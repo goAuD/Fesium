@@ -25,3 +25,11 @@ Thumbs.db
 # Environment
 .env
 venv/
+
+# Local collaboration artifacts
+.superpowers/
+.fesium/
+
+# Build outputs
+build/
+dist/
