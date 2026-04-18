@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - Updated the top-level documentation to reflect the current migration state honestly
 - Kept SQLite read-only mode and local-first assumptions as explicit product defaults
 
+### Removed
+- Removed the legacy flat runtime modules in favor of the `src/fesium/` package layout
+- Removed the old root-level `test_nanoserver.py` suite after replacing it with the new `tests/` structure
+
 ## [1.2.2] - 2026-01-27
 
 ### Security

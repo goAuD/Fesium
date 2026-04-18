@@ -1,2 +1,2 @@
-# Development dependencies
+# Development dependencies for Fesium
 pytest>=7.0.0

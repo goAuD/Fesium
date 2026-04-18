@@ -35,7 +35,7 @@ The `Fesium` migration is in progress. Right now the repository includes:
 - sidebar navigation and the first real views
 - root launchers for both the new `fesium.py` path and the temporary `nanoserver.py` compatibility shim
 
-Some legacy root files still exist temporarily and will be removed once the migration cleanup task is complete.
+The old flat runtime modules have been removed. The only legacy bridge left at the repo root is `nanoserver.py`, which now forwards into the `Fesium` package for compatibility.
 
 ## Requirements
 

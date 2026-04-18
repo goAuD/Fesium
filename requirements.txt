@@ -1,2 +1,2 @@
-# Runtime dependencies
+# Runtime dependencies for Fesium
 customtkinter>=5.0.0
