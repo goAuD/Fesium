@@ -1,8 +1,22 @@
 # Changelog
 
-All notable changes to NanoServer will be documented in this file.
+All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/), and this project adheres to [Semantic Versioning](https://semver.org/).
+
+## [Unreleased]
+
+### Added
+- Bootstrapped the `src/fesium/` package and thin launchers for the `Fesium` migration
+- Migrated config, database, server, environment, project detection, and security helpers into modular core packages
+- Added the first sidebar shell and real view modules for overview, server, database, environment, and settings
+- Bundled offline font assets and Graphite Grid theme tokens
+- Added repository guidance files, editor configuration, and a GitHub Actions pytest workflow
+
+### Changed
+- Repositioned the project under the `Fesium` brand while preserving the original local-dev purpose
+- Updated the top-level documentation to reflect the current migration state honestly
+- Kept SQLite read-only mode and local-first assumptions as explicit product defaults
 
 ## [1.2.2] - 2026-01-27
 
@@ -59,6 +73,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - Dark mode UI with CustomTkinter
 - Port collision detection with auto-increment
 
----
-
-*Part of the Nano Product Family*

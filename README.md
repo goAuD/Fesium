@@ -1,110 +1,119 @@
-# NanoServer
+# Fesium
 
-**A lightweight, modern PHP development environment for students and developers.**
+**Local dev tools for students and developers.**
 
-NanoServer is a portable, GUI-based tool written in Python that replaces heavy software like XAMPP or Laragon for simple development tasks. It uses the built-in PHP web server and SQLite, wrapped in a modern Dark Mode interface.
+`Fesium` is the new direction of the original `NanoServer` project: a lightweight desktop app for serving local PHP projects, inspecting SQLite databases, and keeping a student-friendly workflow fast, safe, and offline-first.
 
-![Python](https://img.shields.io/badge/Made%20with-Python-blue)
-![License](https://img.shields.io/badge/License-MIT-green)
-![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey)
+The repository is currently in a structured migration. The new `src/fesium/` package, modular core layer, bundled fonts, sidebar shell, and view system are already in place. The backend behavior is intentionally being preserved while the UI and repo contract are modernized.
 
-<br> ![NanoServer Screenshot](nanoserver.png)
+## Current Scope
 
-<br>
+`Fesium` currently targets:
 
-## Features
+- local PHP development via the built-in PHP server
+- Laravel-aware document root detection
+- SQLite inspection with read-only defaults
+- offline-first desktop usage
+- a cleaner public-repo structure for ongoing iteration
 
-* **Zero Configuration:** Just select your project folder and click Start.
-* **Modern UI:** Clean, Dark Mode interface using `CustomTkinter`.
-* **Lightweight:** No Apache/Nginx installation required. Uses `php -S`.
-* **Laravel Support:** Automatically detects Laravel projects and serves from the `/public` directory.
-* **SQLite Manager:** Built-in tool to run SQL queries directly on your local database.
-* **Portable:** Perfect for school computers or restricted environments.
-* **Cross-Platform:** Works on Windows, Linux, and macOS.
+This is the first app in a future local-toolbox direction, but the repo does not pretend to be a larger suite yet.
 
-### New in v1.2.2
+## Principles
 
-* **Modular Architecture:** Clean separation of concerns (server, database, config).
-* **Server Log Display:** Real-time PHP server output in the UI.
-* **Config Persistence:** Remembers your last project folder and settings.
-* **Direct SQL Access:** Run raw SQL queries on local SQLite databases with transaction support. Designed for local development only.
-* **Execution Tracing:** Optional logging decorator for debugging.
-* **Unit Tests:** Comprehensive test suite for core functionality.
+- **Offline-first:** no runtime dependency on external assets or hosted services
+- **Security-first defaults:** read-only SQLite mode, local-only server assumptions, explicit destructive-action handling
+- **Student-friendly:** lightweight setup, clear diagnostics, minimal friction on school or restricted machines
+- **Modular architecture:** runtime logic under `src/fesium/` instead of a single monolithic script
 
-> **Note:** Primarily tested on Windows. Linux/macOS should work but feedback is welcome!
+## Status
+
+The `Fesium` migration is in progress. Right now the repository includes:
+
+- packaged app bootstrap in `src/fesium/`
+- separated core modules for config, server, database, environment, security, and project detection
+- bundled local fonts for the approved `Graphite Grid` visual direction
+- sidebar navigation and the first real views
+- root launchers for both the new `fesium.py` path and the temporary `nanoserver.py` compatibility shim
+
+Some legacy root files still exist temporarily and will be removed once the migration cleanup task is complete.
 
 ## Requirements
 
-* **Python 3.8+** installed
-* **PHP** installed and added to your system PATH
+- Python 3.8+
+- PHP on your system `PATH`
+
+Check PHP availability:
 
 ```bash
-# Check if PHP is installed
 php -v
 ```
 
 ## Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/yourusername/NanoServer.git
 cd NanoServer
+python -m pip install -r requirements.txt
+```
 
-# Install dependencies
-pip install -r requirements.txt
+## Running the App
 
-# Run
+Primary launcher:
+
+```bash
+python fesium.py
+```
+
+Temporary compatibility launcher:
+
+```bash
 python nanoserver.py
 ```
 
-### Development Setup
+## Development
+
+Install development dependencies:
 
 ```bash
-# Install dev dependencies for testing
-pip install -r requirements-dev.txt
-
-# Run tests
-python -m pytest test_nanoserver.py -v
+python -m pip install -r requirements-dev.txt
 ```
 
-## Usage
+Run tests:
 
-1. **Select Project Folder:** Click the button to choose your website's root folder.
-2. **Start Server:** Click "Start Server". Your site will run at `http://localhost:8000`.
-3. **View Logs:** Server output appears in the log panel in real-time.
-4. **Database:** Run SQL commands in the bottom section for SQLite databases.
-
-## Project Structure
-
+```bash
+python -m pytest tests/unit -v
 ```
+
+Run the full test suite:
+
+```bash
+python -m pytest -v
+```
+
+## Project Layout
+
+```text
 NanoServer/
-├── nanoserver.py      # Main UI application
-├── server.py          # PHP server management
-├── database.py        # SQLite operations
-├── config.py          # Settings persistence
-├── test_nanoserver.py # Unit tests
-└── requirements.txt   # Dependencies
+├── src/
+│   └── fesium/
+│       ├── app.py
+│       ├── core/
+│       ├── ui/
+│       └── assets/
+├── tests/
+├── docs/
+├── fesium.py
+└── nanoserver.py
 ```
 
-## Running Tests
+## Origin
 
-```bash
-python test_nanoserver.py
-# or with pytest
-python -m pytest test_nanoserver.py -v
-```
-
-## Why I Made This
-
-I created NanoServer because the software at my school (Laragon) had expired licenses, and I needed a quick, free, and modern way to host my PHP/HTML homework locally without administrative privileges.
+The project started as `NanoServer`, built as a free alternative for school environments where tools like Laragon were no longer a practical option. `Fesium` keeps that purpose, but gives it a stronger architecture, a better product shell, and a clearer long-term direction.
 
 ## Contributing
 
-Contributions are welcome! Feel free to:
-- Report bugs
-- Suggest features
-- Submit pull requests
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, test commands, and repo conventions.
 
 ## License
 
-This project is open-source and free to use under the MIT License.
+The repository is currently licensed under the MIT License.
