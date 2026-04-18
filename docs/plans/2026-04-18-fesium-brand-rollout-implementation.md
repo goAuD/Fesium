@@ -2,9 +2,9 @@
 
 > **For Claude:** Use `${SUPERPOWERS_SKILLS_ROOT}/skills/collaboration/executing-plans/SKILL.md` to implement this plan task-by-task.
 
-**Goal:** Complete the first public `Fesium` brand rollout: add the approved logo and social preview assets, clean up legacy public docs, wire the runtime app icon, rename the GitHub repository, and prepare the new screenshot asset path.
+**Goal:** Complete the first public `Fesium` brand rollout: add the approved logo and social preview assets, clean up legacy public docs, wire the runtime app icon, consolidate dependencies around a single full `requirements.txt`, rename the GitHub repository, prepare the new screenshot asset path, and ship the work as `v2.0.0`.
 
-**Architecture:** Treat `docs/assets/brand/` as the source of truth for repository-facing brand assets and `src/fesium/assets/` as the runtime asset location for the desktop app. Keep the rollout brand-first: create the controlled SVG and PNG assets first, update public docs and metadata second, then add the fresh screenshot as a separate follow-up asset. Do not rename the local workspace folder until the very end, after the session is finished, because the current tooling is rooted in `D:\GitHub\NanoServer`.
+**Architecture:** Treat `docs/assets/brand/` as the source of truth for repository-facing brand assets and `src/fesium/assets/` as the runtime asset location for the desktop app. Keep the rollout brand-first: create the controlled SVG and PNG assets first, update public docs and metadata second, then add the fresh screenshot as a separate follow-up asset. Consolidate dependencies so `requirements.txt` is the complete install surface, with `requirements-dev.txt` reduced to a compatibility shim or removed only after all references are updated. Do not rename the local workspace folder until the very end, after the session is finished, because the current tooling is rooted in `D:\GitHub\NanoServer`.
 
 **Tech Stack:** Python 3.12, `pytest`, `pathlib`, `xml.etree.ElementTree`, `tkinter`, `customtkinter`, ImageMagick 7 (`magick`), GitHub CLI (`gh`)
 
@@ -28,6 +28,8 @@ Read these before starting implementation:
 - Keep the faceted graphite background subtle; do not introduce loud gradients or extra accent colors.
 - Do not restore `nanoserver.png` or `social_preview.png`.
 - There is no longer a `Nano product family`; remove or rewrite public-facing traces of that concept.
+- The release target for this rollout is `v2.0.0`.
+- `requirements.txt` must become the full install list; do not leave important dependencies only in `requirements-dev.txt`.
 - Do not rename the local `D:\GitHub\NanoServer` folder until the final manual post-session step.
 
 ## Task 1: Brand Asset Scaffold and Root Image Cleanup Contract
@@ -459,7 +461,120 @@ git add README.md ROADMAP.md DESIGN_SYSTEM.md tests/unit/test_brand_asset_layout
 git commit -m "docs: align public repo docs with Fesium brand"
 ```
 
-## Task 5: Runtime App Icon Export and Window Wiring
+## Task 5: Dependency Consolidation Around `requirements.txt`
+
+**Files:**
+- Modify: `requirements.txt`
+- Modify: `requirements-dev.txt`
+- Modify: `.github/workflows/python-tests.yml`
+- Modify: `CONTRIBUTING.md`
+- Modify: `README.md`
+- Create: `tests/unit/test_dependency_contract.py`
+
+**Step 1: Write the failing dependency contract**
+
+Create `tests/unit/test_dependency_contract.py`:
+
+```python
+from pathlib import Path
+
+
+def test_requirements_txt_contains_runtime_and_test_dependencies():
+    requirements = Path("requirements.txt").read_text(encoding="utf-8")
+    assert "customtkinter" in requirements
+    assert "pytest" in requirements
+
+
+def test_requirements_dev_txt_is_only_a_compatibility_shim():
+    requirements_dev = Path("requirements-dev.txt").read_text(encoding="utf-8").strip()
+    assert requirements_dev == "-r requirements.txt"
+
+
+def test_repo_docs_install_from_requirements_txt():
+    readme = Path("README.md").read_text(encoding="utf-8")
+    contributing = Path("CONTRIBUTING.md").read_text(encoding="utf-8")
+    workflow = Path(".github/workflows/python-tests.yml").read_text(encoding="utf-8")
+
+    assert "python -m pip install -r requirements.txt" in readme
+    assert "python -m pip install -r requirements.txt" in contributing
+    assert "python -m pip install -r requirements.txt" in workflow
+```
+
+**Step 2: Run the dependency contract to verify it fails**
+
+Run: `python -m pytest tests/unit/test_dependency_contract.py -v`
+
+Expected output:
+
+```text
+FAILED tests/unit/test_dependency_contract.py::test_requirements_txt_contains_runtime_and_test_dependencies
+FAILED tests/unit/test_dependency_contract.py::test_requirements_dev_txt_is_only_a_compatibility_shim
+```
+
+**Step 3: Consolidate the dependency files**
+
+Update `requirements.txt` to:
+
+```text
+# Runtime and contributor dependencies for Fesium
+customtkinter>=5.0.0
+pytest>=7.0.0
+```
+
+Update `requirements-dev.txt` to:
+
+```text
+-r requirements.txt
+```
+
+This keeps older contributor habits and existing commands from breaking, while making `requirements.txt` the real source of truth.
+
+**Step 4: Update docs and workflow to use `requirements.txt` as primary**
+
+Make these exact changes:
+
+- In `README.md`, keep install commands on `requirements.txt` only
+- In `CONTRIBUTING.md`, change setup to:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+Then add one sentence below it:
+
+`requirements-dev.txt` is retained only as a compatibility shim and currently points back to `requirements.txt`.
+
+- In `.github/workflows/python-tests.yml`, replace the two install lines with:
+
+```yaml
+          python -m pip install -r requirements.txt
+```
+
+**Step 5: Run the dependency contract and full unit suite**
+
+Run:
+
+```bash
+python -m pytest tests/unit/test_dependency_contract.py -v
+python -m pytest tests/unit -v
+```
+
+Expected output:
+
+```text
+3 passed
+```
+
+The full unit suite should remain green.
+
+**Step 6: Commit**
+
+```bash
+git add requirements.txt requirements-dev.txt .github/workflows/python-tests.yml CONTRIBUTING.md README.md tests/unit/test_dependency_contract.py
+git commit -m "chore: consolidate Fesium dependencies into requirements.txt"
+```
+
+## Task 6: Runtime App Icon Export and Window Wiring
 
 **Files:**
 - Create: `src/fesium/assets/icons/fesium-orbit-256.png`
@@ -612,7 +727,7 @@ git add src/fesium/assets/icons src/fesium/ui/theme/window_icon.py src/fesium/ui
 git commit -m "feat: add Fesium runtime window icon assets"
 ```
 
-## Task 6: GitHub Metadata Rollout and Social Preview Upload
+## Task 7: GitHub Metadata Rollout and Social Preview Upload
 
 **Files:**
 - No tracked file changes required
@@ -694,7 +809,7 @@ Acceptance for the uploaded image:
 
 This task changes GitHub metadata and settings, not tracked files. Do not create an empty commit.
 
-## Task 7: New Screenshot Asset and README Screenshot Section
+## Task 8: New Screenshot Asset and README Screenshot Section
 
 **Files:**
 - Create: `docs/assets/screenshots/fesium-overview.png`
@@ -800,7 +915,109 @@ git add docs/assets/screenshots/fesium-overview.png README.md tests/unit/test_br
 git commit -m "docs: add Fesium overview screenshot"
 ```
 
-## Task 8: Final Verification and Post-Session Local Folder Rename
+## Task 9: Version Bump, Changelog Finalization, and Release Tag
+
+**Files:**
+- Modify: `pyproject.toml`
+- Modify: `src/fesium/__init__.py`
+- Modify: `tests/unit/test_app_metadata.py`
+- Modify: `CHANGELOG.md`
+
+**Step 1: Write the failing version contract**
+
+Append this test to `tests/unit/test_app_metadata.py`:
+
+```python
+def test_release_version_targets_v2():
+    assert __version__ == "2.0.0"
+```
+
+**Step 2: Run the app metadata tests to verify they fail**
+
+Run: `python -m pytest tests/unit/test_app_metadata.py -v`
+
+Expected output:
+
+```text
+FAILED tests/unit/test_app_metadata.py::test_release_version_targets_v2
+```
+
+**Step 3: Bump the project version**
+
+Update `pyproject.toml`:
+
+```toml
+version = "2.0.0"
+```
+
+Update `src/fesium/__init__.py`:
+
+```python
+__version__ = "2.0.0"
+```
+
+Do not change the package name.
+
+**Step 4: Finalize the changelog for the release**
+
+In `CHANGELOG.md`:
+
+1. Move the current `Unreleased` rollout content into:
+
+```markdown
+## [2.0.0] - 2026-04-18
+```
+
+2. Keep the grouped sections (`Added`, `Changed`, `Removed`)
+3. Add a short release-scoped line under `Changed` noting:
+   - rebrand from `NanoServer` to `Fesium`
+   - public repo asset rollout
+   - GitHub metadata refresh
+
+4. Recreate an empty `## [Unreleased]` section above `2.0.0`
+
+**Step 5: Run the app metadata tests and a full regression**
+
+Run:
+
+```bash
+python -m pytest tests/unit/test_app_metadata.py -v
+python -m pytest tests/unit -v
+```
+
+Expected output:
+
+```text
+3 passed
+```
+
+The full unit suite should remain green.
+
+**Step 6: Commit**
+
+```bash
+git add pyproject.toml src/fesium/__init__.py tests/unit/test_app_metadata.py CHANGELOG.md
+git commit -m "chore: prepare Fesium v2.0.0 release"
+```
+
+**Step 7: Create the tag and GitHub release**
+
+Run:
+
+```bash
+git tag -a v2.0.0 -m "Fesium v2.0.0"
+git push origin main --follow-tags
+gh release create v2.0.0 --title "Fesium v2.0.0" --notes-file CHANGELOG.md
+```
+
+Expected result:
+
+- tag `v2.0.0` exists locally and on GitHub
+- GitHub release `Fesium v2.0.0` is published
+
+If you prefer cleaner release notes, prepare a small temporary release note file from the `2.0.0` section instead of using the whole changelog.
+
+## Task 10: Final Verification and Post-Session Local Folder Rename
 
 **Files:**
 - No required tracked file changes
@@ -838,6 +1055,7 @@ Run:
 
 ```bash
 gh repo view goAuD/Fesium --json name,nameWithOwner,description,repositoryTopics
+gh release view v2.0.0
 ```
 
 Expected result:
@@ -845,6 +1063,7 @@ Expected result:
 - repo is `goAuD/Fesium`
 - description matches exactly
 - approved topics are present
+- release `v2.0.0` exists
 
 **Step 4: Rename the local folder only after the session ends**
 
