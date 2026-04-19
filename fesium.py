@@ -19,7 +19,8 @@ exec((PACKAGE_DIR / "__init__.py").read_text(encoding="utf-8"), globals())
 
 
 def main():
-    return importlib.import_module("fesium.app").main()
+    app_module = importlib.import_module("fesium.app")
+    return app_module.main()
 
 
 if __name__ == "__main__":
