@@ -6,21 +6,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-04-19
+
 ### Added
 - Bootstrapped the `src/fesium/` package and thin launchers for the `Fesium` migration
 - Migrated config, database, server, environment, project detection, and security helpers into modular core packages
 - Added the first sidebar shell and real view modules for overview, server, database, environment, and settings
 - Bundled offline font assets and Graphite Grid theme tokens
 - Added repository guidance files, editor configuration, and a GitHub Actions pytest workflow
+- Added the `Pure Orbit` brand assets, controlled GitHub social preview sources, and a new `Overview` screenshot
+- Added runtime window icon assets sourced from the master brand SVG
 
 ### Changed
 - Repositioned the project under the `Fesium` brand while preserving the original local-dev purpose
 - Updated the top-level documentation to reflect the current migration state honestly
 - Kept SQLite read-only mode and local-first assumptions as explicit product defaults
+- Refreshed the public repository metadata around the `goAuD/Fesium` slug and approved topic set
+- Consolidated contributor installation around a single primary `requirements.txt`
+- Switched the repository license from MIT to Apache-2.0
 
 ### Removed
 - Removed the legacy flat runtime modules in favor of the `src/fesium/` package layout
 - Removed the old root-level `test_nanoserver.py` suite after replacing it with the new `tests/` structure
+- Removed obsolete root brand images and the legacy design-system document
 
 ## [1.2.2] - 2026-01-27
 

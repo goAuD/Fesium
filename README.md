@@ -83,7 +83,7 @@ python nanoserver.py
 Install development dependencies:
 
 ```bash
-python -m pip install -r requirements-dev.txt
+python -m pip install -r requirements.txt
 ```
 
 Run tests:
@@ -124,4 +124,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, test commands, and repo conven
 
 ## License
 
-The repository is currently licensed under the MIT License.
+The repository is licensed under the Apache License, Version 2.0.

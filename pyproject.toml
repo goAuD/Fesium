@@ -4,10 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fesium"
-version = "0.1.0"
+version = "2.0.0"
 description = "Local dev tools for students and developers"
 readme = "README.md"
 requires-python = ">=3.8"
+license = {text = "Apache-2.0"}
 dependencies = [
   "customtkinter>=5.0.0",
 ]
