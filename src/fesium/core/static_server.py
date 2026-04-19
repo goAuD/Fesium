@@ -19,6 +19,13 @@ class StaticServer:
 
     def start(self, document_root: Path, port: int) -> str:
         root = Path(document_root)
+        if self.is_running:
+            raise RuntimeError("Static server is already running")
+        if not root.exists():
+            raise FileNotFoundError(f"Document root does not exist: {root}")
+        if not root.is_dir():
+            raise NotADirectoryError(f"Document root is not a directory: {root}")
+
         handler = partial(SimpleHTTPRequestHandler, directory=str(root))
         self._httpd = ThreadingHTTPServer(("localhost", port), handler)
         self._thread = threading.Thread(target=self._httpd.serve_forever, daemon=True)
@@ -39,4 +46,6 @@ class StaticServer:
             self._thread.join(timeout=5)
         self._httpd = None
         self._thread = None
+        self.port = None
+        self.document_root = None
         self.on_log("[Fesium] Static server stopped")
