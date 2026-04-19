@@ -59,6 +59,70 @@ def _build_metadata() -> AppMetadata:
     )
 
 
+def _build_database_manager(project_root: Path | None, fallback_project: Path) -> DatabaseManager:
+    profile = detect_project_profile(project_root or fallback_project)
+    return DatabaseManager(
+        str(profile.database_path) if profile.database_path else None,
+        read_only=True,
+    )
+
+
+def _replace_runtime_views(
+    *,
+    shell: FesiumShell,
+    controller: FesiumController,
+    config: Config,
+    fallback_project: Path,
+    select_project_action,
+    start_action,
+    stop_action,
+    restart_action,
+    open_browser_action,
+) -> None:
+    state = controller.state
+    database = _build_database_manager(state.project_root, fallback_project)
+
+    shell.replace_view(
+        "overview",
+        lambda parent: OverviewView(
+            parent,
+            project_root=state.project_root,
+            project_kind=state.project_kind,
+            php_summary=state.php_summary,
+            server_status=state.server_status,
+            local_url=state.local_url,
+        ),
+    )
+    shell.replace_view(
+        "server",
+        lambda parent: ServerView(
+            parent,
+            document_root=state.document_root,
+            port=config.port,
+            project_root=state.project_root,
+            project_kind=state.project_kind,
+            backend_kind=state.backend_kind,
+            server_status=state.server_status,
+            local_url=state.local_url,
+            last_error=state.last_error,
+            log_lines=state.log_lines,
+            on_select_project=select_project_action,
+            on_start=start_action,
+            on_stop=stop_action,
+            on_restart=restart_action,
+            on_open_browser=open_browser_action,
+        ),
+    )
+    shell.replace_view(
+        "database",
+        lambda parent: DatabaseView(
+            parent,
+            db_path=str(database.db_path) if database.db_path else "",
+            read_only=database.read_only,
+        ),
+    )
+
+
 def main() -> None:
     metadata = _build_metadata()
     paths = build_default_paths()
@@ -71,12 +135,6 @@ def main() -> None:
     controller = FesiumController(config=config, cwd=cwd)
     startup_project = context.project_root if context.project_root else cwd
     controller.select_project(startup_project)
-
-    profile = detect_project_profile(controller.state.project_root or startup_project)
-    database = DatabaseManager(
-        str(profile.database_path) if profile.database_path else None,
-        read_only=True,
-    )
     environment_status = summarize_php_environment()
 
     shell = FesiumShell()
@@ -84,37 +142,16 @@ def main() -> None:
     shell.geometry(config.get("window_geometry", "1280x860"))
 
     def refresh_runtime_views() -> None:
-        state = controller.state
-        shell.replace_view(
-            "overview",
-            lambda parent: OverviewView(
-                parent,
-                project_root=state.project_root,
-                project_kind=state.project_kind,
-                php_summary=state.php_summary,
-                server_status=state.server_status,
-                local_url=state.local_url,
-            ),
-        )
-        shell.replace_view(
-            "server",
-            lambda parent: ServerView(
-                parent,
-                document_root=state.document_root,
-                port=config.port,
-                project_root=state.project_root,
-                project_kind=state.project_kind,
-                backend_kind=state.backend_kind,
-                server_status=state.server_status,
-                local_url=state.local_url,
-                last_error=state.last_error,
-                log_lines=state.log_lines,
-                on_select_project=select_project_action,
-                on_start=start_action,
-                on_stop=stop_action,
-                on_restart=restart_action,
-                on_open_browser=open_browser_action,
-            ),
+        _replace_runtime_views(
+            shell=shell,
+            controller=controller,
+            config=config,
+            fallback_project=startup_project,
+            select_project_action=select_project_action,
+            start_action=start_action,
+            stop_action=stop_action,
+            restart_action=restart_action,
+            open_browser_action=open_browser_action,
         )
 
     def select_project_action() -> None:
@@ -145,14 +182,6 @@ def main() -> None:
         refresh_runtime_views()
 
     refresh_runtime_views()
-    shell.register_view(
-        "database",
-        lambda parent: DatabaseView(
-            parent,
-            db_path=str(database.db_path) if database.db_path else "",
-            read_only=database.read_only,
-        ),
-    )
     shell.register_view(
         "environment",
         lambda parent: EnvironmentView(parent, status=environment_status),
