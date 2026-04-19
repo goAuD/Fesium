@@ -15,8 +15,9 @@ Install dependencies:
 
 ```bash
 python -m pip install -r requirements.txt
-python -m pip install -r requirements-dev.txt
 ```
+
+`requirements-dev.txt` is retained only as a compatibility shim and currently points back to `requirements.txt`.
 
 ## Running the App
 
@@ -72,4 +73,3 @@ If your change affects behavior, update the relevant docs:
 - `README.md` for user-facing workflow changes
 - `CHANGELOG.md` for release-facing notes
 - `docs/plans/` or `docs/superpowers/specs/` for larger scoped work
-

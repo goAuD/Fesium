@@ -1,2 +1,1 @@
-# Development dependencies for Fesium
-pytest>=7.0.0
+-r requirements.txt
