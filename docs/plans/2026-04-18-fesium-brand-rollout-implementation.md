@@ -1,6 +1,6 @@
 # Fesium Brand Rollout Implementation Plan
 
-> **For Claude:** Use `${SUPERPOWERS_SKILLS_ROOT}/skills/collaboration/executing-plans/SKILL.md` to implement this plan task-by-task.
+> **For Codex/Claude:** Use `${SUPERPOWERS_SKILLS_ROOT}/skills/collaboration/executing-plans/SKILL.md` to implement this plan task-by-task.
 
 **Goal:** Complete the first public `Fesium` brand rollout: add the approved logo and social preview assets, clean up legacy public docs, wire the runtime app icon, consolidate dependencies around a single full `requirements.txt`, rename the GitHub repository, prepare the new screenshot asset path, and ship the work as `v2.0.0`.
 
@@ -35,6 +35,7 @@ Read these before starting implementation:
 ## Task 1: Brand Asset Scaffold and Root Image Cleanup Contract
 
 **Files:**
+
 - Create: `docs/assets/brand/.gitkeep`
 - Create: `docs/assets/screenshots/.gitkeep`
 - Create: `tests/unit/test_brand_asset_layout.py`
@@ -98,6 +99,7 @@ git commit -m "chore: scaffold Fesium brand asset directories"
 ## Task 2: Master `Pure Orbit` SVG and AI Prompt Source
 
 **Files:**
+
 - Create: `docs/assets/brand/fesium-orbit.svg`
 - Create: `docs/assets/brand/fesium-social-preview-prompt.md`
 - Modify: `tests/unit/test_brand_asset_layout.py`
@@ -224,6 +226,7 @@ git commit -m "feat: add Fesium master brand assets"
 ## Task 3: Controlled Social Preview Source and PNG Export
 
 **Files:**
+
 - Create: `docs/assets/brand/fesium-social-preview.svg`
 - Create: `docs/assets/brand/fesium-social-preview.png`
 - Modify: `tests/unit/test_brand_asset_layout.py`
@@ -369,6 +372,7 @@ git commit -m "feat: add controlled Fesium social preview assets"
 ## Task 4: Public Docs Cleanup and README Brand Integration
 
 **Files:**
+
 - Modify: `README.md`
 - Modify: `ROADMAP.md`
 - Delete: `DESIGN_SYSTEM.md`
@@ -425,7 +429,7 @@ Make these exact README changes:
 
 Insert it directly below `# Fesium`.
 
-2. Update installation to:
+1. Update installation to:
 
 ```bash
 git clone https://github.com/goAuD/Fesium.git
@@ -433,9 +437,9 @@ cd Fesium
 python -m pip install -r requirements.txt
 ```
 
-3. Change the project layout label from `NanoServer/` to `Fesium/`.
+1. Change the project layout label from `NanoServer/` to `Fesium/`.
 
-4. Do not add the social preview PNG to the README yet. The logo is enough for the README brand surface.
+2. Do not add the social preview PNG to the README yet. The logo is enough for the README brand surface.
 
 **Step 4: Rewrite the roadmap and remove the family doc**
 
@@ -464,6 +468,7 @@ git commit -m "docs: align public repo docs with Fesium brand"
 ## Task 5: Dependency Consolidation Around `requirements.txt`
 
 **Files:**
+
 - Modify: `requirements.txt`
 - Modify: `requirements-dev.txt`
 - Modify: `.github/workflows/python-tests.yml`
@@ -577,6 +582,7 @@ git commit -m "chore: consolidate Fesium dependencies into requirements.txt"
 ## Task 6: Runtime App Icon Export and Window Wiring
 
 **Files:**
+
 - Create: `src/fesium/assets/icons/fesium-orbit-256.png`
 - Create: `src/fesium/assets/icons/fesium-orbit.ico`
 - Create: `src/fesium/ui/theme/window_icon.py`
@@ -730,6 +736,7 @@ git commit -m "feat: add Fesium runtime window icon assets"
 ## Task 7: GitHub Metadata Rollout and Social Preview Upload
 
 **Files:**
+
 - No tracked file changes required
 
 **Required reading:**
@@ -812,6 +819,7 @@ This task changes GitHub metadata and settings, not tracked files. Do not create
 ## Task 8: New Screenshot Asset and README Screenshot Section
 
 **Files:**
+
 - Create: `docs/assets/screenshots/fesium-overview.png`
 - Create: `tests/unit/test_brand_screenshot.py`
 - Modify: `README.md`
@@ -870,10 +878,10 @@ FAILED tests/unit/test_brand_screenshot.py::test_readme_mentions_the_new_overvie
 python fesium.py
 ```
 
-2. Switch to the `Overview` view.
-3. Keep the window at the default `1280x860` size.
-4. Capture a clean screenshot with no external clutter.
-5. Save it exactly here:
+1. Switch to the `Overview` view.
+2. Keep the window at the default `1280x860` size.
+3. Capture a clean screenshot with no external clutter.
+4. Save it exactly here:
 
 ```text
 docs/assets/screenshots/fesium-overview.png
@@ -918,6 +926,7 @@ git commit -m "docs: add Fesium overview screenshot"
 ## Task 9: Version Bump, Changelog Finalization, and Release Tag
 
 **Files:**
+
 - Modify: `pyproject.toml`
 - Modify: `src/fesium/__init__.py`
 - Modify: `tests/unit/test_app_metadata.py`
@@ -968,13 +977,13 @@ In `CHANGELOG.md`:
 ## [2.0.0] - 2026-04-18
 ```
 
-2. Keep the grouped sections (`Added`, `Changed`, `Removed`)
-3. Add a short release-scoped line under `Changed` noting:
+1. Keep the grouped sections (`Added`, `Changed`, `Removed`)
+2. Add a short release-scoped line under `Changed` noting:
    - rebrand from `NanoServer` to `Fesium`
    - public repo asset rollout
    - GitHub metadata refresh
 
-4. Recreate an empty `## [Unreleased]` section above `2.0.0`
+3. Recreate an empty `## [Unreleased]` section above `2.0.0`
 
 **Step 5: Run the app metadata tests and a full regression**
 
@@ -1020,6 +1029,7 @@ If you prefer cleaner release notes, prepare a small temporary release note file
 ## Task 10: Final Verification and Post-Session Local Folder Rename
 
 **Files:**
+
 - No required tracked file changes
 
 **Step 1: Run the full test suite**

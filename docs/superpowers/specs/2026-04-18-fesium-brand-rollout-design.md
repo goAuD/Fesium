@@ -318,4 +318,3 @@ This rollout is complete when:
 - the README references the new brand assets rather than old root images
 - the old root images remain removed
 - the screenshot asset path is prepared for the next round
-
