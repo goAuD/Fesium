@@ -4,6 +4,7 @@ import customtkinter as ctk
 
 from fesium.ui.navigation import build_navigation_items
 from fesium.ui.theme.styles import apply_graphite_grid_theme, get_color_token, get_font_token
+from fesium.ui.theme.window_icon import apply_window_icon
 
 
 class FesiumShell(ctk.CTk):
@@ -17,6 +18,7 @@ class FesiumShell(ctk.CTk):
         self.geometry("1280x860")
         self.minsize(980, 680)
         self.configure(fg_color=get_color_token("bg.app"))
+        apply_window_icon(self)
 
         self._view_factories: Dict[str, Callable[[ctk.CTkFrame], ctk.CTkBaseClass]] = {}
         self._view_instances: Dict[str, ctk.CTkBaseClass] = {}
