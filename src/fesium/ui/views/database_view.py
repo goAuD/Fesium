@@ -2,6 +2,7 @@ import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_font_token
 from fesium.ui.widgets.panel_card import PanelCard
+from fesium.ui.widgets.scrollable_view_body import ScrollableViewBody
 from fesium.ui.widgets.status_badge import StatusBadge
 
 
@@ -19,6 +20,7 @@ class DatabaseView(ctk.CTkFrame):
     def __init__(self, master, db_path: str, read_only: bool):
         super().__init__(master, fg_color="transparent")
         self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(2, weight=1)
 
         summary = build_database_summary(db_path, read_only)
 
@@ -41,11 +43,15 @@ class DatabaseView(ctk.CTkFrame):
         )
         subtitle.grid(row=1, column=0, columnspan=2, sticky="w", pady=(4, 20))
 
-        panel = PanelCard(self)
-        panel.grid(row=2, column=0, columnspan=2, sticky="ew")
+        body = ScrollableViewBody(self)
+        body.grid(row=2, column=0, columnspan=2, sticky="nsew")
+        body.grid_columnconfigure(0, weight=1)
 
+        panel = PanelCard(body, surface_variant="inset")
+        panel.grid(row=0, column=0, sticky="ew")
+        panel_content = panel.content_frame
         label = ctk.CTkLabel(
-            panel,
+            panel_content,
             text="Selected Database",
             text_color=get_color_token("text.primary"),
             font=get_font_token("body_medium"),
@@ -53,7 +59,7 @@ class DatabaseView(ctk.CTkFrame):
         label.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 8))
 
         value = ctk.CTkLabel(
-            panel,
+            panel_content,
             text=summary["path"],
             text_color=get_color_token("text.secondary"),
             font=get_font_token("body"),

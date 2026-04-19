@@ -32,6 +32,13 @@ def test_font_tokens_include_expected_roles():
     assert set(FONT_TOKENS.keys()) == {"heading", "body", "body_medium", "mono"}
 
 
+def test_font_tokens_match_shell_density_scale():
+    assert FONT_TOKENS["heading"] == ("Sora", 24, "bold")
+    assert FONT_TOKENS["body"] == ("IBM Plex Sans", 14)
+    assert FONT_TOKENS["body_medium"] == ("IBM Plex Sans", 14)
+    assert FONT_TOKENS["mono"] == ("JetBrains Mono", 13)
+
+
 def test_font_license_docs_exist():
     assert Path("src/fesium/assets/fonts/LICENSES.md").exists()
     assert Path("src/fesium/assets/fonts/licenses/Sora-OFL.txt").exists()

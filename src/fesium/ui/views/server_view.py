@@ -5,7 +5,19 @@ import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_font_token
 from fesium.ui.widgets.panel_card import PanelCard
+from fesium.ui.widgets.scrollable_view_body import ScrollableViewBody
 from fesium.ui.widgets.status_badge import StatusBadge
+
+ACTION_BUTTON_SPECS = (
+    ("select_project_button", "Select Project Folder", "select_project"),
+    ("start_button", "Start", "start"),
+    ("stop_button", "Stop", "stop"),
+    ("restart_button", "Restart", "restart"),
+    ("open_browser_button", "Open in Browser", "open_in_browser"),
+)
+
+ONE_ROW_SERVER_ACTION_LAYOUT = [["select_project", "start", "stop", "restart", "open_in_browser"]]
+TWO_ROW_SERVER_ACTION_LAYOUT = [["select_project", "start", "stop"], ["restart", "open_in_browser"]]
 
 
 def _format_path(path: Path | None) -> str:
@@ -77,6 +89,12 @@ def build_server_view_model(
     }
 
 
+def resolve_server_action_layout(available_width: int) -> list[list[str]]:
+    if available_width >= 980:
+        return ONE_ROW_SERVER_ACTION_LAYOUT
+    return TWO_ROW_SERVER_ACTION_LAYOUT
+
+
 class ServerView(ctk.CTkFrame):
     """Server operations view for current project serving state."""
 
@@ -102,6 +120,7 @@ class ServerView(ctk.CTkFrame):
     ):
         super().__init__(master, fg_color="transparent")
         self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(2, weight=1)
 
         resolved_status = server_status or ("running" if is_running else "stopped")
         resolved_url = local_url or (f"http://localhost:{port}" if port else "")
@@ -138,9 +157,14 @@ class ServerView(ctk.CTkFrame):
         )
         subtitle.grid(row=1, column=0, columnspan=2, sticky="w", pady=(4, 20))
 
-        details_panel = PanelCard(self)
-        details_panel.grid(row=2, column=0, columnspan=2, sticky="ew")
-        details_panel.grid_columnconfigure(0, weight=1)
+        body = ScrollableViewBody(self)
+        body.grid(row=2, column=0, columnspan=2, sticky="nsew")
+        body.grid_columnconfigure(0, weight=1)
+
+        details_panel = PanelCard(body, surface_variant="inset")
+        details_panel.grid(row=0, column=0, sticky="ew")
+        details_content = details_panel.content_frame
+        details_content.grid_columnconfigure(0, weight=1)
 
         details = [
             ("Selected Project", model["selected_project"]),
@@ -153,7 +177,7 @@ class ServerView(ctk.CTkFrame):
 
         for row, (label_text, value_text) in enumerate(details):
             label = ctk.CTkLabel(
-                details_panel,
+                details_content,
                 text=label_text,
                 text_color=get_color_token("text.primary"),
                 font=get_font_token("body_medium"),
@@ -161,7 +185,7 @@ class ServerView(ctk.CTkFrame):
             label.grid(row=row * 2, column=0, sticky="w", padx=16, pady=(16 if row == 0 else 10, 4))
 
             value = ctk.CTkLabel(
-                details_panel,
+                details_content,
                 text=value_text,
                 text_color=get_color_token("text.secondary"),
                 font=get_font_token("body"),
@@ -176,27 +200,20 @@ class ServerView(ctk.CTkFrame):
                 pady=(0, 4 if row < len(details) - 1 else 16),
             )
 
-        actions_panel = PanelCard(self)
-        actions_panel.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(16, 0))
-        actions_panel.grid_columnconfigure((0, 1, 2, 3, 4), weight=1)
+        actions_panel = PanelCard(body, surface_variant="inset")
+        actions_panel.grid(row=1, column=0, sticky="ew", pady=(16, 0))
+        self.actions_content = actions_panel.content_frame
 
-        actions_title = ctk.CTkLabel(
-            actions_panel,
+        self.actions_title = ctk.CTkLabel(
+            self.actions_content,
             text="Controls",
             text_color=get_color_token("text.primary"),
             font=get_font_token("body_medium"),
         )
-        actions_title.grid(row=0, column=0, columnspan=5, sticky="w", padx=16, pady=(16, 12))
+        self.actions_title.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 12))
 
-        button_specs = [
-            ("select_project_button", "Select Project Folder", "select_project"),
-            ("start_button", "Start", "start"),
-            ("stop_button", "Stop", "stop"),
-            ("restart_button", "Restart", "restart"),
-            ("open_browser_button", "Open in Browser", "open_in_browser"),
-        ]
-
-        for column, (attr_name, label_text, action_key) in enumerate(button_specs):
+        self._action_buttons: dict[str, ctk.CTkButton] = {}
+        for attr_name, label_text, action_key in ACTION_BUTTON_SPECS:
             commands = {
                 "select_project": on_select_project or _noop,
                 "start": on_start or _noop,
@@ -205,22 +222,22 @@ class ServerView(ctk.CTkFrame):
                 "open_in_browser": on_open_browser or _noop,
             }
             button = ctk.CTkButton(
-                actions_panel,
+                self.actions_content,
                 text=label_text,
                 state="normal" if model["actions"][action_key] else "disabled",
                 command=commands[action_key],
             )
-            button.grid(row=1, column=column, sticky="ew", padx=(16 if column == 0 else 8, 16 if column == 4 else 8), pady=(0, 16))
             setattr(self, attr_name, button)
+            self._action_buttons[action_key] = button
 
-        logs_panel = PanelCard(self)
-        logs_panel.grid(row=4, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
-        logs_panel.grid_columnconfigure(0, weight=1)
-        logs_panel.grid_rowconfigure(1, weight=1)
-        self.grid_rowconfigure(4, weight=1)
+        logs_panel = PanelCard(body, surface_variant="inset_strong")
+        logs_panel.grid(row=2, column=0, sticky="ew", pady=(16, 0))
+        logs_content = logs_panel.content_frame
+        logs_content.grid_columnconfigure(0, weight=1)
+        logs_content.grid_rowconfigure(1, weight=1)
 
         logs_title = ctk.CTkLabel(
-            logs_panel,
+            logs_content,
             text="Logs",
             text_color=get_color_token("text.primary"),
             font=get_font_token("body_medium"),
@@ -228,11 +245,11 @@ class ServerView(ctk.CTkFrame):
         logs_title.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 12))
 
         self.log_textbox = ctk.CTkTextbox(
-            logs_panel,
+            logs_content,
             fg_color=get_color_token("bg.panel_alt"),
             text_color=get_color_token("text.secondary"),
-            font=get_font_token("body"),
-            height=220,
+            font=get_font_token("mono"),
+            height=260,
         )
         self.log_textbox.grid(row=1, column=0, sticky="nsew", padx=16, pady=(0, 16))
         self.log_textbox.insert("1.0", model["log_text"])
@@ -240,11 +257,41 @@ class ServerView(ctk.CTkFrame):
 
         if model["last_error"]:
             error_label = ctk.CTkLabel(
-                self,
+                body,
                 text=model["last_error"],
                 text_color=get_color_token("accent.danger"),
                 font=get_font_token("body"),
                 justify="left",
                 wraplength=900,
             )
-            error_label.grid(row=5, column=0, columnspan=2, sticky="w", pady=(16, 0))
+            error_label.grid(row=3, column=0, sticky="w", pady=(16, 0))
+
+        self._render_action_buttons(resolve_server_action_layout(self.winfo_reqwidth()))
+        self.bind("<Configure>", self._on_resize)
+
+    def _on_resize(self, _event) -> None:
+        available_width = self.winfo_width() or self.winfo_reqwidth()
+        self._render_action_buttons(resolve_server_action_layout(available_width))
+
+    def _render_action_buttons(self, layout: list[list[str]]) -> None:
+        max_columns = max(len(row) for row in layout)
+
+        for column in range(5):
+            self.actions_content.grid_columnconfigure(column, weight=1 if column < max_columns else 0)
+
+        self.actions_title.grid_configure(columnspan=max_columns)
+
+        for button in self._action_buttons.values():
+            button.grid_forget()
+
+        for row_index, row_actions in enumerate(layout, start=1):
+            is_last_row = row_index == len(layout)
+            for column, action_key in enumerate(row_actions):
+                button = self._action_buttons[action_key]
+                button.grid(
+                    row=row_index,
+                    column=column,
+                    sticky="ew",
+                    padx=(16 if column == 0 else 8, 16 if column == len(row_actions) - 1 else 8),
+                    pady=(0, 16 if is_last_row else 8),
+                )

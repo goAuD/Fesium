@@ -40,6 +40,10 @@ The `Fesium` migration is in progress. Right now the repository includes:
 - separated core modules for config, server, database, environment, security, and project detection
 - bundled local fonts for the approved `Graphite Grid` visual direction
 - sidebar navigation and the first real views
+- a larger default desktop shell with improved baseline readability
+- responsive `Server` controls with a visible log panel at the default window size
+- scroll-safe `Server`, `Database`, `Environment`, and `Settings` views
+- refined inset panel surfaces for operational panels and logs
 - root launchers for both the new `fesium.py` path and the temporary `nanoserver.py` compatibility shim
 
 The old flat runtime modules have been removed. The only legacy bridge left at the repo root is `nanoserver.py`, which now forwards into the `Fesium` package for compatibility.
@@ -53,6 +57,8 @@ From the `Server` view, `Fesium` can:
 - run the local site with PHP when PHP is available on your system
 - fall back to a static local server when PHP is unavailable
 - open the running local site in your browser
+- keep the controls readable at the default desktop size
+- keep the log panel visible without forcing immediate manual window resizing
 
 SQLite support remains focused on inspection with read-only defaults in this milestone.
 

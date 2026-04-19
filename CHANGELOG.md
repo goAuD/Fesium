@@ -13,6 +13,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Changed
 - Restored the server interaction flow for selecting a project, starting the local server, stopping it, restarting it, and opening the site in a browser
+- Increased the default desktop shell size and baseline typography for better readability
+- Made the `Server`, `Database`, `Environment`, and `Settings` views scroll-safe instead of relying on manual window resizing
+- Added responsive `Server` control layout behavior and inset panel surfaces to preserve hierarchy at smaller window sizes
+
+### Security
+- Hardened the GitHub Actions pytest workflow with explicit minimal `contents: read` permissions
 
 ## [2.0.0] - 2026-04-19
 

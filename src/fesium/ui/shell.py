@@ -6,6 +6,9 @@ from fesium.ui.navigation import build_navigation_items
 from fesium.ui.theme.styles import apply_graphite_grid_theme, get_color_token, get_font_token
 from fesium.ui.theme.window_icon import apply_window_icon
 
+DEFAULT_WINDOW_GEOMETRY = "1400x960"
+MIN_WINDOW_SIZE = (1100, 760)
+
 
 class FesiumShell(ctk.CTk):
     """Primary desktop shell with a sidebar and content frame."""
@@ -15,8 +18,8 @@ class FesiumShell(ctk.CTk):
         super().__init__()
 
         self.title("Fesium")
-        self.geometry("1280x860")
-        self.minsize(980, 680)
+        self.geometry(DEFAULT_WINDOW_GEOMETRY)
+        self.minsize(*MIN_WINDOW_SIZE)
         self.configure(fg_color=get_color_token("bg.app"))
         apply_window_icon(self)
 

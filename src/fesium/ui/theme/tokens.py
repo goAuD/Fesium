@@ -14,8 +14,8 @@ COLOR_TOKENS = {
 }
 
 FONT_TOKENS = {
-    "heading": ("Sora", 22, "bold"),
-    "body": ("IBM Plex Sans", 13),
-    "body_medium": ("IBM Plex Sans", 13),
-    "mono": ("JetBrains Mono", 12),
+    "heading": ("Sora", 24, "bold"),
+    "body": ("IBM Plex Sans", 14),
+    "body_medium": ("IBM Plex Sans", 14),
+    "mono": ("JetBrains Mono", 13),
 }
