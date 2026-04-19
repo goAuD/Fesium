@@ -86,6 +86,18 @@ class FesiumShell(ctk.CTk):
     def register_view(self, view_id: str, factory: Callable[[ctk.CTkFrame], ctk.CTkBaseClass]) -> None:
         self._view_factories[view_id] = factory
 
+    def replace_view(self, view_id: str, factory: Callable[[ctk.CTkFrame], ctk.CTkBaseClass]) -> None:
+        self._view_factories[view_id] = factory
+
+        existing = self._view_instances.pop(view_id, None)
+        was_active = self.active_view_id == view_id
+        if existing is not None:
+            existing.destroy()
+
+        if was_active:
+            self.active_view_id = None
+            self.set_active_view(view_id)
+
     def set_active_view(self, view_id: str) -> None:
         if view_id == self.active_view_id:
             return

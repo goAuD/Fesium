@@ -1,15 +1,16 @@
 import logging
 from dataclasses import dataclass
 from pathlib import Path
+from tkinter import filedialog
 from typing import Dict
 
 from fesium import __version__
+from fesium.app.controller import FesiumController
 from fesium.core.config import Config
 from fesium.core.database import DatabaseManager
 from fesium.core.environment import summarize_php_environment
 from fesium.core.paths import AppPaths
 from fesium.core.project_detection import detect_project_profile
-from fesium.core.server import PHPServer
 from fesium.ui.shell import FesiumShell
 from fesium.ui.views.database_view import DatabaseView
 from fesium.ui.views.environment_view import EnvironmentView
@@ -61,41 +62,89 @@ def _build_metadata() -> AppMetadata:
 def main() -> None:
     metadata = _build_metadata()
     paths = build_default_paths()
+    cwd = Path.cwd()
     config = Config(
         config_dir=paths.config_dir,
         legacy_config_dir=paths.legacy_config_dir,
     )
-    context = build_app_context(Path.cwd(), config._data)
-    profile = detect_project_profile(context.project_root)
+    context = build_app_context(cwd, config._data)
+    controller = FesiumController(config=config, cwd=cwd)
+    startup_project = context.project_root if context.project_root else cwd
+    controller.select_project(startup_project)
+
+    profile = detect_project_profile(controller.state.project_root or startup_project)
     database = DatabaseManager(
         str(profile.database_path) if profile.database_path else None,
         read_only=True,
     )
-    server = PHPServer()
-    server.document_root = str(profile.document_root)
     environment_status = summarize_php_environment()
 
     shell = FesiumShell()
     shell.title(build_window_title(__version__))
     shell.geometry(config.get("window_geometry", "1280x860"))
-    shell.register_view(
-        "overview",
-        lambda parent: OverviewView(
-            parent,
-            project_profile=profile,
-            php_summary=environment_status.summary,
-            server_running=server.is_running,
-        ),
-    )
-    shell.register_view(
-        "server",
-        lambda parent: ServerView(
-            parent,
-            document_root=profile.document_root,
-            port=config.port,
-            is_running=server.is_running,
-        ),
-    )
+
+    def refresh_runtime_views() -> None:
+        state = controller.state
+        shell.replace_view(
+            "overview",
+            lambda parent: OverviewView(
+                parent,
+                project_root=state.project_root,
+                project_kind=state.project_kind,
+                php_summary=state.php_summary,
+                server_status=state.server_status,
+                local_url=state.local_url,
+            ),
+        )
+        shell.replace_view(
+            "server",
+            lambda parent: ServerView(
+                parent,
+                document_root=state.document_root,
+                port=config.port,
+                project_root=state.project_root,
+                project_kind=state.project_kind,
+                backend_kind=state.backend_kind,
+                server_status=state.server_status,
+                local_url=state.local_url,
+                last_error=state.last_error,
+                log_lines=state.log_lines,
+                on_select_project=select_project_action,
+                on_start=start_action,
+                on_stop=stop_action,
+                on_restart=restart_action,
+                on_open_browser=open_browser_action,
+            ),
+        )
+
+    def select_project_action() -> None:
+        initial_dir = controller.state.project_root or cwd
+        selected_directory = filedialog.askdirectory(
+            initialdir=str(initial_dir),
+        )
+        if not selected_directory:
+            return
+
+        controller.select_project(Path(selected_directory))
+        refresh_runtime_views()
+
+    def start_action() -> None:
+        controller.start()
+        refresh_runtime_views()
+
+    def stop_action() -> None:
+        controller.stop()
+        refresh_runtime_views()
+
+    def restart_action() -> None:
+        controller.restart()
+        refresh_runtime_views()
+
+    def open_browser_action() -> None:
+        controller.open_in_browser()
+        refresh_runtime_views()
+
+    refresh_runtime_views()
     shell.register_view(
         "database",
         lambda parent: DatabaseView(
@@ -118,8 +167,7 @@ def main() -> None:
     def on_close() -> None:
         config.set("window_geometry", shell.geometry())
         config.active_view = shell.active_view_id or requested_view
-        if server.is_running:
-            server.stop()
+        controller.stop()
         logger.info("%s closed", metadata.name)
         shell.destroy()
 

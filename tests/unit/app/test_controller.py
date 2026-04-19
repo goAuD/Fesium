@@ -13,6 +13,7 @@ def test_controller_starts_with_stopped_state(tmp_path):
 
     assert state.server_status == "stopped"
     assert state.backend_kind == "none"
+    assert state.php_summary == ""
     assert state.log_lines == ()
 
 
@@ -58,6 +59,7 @@ def test_controller_select_project_updates_state_and_persists_last_project(
         server_status="running",
         local_url="http://localhost:8000",
         php_available=True,
+        php_summary="PHP 8.3.0",
         last_error="boom",
         log_lines=("previous log",),
     )
@@ -93,6 +95,7 @@ def test_controller_select_project_updates_state_and_persists_last_project(
     assert state.server_status == "stopped"
     assert state.local_url == ""
     assert state.php_available is True
+    assert state.php_summary == "PHP 8.3.0"
     assert state.last_error == ""
     assert state.log_lines == (
         "previous log",
@@ -116,6 +119,7 @@ def test_select_project_stops_running_backend_before_resetting_state(tmp_path, m
         server_status="running",
         local_url="http://localhost:8000",
         php_available=False,
+        php_summary="PHP not found",
         last_error="",
         log_lines=(),
     )
@@ -165,6 +169,7 @@ def test_start_moves_controller_to_running_and_stores_local_url(tmp_path):
         server_status="stopped",
         local_url="",
         php_available=False,
+        php_summary="PHP not found",
         last_error="previous error",
         log_lines=(),
     )
@@ -199,6 +204,7 @@ def test_start_converts_backend_exceptions_into_error_state(tmp_path):
         server_status="stopped",
         local_url="",
         php_available=False,
+        php_summary="PHP not found",
         last_error="",
         log_lines=(),
     )

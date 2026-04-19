@@ -17,3 +17,13 @@ def test_build_app_context_uses_last_project_or_cwd(tmp_path):
 
     assert context.project_root == tmp_path
     assert context.active_view == "overview"
+
+
+def test_build_app_context_preserves_last_project(tmp_path):
+    context = build_app_context(
+        cwd=tmp_path,
+        config_data={"last_project": str(tmp_path / "demo"), "active_view": "server"},
+    )
+
+    assert context.project_root == (tmp_path / "demo").resolve()
+    assert context.active_view == "server"

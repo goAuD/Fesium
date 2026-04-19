@@ -18,6 +18,7 @@ class ControllerState:
     server_status: str
     local_url: str
     php_available: bool
+    php_summary: str
     last_error: str
     log_lines: tuple[str, ...]
 
@@ -38,6 +39,7 @@ class FesiumController:
             server_status="stopped",
             local_url="",
             php_available=False,
+            php_summary="",
             last_error="",
             log_lines=(),
         )
@@ -68,6 +70,7 @@ class FesiumController:
             local_url="",
             last_error="",
             php_available=environment_status.php_available,
+            php_summary=environment_status.summary,
         )
         self._backend = None
         self.append_log(f"Selected project: {profile.root}")

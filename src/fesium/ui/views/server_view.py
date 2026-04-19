@@ -52,6 +52,7 @@ def build_server_view_model(
     server_status: str,
     local_url: str,
     last_error: str,
+    log_lines: tuple[str, ...] = (),
 ) -> dict[str, Any]:
     is_running = server_status == "running"
     has_project = document_root is not None
@@ -65,6 +66,7 @@ def build_server_view_model(
         "status_label": _format_status_label(server_status),
         "status_tone": _status_tone(server_status),
         "last_error": last_error,
+        "log_text": "\n".join(log_lines),
         "actions": {
             "select_project": True,
             "start": has_project and not is_running,
@@ -91,6 +93,12 @@ class ServerView(ctk.CTkFrame):
         server_status: str | None = None,
         local_url: str = "",
         last_error: str = "",
+        log_lines: tuple[str, ...] = (),
+        on_select_project=None,
+        on_start=None,
+        on_stop=None,
+        on_restart=None,
+        on_open_browser=None,
     ):
         super().__init__(master, fg_color="transparent")
         self.grid_columnconfigure(0, weight=1)
@@ -105,7 +113,11 @@ class ServerView(ctk.CTkFrame):
             server_status=resolved_status,
             local_url=resolved_url if is_running or server_status == "running" else local_url,
             last_error=last_error,
+            log_lines=log_lines,
         )
+
+        def _noop() -> None:
+            return None
 
         title = ctk.CTkLabel(
             self,
@@ -185,13 +197,46 @@ class ServerView(ctk.CTkFrame):
         ]
 
         for column, (attr_name, label_text, action_key) in enumerate(button_specs):
+            commands = {
+                "select_project": on_select_project or _noop,
+                "start": on_start or _noop,
+                "stop": on_stop or _noop,
+                "restart": on_restart or _noop,
+                "open_in_browser": on_open_browser or _noop,
+            }
             button = ctk.CTkButton(
                 actions_panel,
                 text=label_text,
                 state="normal" if model["actions"][action_key] else "disabled",
+                command=commands[action_key],
             )
             button.grid(row=1, column=column, sticky="ew", padx=(16 if column == 0 else 8, 16 if column == 4 else 8), pady=(0, 16))
             setattr(self, attr_name, button)
+
+        logs_panel = PanelCard(self)
+        logs_panel.grid(row=4, column=0, columnspan=2, sticky="nsew", pady=(16, 0))
+        logs_panel.grid_columnconfigure(0, weight=1)
+        logs_panel.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(4, weight=1)
+
+        logs_title = ctk.CTkLabel(
+            logs_panel,
+            text="Logs",
+            text_color=get_color_token("text.primary"),
+            font=get_font_token("body_medium"),
+        )
+        logs_title.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 12))
+
+        self.log_textbox = ctk.CTkTextbox(
+            logs_panel,
+            fg_color=get_color_token("bg.panel_alt"),
+            text_color=get_color_token("text.secondary"),
+            font=get_font_token("body"),
+            height=220,
+        )
+        self.log_textbox.grid(row=1, column=0, sticky="nsew", padx=16, pady=(0, 16))
+        self.log_textbox.insert("1.0", model["log_text"])
+        self.log_textbox.configure(state="disabled")
 
         if model["last_error"]:
             error_label = ctk.CTkLabel(
@@ -202,4 +247,4 @@ class ServerView(ctk.CTkFrame):
                 justify="left",
                 wraplength=900,
             )
-            error_label.grid(row=4, column=0, columnspan=2, sticky="w", pady=(16, 0))
+            error_label.grid(row=5, column=0, columnspan=2, sticky="w", pady=(16, 0))
