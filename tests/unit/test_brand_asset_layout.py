@@ -1,3 +1,4 @@
+import struct
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -32,3 +33,27 @@ def test_social_preview_prompt_mentions_required_terms():
         "nano banana 2",
     ]:
         assert token in prompt
+
+
+def read_png_dimensions(path: Path) -> tuple[int, int]:
+    with path.open("rb") as handle:
+        signature = handle.read(8)
+        assert signature == b"\x89PNG\r\n\x1a\n"
+        length = struct.unpack(">I", handle.read(4))[0]
+        assert length == 13
+        chunk = handle.read(4)
+        assert chunk == b"IHDR"
+        width = struct.unpack(">I", handle.read(4))[0]
+        height = struct.unpack(">I", handle.read(4))[0]
+        return width, height
+
+
+def test_social_preview_png_matches_github_recommendation():
+    png_path = Path("docs/assets/brand/fesium-social-preview.png")
+    assert png_path.exists()
+    assert png_path.stat().st_size < 1_000_000
+    assert read_png_dimensions(png_path) == (1280, 640)
+
+
+def test_social_preview_source_svg_exists():
+    assert Path("docs/assets/brand/fesium-social-preview.svg").exists()

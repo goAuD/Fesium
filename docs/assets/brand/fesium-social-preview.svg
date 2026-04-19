@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" fill="none">
+  <defs>
+    <radialGradient id="bgGlowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(188 102) rotate(45) scale(230 230)">
+      <stop stop-color="#73F0FF" stop-opacity="0.08" />
+      <stop offset="1" stop-color="#73F0FF" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="bgGlowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1042 114) rotate(45) scale(220 220)">
+      <stop stop-color="#73F0FF" stop-opacity="0.05" />
+      <stop offset="1" stop-color="#73F0FF" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="markGlow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(640 298) rotate(90) scale(124 124)">
+      <stop stop-color="#73F0FF" stop-opacity="0.12" />
+      <stop offset="1" stop-color="#73F0FF" stop-opacity="0" />
+    </radialGradient>
+    <pattern id="facets" width="160" height="160" patternUnits="userSpaceOnUse">
+      <rect width="160" height="160" fill="#13181F" />
+      <polygon points="80,0 160,80 80,80" fill="#2A313B" />
+      <polygon points="80,0 80,80 0,80" fill="#232A33" />
+      <polygon points="0,80 80,80 80,160" fill="#151A21" />
+      <polygon points="160,80 80,80 80,160" fill="#0F141A" />
+      <polygon points="80,0 160,80 160,0" fill="#1D242C" />
+      <polygon points="80,0 0,0 0,80" fill="#171C23" />
+      <polygon points="0,160 80,80 80,160" fill="#0D1217" />
+      <polygon points="160,160 80,80 80,160" fill="#11161C" />
+    </pattern>
+  </defs>
+
+  <rect width="1280" height="640" fill="#11151B" />
+  <rect width="1280" height="640" fill="url(#bgGlowA)" />
+  <rect width="1280" height="640" fill="url(#bgGlowB)" />
+  <rect width="1280" height="640" fill="url(#facets)" opacity="0.46" />
+  <rect width="1280" height="640" fill="#0B0F14" opacity="0.18" />
+
+  <g transform="translate(640 286)">
+    <circle r="124" fill="url(#markGlow)" />
+    <circle r="164" stroke="#73F0FF" stroke-opacity="0.28" stroke-width="10" />
+    <circle r="104" stroke="#73F0FF" stroke-opacity="0.28" stroke-width="10" transform="rotate(18)" />
+    <ellipse rx="186" ry="88" stroke="#73F0FF" stroke-opacity="0.28" stroke-width="10" transform="rotate(-24)" />
+    <circle r="16" fill="#73F0FF" />
+    <circle cx="50" cy="-79" r="10" fill="#73F0FF" />
+    <circle cx="-67" cy="82" r="10" fill="#73F0FF" />
+  </g>
+
+  <text x="640" y="572" text-anchor="middle" fill="#EEF3F7" font-size="82" font-family="Arial" font-weight="700">Fesium</text>
+</svg>
