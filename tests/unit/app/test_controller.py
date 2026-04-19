@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from fesium.app.controller import FesiumController
 
 
@@ -30,3 +32,57 @@ def test_controller_rejects_nonpositive_log_limit(tmp_path):
             assert "log_limit" in str(exc)
         else:
             raise AssertionError("expected ValueError for nonpositive log_limit")
+
+
+def test_controller_select_project_updates_state_and_persists_last_project(
+    tmp_path, monkeypatch
+):
+    project_dir = tmp_path / "demo-project"
+    project_dir.mkdir()
+
+    calls = []
+
+    class FakeConfig:
+        def set(self, key, value):
+            calls.append((key, value))
+
+    controller = FesiumController(config=FakeConfig(), cwd=tmp_path)
+
+    monkeypatch.setattr(
+        "fesium.app.controller.detect_project_profile",
+        lambda path: type(
+            "Profile",
+            (),
+            {
+                "root": Path(path).resolve(),
+                "kind": "standard",
+                "document_root": Path(path).resolve() / "public",
+            },
+        )(),
+    )
+    monkeypatch.setattr(
+        "fesium.app.controller.summarize_php_environment",
+        lambda: type("EnvironmentStatus", (), {"php_available": True})(),
+    )
+    monkeypatch.setattr(
+        "fesium.app.controller.decide_runtime_backend",
+        lambda profile, php_available: type(
+            "RuntimeDecision",
+            (),
+            {"backend_kind": "php"},
+        )(),
+    )
+
+    controller.select_project(project_dir)
+
+    state = controller.state
+    assert state.project_root == project_dir.resolve()
+    assert state.project_kind == "standard"
+    assert state.document_root == project_dir.resolve() / "public"
+    assert state.backend_kind == "php"
+    assert state.php_available is True
+    assert state.log_lines == (
+        f"Selected project: {project_dir.resolve()}",
+        "Backend selected: php",
+    )
+    assert calls == [("last_project", str(project_dir.resolve()))]
