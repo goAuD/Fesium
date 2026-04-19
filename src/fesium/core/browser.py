@@ -17,7 +17,12 @@ def open_local_url(url: str) -> bool:
     if parsed.hostname not in {"localhost", "127.0.0.1"}:
         return False
 
-    if parsed.port is None:
+    try:
+        port = parsed.port
+    except ValueError:
+        return False
+
+    if port is None:
         return False
 
     return bool(webbrowser.open(url))
