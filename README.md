@@ -6,7 +6,7 @@
 
 **Local dev tools for students and developers.**
 
-`Fesium` is the new direction of the original `NanoServer` project: a lightweight desktop app for serving local PHP projects, inspecting SQLite databases, and keeping a student-friendly workflow fast, safe, and offline-first.
+`Fesium` is the new direction of the original `NanoServer` project: a lightweight desktop app for serving local sites, inspecting SQLite databases, and keeping a student-friendly workflow fast, safe, and offline-first.
 
 The repository is currently in a structured migration. The new `src/fesium/` package, modular core layer, bundled fonts, sidebar shell, and view system are already in place. The backend behavior is intentionally being preserved while the UI and repo contract are modernized.
 
@@ -14,8 +14,11 @@ The repository is currently in a structured migration. The new `src/fesium/` pac
 
 `Fesium` currently targets:
 
-- local PHP development via the built-in PHP server
-- Laravel-aware document root detection
+- local project selection from the desktop app
+- Laravel-aware and standard project detection
+- PHP-backed local serving when PHP is available
+- static local serving fallback when PHP is unavailable
+- opening the running local site in the default browser
 - SQLite inspection with read-only defaults
 - offline-first desktop usage
 - a cleaner public-repo structure for ongoing iteration
@@ -41,6 +44,18 @@ The `Fesium` migration is in progress. Right now the repository includes:
 
 The old flat runtime modules have been removed. The only legacy bridge left at the repo root is `nanoserver.py`, which now forwards into the `Fesium` package for compatibility.
 
+## Local Server Workflow
+
+From the `Server` view, `Fesium` can:
+
+- select a local project folder
+- auto-detect Laravel projects or treat the folder as a standard site
+- run the local site with PHP when PHP is available on your system
+- fall back to a static local server when PHP is unavailable
+- open the running local site in your browser
+
+SQLite support remains focused on inspection with read-only defaults in this milestone.
+
 ## Overview
 
 ![Fesium Overview screenshot](docs/assets/screenshots/fesium-overview.png)
@@ -48,7 +63,7 @@ The old flat runtime modules have been removed. The only legacy bridge left at t
 ## Requirements
 
 - Python 3.8+
-- PHP on your system `PATH`
+- PHP on your system `PATH` for PHP-backed serving
 
 Check PHP availability:
 
@@ -104,7 +119,7 @@ python -m pytest -v
 Fesium/
 ├── src/
 │   └── fesium/
-│       ├── app.py
+│       ├── app/
 │       ├── core/
 │       ├── ui/
 │       └── assets/

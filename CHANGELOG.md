@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+### Added
+- Added a static fallback server when PHP is unavailable
+- Added controller-based runtime orchestration for project selection and local serving
+- Added a live server log panel in the `Server` view
+
+### Changed
+- Restored the server interaction flow for selecting a project, starting the local server, stopping it, restarting it, and opening the site in a browser
+
 ## [2.0.0] - 2026-04-19
 
 ### Added
