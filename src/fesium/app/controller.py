@@ -1,9 +1,12 @@
 from dataclasses import dataclass, replace
 from pathlib import Path
 
+from fesium.core.browser import open_local_url
 from fesium.core.environment import summarize_php_environment
 from fesium.core.project_detection import detect_project_profile
 from fesium.core.runtime_detection import decide_runtime_backend
+from fesium.core.server import PHPServer
+from fesium.core.static_server import StaticServer
 
 
 @dataclass(frozen=True)
@@ -26,6 +29,7 @@ class FesiumController:
         self.config = config
         self.cwd = Path(cwd)
         self.log_limit = log_limit
+        self._backend = None
         self.state = ControllerState(
             project_root=None,
             project_kind="unknown",
@@ -62,8 +66,85 @@ class FesiumController:
             last_error="",
             php_available=environment_status.php_available,
         )
+        self._backend = None
         self.append_log(f"Selected project: {profile.root}")
         self.append_log(f"Backend selected: {runtime_decision.backend_kind}")
 
         if self.config is not None:
             self.config.set("last_project", str(profile.root))
+
+    def _build_backend(self):
+        if self.state.backend_kind == "php":
+            return PHPServer(on_log=self.append_log)
+        if self.state.backend_kind == "static":
+            return StaticServer(on_log=self.append_log)
+        raise ValueError(f"Unsupported backend kind: {self.state.backend_kind}")
+
+    def _resolve_port(self) -> int:
+        if self.config is None:
+            return 8000
+        if hasattr(self.config, "port"):
+            return int(self.config.port)
+        if hasattr(self.config, "get"):
+            return int(self.config.get("port", 8000))
+        return 8000
+
+    def start(self) -> bool:
+        if not self.state.document_root:
+            self.state = replace(
+                self.state,
+                server_status="error",
+                last_error="No project selected",
+            )
+            self.append_log("[Fesium] ERROR: No project selected")
+            return False
+
+        if self._backend is None:
+            self._backend = self._build_backend()
+
+        result = self._backend.start(self.state.document_root, self._resolve_port())
+        if not result:
+            self.state = replace(self.state, server_status="error", last_error="Failed to start server")
+            return False
+
+        local_url = result if isinstance(result, str) else getattr(self._backend, "url", "")
+        self.state = replace(
+            self.state,
+            server_status="running",
+            local_url=local_url,
+            last_error="",
+        )
+        return True
+
+    def stop(self) -> bool:
+        if self._backend is None:
+            self.state = replace(
+                self.state,
+                server_status="stopped",
+                local_url="",
+                last_error="",
+            )
+            return False
+
+        self._backend.stop()
+        self.state = replace(
+            self.state,
+            server_status="stopped",
+            local_url="",
+            last_error="",
+        )
+        return True
+
+    def restart(self) -> bool:
+        if self.state.server_status != "running":
+            self.append_log("[Fesium] Restart rejected: server not running")
+            return False
+
+        self.stop()
+        return self.start()
+
+    def open_in_browser(self) -> bool:
+        if self.state.server_status != "running" or not self.state.local_url:
+            self.append_log("[Fesium] Open in Browser rejected: server not running")
+            return False
+        return open_local_url(self.state.local_url)

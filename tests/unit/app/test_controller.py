@@ -100,3 +100,55 @@ def test_controller_select_project_updates_state_and_persists_last_project(
         "Backend selected: php",
     )
     assert calls == [("last_project", str(project_dir.resolve()))]
+
+
+def test_start_moves_controller_to_running_and_stores_local_url(tmp_path):
+    controller = FesiumController(config=None, cwd=tmp_path)
+    controller.state = controller.state.__class__(
+        project_root=tmp_path,
+        project_kind="standard",
+        document_root=tmp_path,
+        backend_kind="static",
+        server_status="stopped",
+        local_url="",
+        php_available=False,
+        last_error="previous error",
+        log_lines=(),
+    )
+
+    class FakeBackend:
+        is_running = False
+
+        def start(self, document_root, port):
+            assert document_root == tmp_path
+            assert port == 8000
+            self.is_running = True
+            return "http://localhost:8000"
+
+        def stop(self):
+            self.is_running = False
+
+    controller._backend = FakeBackend()
+
+    assert controller.start() is True
+    assert controller.state.server_status == "running"
+    assert controller.state.local_url == "http://localhost:8000"
+    assert controller.state.last_error == ""
+
+
+def test_restart_is_rejected_while_stopped(tmp_path):
+    controller = FesiumController(config=None, cwd=tmp_path)
+
+    assert controller.restart() is False
+    assert controller.state.server_status == "stopped"
+    assert controller.state.log_lines[-1] == "[Fesium] Restart rejected: server not running"
+
+
+def test_open_in_browser_is_rejected_without_running_server(tmp_path, monkeypatch):
+    controller = FesiumController(config=None, cwd=tmp_path)
+    opened = []
+    monkeypatch.setattr("fesium.app.controller.open_local_url", lambda url: opened.append(url))
+
+    assert controller.open_in_browser() is False
+    assert opened == []
+    assert controller.state.log_lines[-1] == "[Fesium] Open in Browser rejected: server not running"
