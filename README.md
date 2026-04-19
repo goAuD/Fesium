@@ -1,5 +1,9 @@
 # Fesium
 
+<p align="center">
+  <img src="docs/assets/brand/fesium-orbit.svg" width="120" alt="Fesium Pure Orbit logo">
+</p>
+
 **Local dev tools for students and developers.**
 
 `Fesium` is the new direction of the original `NanoServer` project: a lightweight desktop app for serving local PHP projects, inspecting SQLite databases, and keeping a student-friendly workflow fast, safe, and offline-first.
@@ -51,8 +55,8 @@ php -v
 ## Installation
 
 ```bash
-git clone https://github.com/yourusername/NanoServer.git
-cd NanoServer
+git clone https://github.com/goAuD/Fesium.git
+cd Fesium
 python -m pip install -r requirements.txt
 ```
 
@@ -93,7 +97,7 @@ python -m pytest -v
 ## Project Layout
 
 ```text
-NanoServer/
+Fesium/
 ├── src/
 │   └── fesium/
 │       ├── app.py

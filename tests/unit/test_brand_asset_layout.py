@@ -57,3 +57,23 @@ def test_social_preview_png_matches_github_recommendation():
 
 def test_social_preview_source_svg_exists():
     assert Path("docs/assets/brand/fesium-social-preview.svg").exists()
+
+
+def test_readme_uses_new_brand_assets_and_repo_slug():
+    readme = Path("README.md").read_text(encoding="utf-8")
+    assert "docs/assets/brand/fesium-orbit.svg" in readme
+    assert "https://github.com/goAuD/Fesium.git" in readme
+    assert "cd Fesium" in readme
+    assert "nanoserver.png" not in readme
+    assert "social_preview.png" not in readme
+    assert "NanoServer/" not in readme
+
+
+def test_roadmap_uses_fesium_name():
+    roadmap = Path("ROADMAP.md").read_text(encoding="utf-8")
+    assert roadmap.startswith("# Fesium Roadmap")
+    assert "NanoServer" not in roadmap
+
+
+def test_legacy_design_system_doc_is_removed():
+    assert not Path("DESIGN_SYSTEM.md").exists()

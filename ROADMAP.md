@@ -1,4 +1,4 @@
-# NanoServer Roadmap
+# Fesium Roadmap
 
 Future features and improvements planned for upcoming versions.
 
@@ -46,7 +46,7 @@ Future features and improvements planned for upcoming versions.
 ## Notes
 
 ### Docker
-NanoServer is a **desktop GUI application** that uses local file dialogs and the host's PHP installation. Running it in Docker is not recommended. For containerized PHP development, use a standard PHP/Apache or PHP-FPM image with docker-compose instead.
+Fesium is a **desktop GUI application** that uses local file dialogs and the host's PHP installation. Running it in Docker is not recommended. For containerized PHP development, use a standard PHP/Apache or PHP-FPM image with docker-compose instead.
 
 ### MySQL Support
 MySQL support is planned for **v1.4.0**. Currently only SQLite is supported. The roadmap item includes MySQL/MariaDB connections and a phpMyAdmin-style query interface.
