@@ -10,12 +10,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - Added a static fallback server when PHP is unavailable
 - Added controller-based runtime orchestration for project selection and local serving
 - Added a live server log panel in the `Server` view
+- Added interactive SQLite workflow in the `Database` view with manual database file selection
+- Added one-statement SQL execution with result rendering and write-query confirmations
 
 ### Changed
 - Restored the server interaction flow for selecting a project, starting the local server, stopping it, restarting it, and opening the site in a browser
 - Increased the default desktop shell size and baseline typography for better readability
 - Made the `Server`, `Database`, `Environment`, and `Settings` views scroll-safe instead of relying on manual window resizing
 - Added responsive `Server` control layout behavior and inset panel surfaces to preserve hierarchy at smaller window sizes
+- Kept `Read-only` mode session-scoped and reset to enabled on every app launch
+- Fixed the inset panel corner rendering so rounded cards no longer show chipped inner corners
 
 ### Security
 - Hardened the GitHub Actions pytest workflow with explicit minimal `contents: read` permissions

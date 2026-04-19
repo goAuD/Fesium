@@ -2,9 +2,11 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 from fesium.core.browser import open_local_url
+from fesium.core.database import DatabaseManager, is_read_query
 from fesium.core.environment import summarize_php_environment
 from fesium.core.project_detection import detect_project_profile
 from fesium.core.runtime_detection import decide_runtime_backend
+from fesium.core.security import validate_single_sql_statement
 from fesium.core.server import PHPServer
 from fesium.core.static_server import StaticServer
 
@@ -14,6 +16,12 @@ class ControllerState:
     project_root: Path | None
     project_kind: str
     document_root: Path | None
+    database_path: Path | None
+    database_source: str
+    database_read_only: bool
+    database_last_query: str
+    database_last_result: dict
+    database_last_error: str
     backend_kind: str
     server_status: str
     local_url: str
@@ -31,10 +39,17 @@ class FesiumController:
         self.cwd = Path(cwd)
         self.log_limit = log_limit
         self._backend = None
+        self._project_database_path: Path | None = None
         self.state = ControllerState(
             project_root=None,
             project_kind="unknown",
             document_root=None,
+            database_path=None,
+            database_source="none",
+            database_read_only=True,
+            database_last_query="",
+            database_last_result={"kind": "none"},
+            database_last_error="",
             backend_kind="none",
             server_status="stopped",
             local_url="",
@@ -48,6 +63,10 @@ class FesiumController:
         next_lines = (*self.state.log_lines, message)[-self.log_limit :]
         self.state = replace(self.state, log_lines=next_lines)
 
+    @property
+    def project_database_available(self) -> bool:
+        return self._project_database_path is not None
+
     def select_project(self, path: Path) -> None:
         if self._backend is not None:
             self.stop()
@@ -59,12 +78,26 @@ class FesiumController:
             profile,
             php_available=environment_status.php_available,
         )
+        self._project_database_path = profile.database_path.resolve() if profile.database_path else None
+        keep_manual_database = self.state.database_source == "manual" and self.state.database_path is not None
+        next_database_path = self.state.database_path if keep_manual_database else self._project_database_path
+        next_database_source = (
+            "manual"
+            if keep_manual_database
+            else "project" if next_database_path is not None else "none"
+        )
 
         self.state = replace(
             self.state,
             project_root=profile.root,
             project_kind=profile.kind,
             document_root=profile.document_root,
+            database_path=next_database_path,
+            database_source=next_database_source,
+            database_read_only=True,
+            database_last_query="",
+            database_last_result={"kind": "none"},
+            database_last_error="",
             backend_kind=runtime_decision.backend_kind,
             server_status="stopped",
             local_url="",
@@ -78,6 +111,105 @@ class FesiumController:
 
         if self.config is not None:
             self.config.set("last_project", str(profile.root))
+
+    def select_database(self, path: Path) -> bool:
+        candidate = Path(path).expanduser().resolve()
+        if not candidate.exists() or not candidate.is_file():
+            message = f"Database file not found: {candidate}"
+            self.state = replace(
+                self.state,
+                database_last_error=message,
+                database_last_result={"kind": "error", "message": message},
+            )
+            return False
+
+        self.state = replace(
+            self.state,
+            database_path=candidate,
+            database_source="manual",
+            database_last_result={"kind": "none"},
+            database_last_error="",
+        )
+        return True
+
+    def reset_to_project_database(self) -> bool:
+        if self._project_database_path is None:
+            return False
+
+        self.state = replace(
+            self.state,
+            database_path=self._project_database_path,
+            database_source="project",
+            database_last_result={"kind": "none"},
+            database_last_error="",
+        )
+        return True
+
+    def set_database_read_only(self, enabled: bool) -> None:
+        self.state = replace(self.state, database_read_only=enabled)
+
+    def run_database_query(self, query: str) -> bool:
+        self.state = replace(self.state, database_last_query=query)
+
+        ok, validation_message = validate_single_sql_statement(query)
+        if not ok:
+            self.state = replace(
+                self.state,
+                database_last_error=validation_message,
+                database_last_result={"kind": "error", "message": validation_message},
+            )
+            return False
+
+        if self.state.database_path is None:
+            message = "No database selected"
+            self.state = replace(
+                self.state,
+                database_last_error=message,
+                database_last_result={"kind": "error", "message": message},
+            )
+            return False
+
+        if self.state.database_read_only and not is_read_query(query):
+            message = "Read-only mode: Write operations are disabled"
+            self.state = replace(
+                self.state,
+                database_last_error=message,
+                database_last_result={"kind": "error", "message": message},
+            )
+            return False
+
+        database = DatabaseManager(
+            str(self.state.database_path),
+            read_only=self.state.database_read_only,
+        )
+        success, result = database.execute(query)
+        if not success:
+            self.state = replace(
+                self.state,
+                database_last_error=str(result),
+                database_last_result={"kind": "error", "message": str(result)},
+            )
+            return False
+
+        if is_read_query(query):
+            normalized_result = {
+                "kind": "read",
+                "columns": result["columns"],
+                "rows": result["rows"],
+                "count": result["count"],
+            }
+        else:
+            normalized_result = {
+                "kind": "write",
+                "affected": result["affected"],
+            }
+
+        self.state = replace(
+            self.state,
+            database_last_result=normalized_result,
+            database_last_error="",
+        )
+        return True
 
     def _build_backend(self):
         if self.state.backend_kind == "php":

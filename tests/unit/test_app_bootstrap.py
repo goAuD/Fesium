@@ -41,6 +41,12 @@ def test_replace_runtime_views_rebuilds_database_view_for_current_project(
         project_root=current_project,
         project_kind="standard",
         document_root=current_project,
+        database_path=current_project / "manual.sqlite",
+        database_source="manual",
+        database_read_only=False,
+        database_last_query="SELECT 1",
+        database_last_result={"kind": "read", "columns": ["1"], "rows": [(1,)], "count": 1},
+        database_last_error="",
         backend_kind="static",
         server_status="stopped",
         local_url="",
@@ -57,19 +63,10 @@ def test_replace_runtime_views_rebuilds_database_view_for_current_project(
         def replace_view(self, view_id, factory):
             self.factories[view_id] = factory
 
-    class FakeDatabaseManager:
-        def __init__(self, db_path, read_only):
-            self.db_path = db_path
-            self.read_only = read_only
-
-    monkeypatch.setattr(
-        "fesium.app.bootstrap.detect_project_profile",
-        lambda root: SimpleNamespace(database_path=Path(root) / "database.sqlite"),
-    )
-    monkeypatch.setattr("fesium.app.bootstrap.DatabaseManager", FakeDatabaseManager)
+    controller.project_database_available = True
     monkeypatch.setattr(
         "fesium.app.bootstrap.DatabaseView",
-        lambda parent, db_path, read_only: {"db_path": db_path, "read_only": read_only},
+        lambda parent, **kwargs: kwargs,
     )
     monkeypatch.setattr("fesium.app.bootstrap.OverviewView", lambda *args, **kwargs: None)
     monkeypatch.setattr("fesium.app.bootstrap.ServerView", lambda *args, **kwargs: None)
@@ -87,9 +84,15 @@ def test_replace_runtime_views_rebuilds_database_view_for_current_project(
         stop_action=lambda: None,
         restart_action=lambda: None,
         open_browser_action=lambda: None,
+        select_database_action=lambda: None,
+        reset_project_database_action=lambda: None,
+        toggle_database_read_only_action=lambda enabled: None,
+        run_sql_action=lambda query: None,
     )
 
     database_view = shell.factories["database"](None)
 
-    assert database_view["db_path"] == str(current_project / "database.sqlite")
-    assert database_view["read_only"] is True
+    assert database_view["db_path"] == str(current_project / "manual.sqlite")
+    assert database_view["read_only"] is False
+    assert database_view["source"] == "manual"
+    assert database_view["project_database_available"] is True

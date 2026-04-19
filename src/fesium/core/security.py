@@ -20,6 +20,18 @@ def classify_query_risk(query: str) -> QueryRisk:
     )
 
 
+def validate_single_sql_statement(query: str) -> tuple[bool, str]:
+    stripped = query.strip()
+    if not stripped:
+        return False, "Query is empty"
+
+    statements = [segment.strip() for segment in stripped.split(";") if segment.strip()]
+    if len(statements) != 1:
+        return False, "Only a single statement can be executed at a time"
+
+    return True, ""
+
+
 def normalize_existing_directory(pathlike) -> Tuple[bool, Union[str, Path]]:
     candidate = Path(pathlike).expanduser().resolve()
     if not candidate.exists():

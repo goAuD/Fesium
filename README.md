@@ -19,7 +19,7 @@ The repository is currently in a structured migration. The new `src/fesium/` pac
 - PHP-backed local serving when PHP is available
 - static local serving fallback when PHP is unavailable
 - opening the running local site in the default browser
-- SQLite inspection with read-only defaults
+- SQLite inspection and raw SQL execution with read-only defaults
 - offline-first desktop usage
 - a cleaner public-repo structure for ongoing iteration
 
@@ -61,6 +61,19 @@ From the `Server` view, `Fesium` can:
 - keep the log panel visible without forcing immediate manual window resizing
 
 SQLite support remains focused on inspection with read-only defaults in this milestone.
+
+## Database Workflow
+
+From the `Database` view, `Fesium` can:
+
+- use a project-detected SQLite database when one is available
+- let you manually select a `.sqlite`, `.db`, or `.db3` file
+- reset back to the detected project database
+- run one SQL statement at a time
+- keep `Read-only` mode enabled by default on every launch
+- require confirmation before destructive queries run in write mode
+
+The first milestone is intentionally SQLite-only and text-first. It does not try to be a full schema browser yet.
 
 ## Overview
 

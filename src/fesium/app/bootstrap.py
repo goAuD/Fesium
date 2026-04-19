@@ -1,16 +1,15 @@
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 from typing import Dict
 
 from fesium import __version__
 from fesium.app.controller import FesiumController
 from fesium.core.config import Config
-from fesium.core.database import DatabaseManager
 from fesium.core.environment import summarize_php_environment
 from fesium.core.paths import AppPaths
-from fesium.core.project_detection import detect_project_profile
+from fesium.core.security import classify_query_risk, validate_single_sql_statement
 from fesium.ui.shell import FesiumShell
 from fesium.ui.views.database_view import DatabaseView
 from fesium.ui.views.environment_view import EnvironmentView
@@ -59,14 +58,6 @@ def _build_metadata() -> AppMetadata:
     )
 
 
-def _build_database_manager(project_root: Path | None, fallback_project: Path) -> DatabaseManager:
-    profile = detect_project_profile(project_root or fallback_project)
-    return DatabaseManager(
-        str(profile.database_path) if profile.database_path else None,
-        read_only=True,
-    )
-
-
 def _replace_runtime_views(
     *,
     shell: FesiumShell,
@@ -78,9 +69,12 @@ def _replace_runtime_views(
     stop_action,
     restart_action,
     open_browser_action,
+    select_database_action,
+    reset_project_database_action,
+    toggle_database_read_only_action,
+    run_sql_action,
 ) -> None:
     state = controller.state
-    database = _build_database_manager(state.project_root, fallback_project)
 
     shell.replace_view(
         "overview",
@@ -117,8 +111,17 @@ def _replace_runtime_views(
         "database",
         lambda parent: DatabaseView(
             parent,
-            db_path=str(database.db_path) if database.db_path else "",
-            read_only=database.read_only,
+            db_path=str(state.database_path) if state.database_path else "",
+            read_only=state.database_read_only,
+            source=state.database_source,
+            project_database_available=controller.project_database_available,
+            last_query=state.database_last_query,
+            last_result=state.database_last_result,
+            last_error=state.database_last_error,
+            on_select_database=select_database_action,
+            on_reset_project_database=reset_project_database_action,
+            on_toggle_read_only=toggle_database_read_only_action,
+            on_run_sql=run_sql_action,
         ),
     )
 
@@ -152,6 +155,10 @@ def main() -> None:
             stop_action=stop_action,
             restart_action=restart_action,
             open_browser_action=open_browser_action,
+            select_database_action=select_database_action,
+            reset_project_database_action=reset_project_database_action,
+            toggle_database_read_only_action=toggle_database_read_only_action,
+            run_sql_action=run_sql_action,
         )
 
     def select_project_action() -> None:
@@ -179,6 +186,44 @@ def main() -> None:
 
     def open_browser_action() -> None:
         controller.open_in_browser()
+        refresh_runtime_views()
+
+    def select_database_action() -> None:
+        initial_dir = controller.state.database_path or controller.state.project_root or cwd
+        selected_file = filedialog.askopenfilename(
+            initialdir=str(initial_dir.parent if isinstance(initial_dir, Path) else initial_dir),
+            filetypes=(
+                ("SQLite Databases", "*.sqlite *.db *.db3"),
+                ("All Files", "*.*"),
+            ),
+        )
+        if not selected_file:
+            return
+
+        controller.select_database(Path(selected_file))
+        refresh_runtime_views()
+
+    def reset_project_database_action() -> None:
+        controller.reset_to_project_database()
+        refresh_runtime_views()
+
+    def toggle_database_read_only_action(enabled: bool) -> None:
+        controller.set_database_read_only(enabled)
+        refresh_runtime_views()
+
+    def run_sql_action(query: str) -> None:
+        is_single_statement, _ = validate_single_sql_statement(query)
+        if is_single_statement and not controller.state.database_read_only:
+            risk = classify_query_risk(query)
+            if risk.requires_confirmation:
+                confirmed = messagebox.askyesno(
+                    "Confirm Destructive Query",
+                    "This query may modify or remove data. Do you want to continue?",
+                )
+                if not confirmed:
+                    return
+
+        controller.run_database_query(query)
         refresh_runtime_views()
 
     refresh_runtime_views()
