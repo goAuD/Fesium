@@ -9,6 +9,9 @@ class RuntimeDecision:
 
 def decide_runtime_backend(profile, php_available: bool) -> RuntimeDecision:
     if php_available:
-        return RuntimeDecision(backend_kind="php", reason="php_available")
+        return RuntimeDecision(
+            backend_kind="php",
+            reason=f"php_available_for_{profile.kind}",
+        )
 
     return RuntimeDecision(backend_kind="static", reason="php_unavailable")

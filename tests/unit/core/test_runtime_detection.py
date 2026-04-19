@@ -16,6 +16,7 @@ def test_decide_runtime_backend_prefers_php_when_available():
 
     assert isinstance(decision, RuntimeDecision)
     assert decision.backend_kind == "php"
+    assert decision.reason == "php_available_for_standard"
 
 
 def test_decide_runtime_backend_falls_back_to_static_without_php():
