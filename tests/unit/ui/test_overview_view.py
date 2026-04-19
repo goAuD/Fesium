@@ -1,17 +1,18 @@
 from pathlib import Path
 
-from fesium.core.project_detection import ProjectProfile
 from fesium.ui.views.overview_view import build_overview_cards
 
 
 def test_build_overview_cards_surfaces_workspace_and_health():
-    profile = ProjectProfile(Path("D:/site"), "standard", Path("D:/site"), None)
-
     cards = build_overview_cards(
-        profile,
+        project_root=Path("D:/site"),
+        project_kind="standard",
         php_summary="PHP 8.4.0",
-        server_running=False,
+        server_status="running",
+        local_url="http://localhost:8000",
     )
 
-    assert "Workspace" in cards[0]["title"]
-    assert any(card["title"] == "Environment Health" for card in cards)
+    assert cards[0]["title"] == "Workspace"
+    assert cards[0]["value"] == str(Path("D:/site"))
+    assert cards[1]["badge"] == "Running"
+    assert "http://localhost:8000" in cards[1]["value"]
