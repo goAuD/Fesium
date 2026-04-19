@@ -12,6 +12,33 @@ SOURCE_BADGES = {
 }
 
 
+def format_query_result_table(columns: list, rows: list) -> str:
+    if not columns:
+        return "Query returned no rows"
+
+    string_columns = [str(column) for column in columns]
+    widths = [len(column) for column in string_columns]
+
+    normalized_rows = []
+    for row in rows:
+        normalized_row = ["" if cell is None else str(cell) for cell in row]
+        normalized_rows.append(normalized_row)
+        for index, cell in enumerate(normalized_row):
+            widths[index] = max(widths[index], len(cell))
+
+    header = " | ".join(column.ljust(widths[index]) for index, column in enumerate(string_columns))
+    divider = "-+-".join("-" * widths[index] for index in range(len(widths)))
+
+    if not normalized_rows:
+        return "\n".join((header, divider, "(no rows)"))
+
+    body_lines = [
+        " | ".join(cell.ljust(widths[index]) for index, cell in enumerate(row))
+        for row in normalized_rows
+    ]
+    return "\n".join((header, divider, *body_lines))
+
+
 def build_database_summary(
     db_path: str,
     read_only: bool,
@@ -46,14 +73,9 @@ def build_database_result_view_model(result: dict, last_error: str) -> dict[str,
         count = result.get("count", 0)
         columns = result.get("columns", [])
         rows = result.get("rows", [])
-        lines = []
-        if columns:
-            lines.append(" | ".join(str(column) for column in columns))
-        for row in rows:
-            lines.append(" | ".join(str(cell) for cell in row))
         return {
             "title": f"{count} row" if count == 1 else f"{count} rows",
-            "body": "\n".join(lines) if lines else "Query returned no rows",
+            "body": format_query_result_table(columns, rows),
             "tone": "accent.success",
         }
 
@@ -181,9 +203,11 @@ class DatabaseView(ctk.CTkFrame):
             actions_content,
             text="Reset to Project Database",
             state="normal" if summary["can_reset"] else "disabled",
-            fg_color=get_color_token("bg.panel_alt"),
-            hover_color=get_color_token("bg.panel"),
+            fg_color=get_color_token("bg.app"),
+            hover_color=get_color_token("bg.sidebar"),
             text_color=get_color_token("text.primary"),
+            border_width=1,
+            border_color=get_color_token("border.default"),
             command=on_reset_project_database,
         )
         reset_database_button.grid(row=0, column=1, sticky="ew", padx=8, pady=(16, 12))

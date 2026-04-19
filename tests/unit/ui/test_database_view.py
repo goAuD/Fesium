@@ -1,6 +1,7 @@
 from fesium.ui.views.database_view import (
     build_database_result_view_model,
     build_database_summary,
+    format_query_result_table,
 )
 
 
@@ -30,12 +31,13 @@ def test_build_database_summary_surfaces_manual_source_and_write_mode():
 
 def test_build_database_result_view_model_handles_read_results():
     model = build_database_result_view_model(
-        {"kind": "read", "columns": ["name"], "rows": [("Ada",)], "count": 1},
+        {"kind": "read", "columns": ["id", "name"], "rows": [(1, "Ada")], "count": 1},
         "",
     )
 
     assert model["title"] == "1 row"
-    assert "Ada" in model["body"]
+    assert "id | name" in model["body"]
+    assert "1  | Ada " in model["body"]
 
 
 def test_build_database_result_view_model_prefers_explicit_error():
@@ -45,3 +47,17 @@ def test_build_database_result_view_model_prefers_explicit_error():
     )
 
     assert model["tone"] == "accent.danger"
+
+
+def test_format_query_result_table_aligns_variable_width_columns():
+    table = format_query_result_table(
+        ["id", "name"],
+        [(1, "Test User"), (22, "Alice"), (333, "Bob")],
+    )
+
+    lines = table.splitlines()
+    assert lines[0] == "id  | name     "
+    assert lines[1] == "----+----------"
+    assert lines[2] == "1   | Test User"
+    assert lines[3] == "22  | Alice    "
+    assert lines[4] == "333 | Bob      "

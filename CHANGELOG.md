@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - Added responsive `Server` control layout behavior and inset panel surfaces to preserve hierarchy at smaller window sizes
 - Kept `Read-only` mode session-scoped and reset to enabled on every app launch
 - Fixed the inset panel corner rendering so rounded cards no longer show chipped inner corners
+- Simplified contributor dependency setup to a single `requirements.txt`
+- Polished the `Database` view with clearer secondary button styling and aligned SQL result formatting
 
 ### Security
 - Hardened the GitHub Actions pytest workflow with explicit minimal `contents: read` permissions

@@ -7,9 +7,8 @@ def test_requirements_txt_contains_runtime_and_test_dependencies():
     assert "pytest" in requirements
 
 
-def test_requirements_dev_txt_is_only_a_compatibility_shim():
-    requirements_dev = Path("requirements-dev.txt").read_text(encoding="utf-8").strip()
-    assert requirements_dev == "-r requirements.txt"
+def test_legacy_requirements_dev_file_is_removed():
+    assert Path("requirements-dev.txt").exists() is False
 
 
 def test_repo_docs_install_from_requirements_txt():

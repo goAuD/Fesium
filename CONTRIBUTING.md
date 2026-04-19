@@ -17,8 +17,6 @@ Install dependencies:
 python -m pip install -r requirements.txt
 ```
 
-`requirements-dev.txt` is retained only as a compatibility shim and currently points back to `requirements.txt`.
-
 ## Running the App
 
 Primary launcher:
