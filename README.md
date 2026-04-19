@@ -41,6 +41,10 @@ The `Fesium` migration is in progress. Right now the repository includes:
 
 The old flat runtime modules have been removed. The only legacy bridge left at the repo root is `nanoserver.py`, which now forwards into the `Fesium` package for compatibility.
 
+## Overview
+
+![Fesium Overview screenshot](docs/assets/screenshots/fesium-overview.png)
+
 ## Requirements
 
 - Python 3.8+
