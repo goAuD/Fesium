@@ -47,6 +47,9 @@ class FesiumController:
         self.state = replace(self.state, log_lines=next_lines)
 
     def select_project(self, path: Path) -> None:
+        if self._backend is not None:
+            self.stop()
+
         project_root = Path(path).resolve()
         profile = detect_project_profile(project_root)
         environment_status = summarize_php_environment()
@@ -102,9 +105,27 @@ class FesiumController:
         if self._backend is None:
             self._backend = self._build_backend()
 
-        result = self._backend.start(self.state.document_root, self._resolve_port())
+        try:
+            result = self._backend.start(self.state.document_root, self._resolve_port())
+        except Exception as exc:
+            message = str(exc) or exc.__class__.__name__
+            self.state = replace(
+                self.state,
+                server_status="error",
+                last_error=message,
+                local_url="",
+            )
+            self.append_log(f"[Fesium] ERROR: {message}")
+            return False
+
         if not result:
-            self.state = replace(self.state, server_status="error", last_error="Failed to start server")
+            self.state = replace(
+                self.state,
+                server_status="error",
+                last_error="Failed to start server",
+                local_url="",
+            )
+            self.append_log("[Fesium] ERROR: Failed to start server")
             return False
 
         local_url = result if isinstance(result, str) else getattr(self._backend, "url", "")

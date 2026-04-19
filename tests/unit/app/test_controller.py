@@ -102,6 +102,59 @@ def test_controller_select_project_updates_state_and_persists_last_project(
     assert calls == [("last_project", str(project_dir.resolve()))]
 
 
+def test_select_project_stops_running_backend_before_resetting_state(tmp_path, monkeypatch):
+    project_dir = tmp_path / "demo-project"
+    project_dir.mkdir()
+    stopped = []
+
+    controller = FesiumController(config=None, cwd=tmp_path)
+    controller.state = controller.state.__class__(
+        project_root=tmp_path / "old-project",
+        project_kind="standard",
+        document_root=tmp_path / "old-project",
+        backend_kind="static",
+        server_status="running",
+        local_url="http://localhost:8000",
+        php_available=False,
+        last_error="",
+        log_lines=(),
+    )
+
+    class FakeBackend:
+        def stop(self):
+            stopped.append("stopped")
+
+    controller._backend = FakeBackend()
+
+    monkeypatch.setattr(
+        "fesium.app.controller.detect_project_profile",
+        lambda path: ProjectProfile(
+            root=Path(path).resolve(),
+            kind="standard",
+            document_root=Path(path).resolve() / "public",
+            database_path=None,
+        ),
+    )
+    monkeypatch.setattr(
+        "fesium.app.controller.summarize_php_environment",
+        lambda: EnvironmentStatus(php_available=False, php_version="", summary="PHP not found"),
+    )
+    monkeypatch.setattr(
+        "fesium.app.controller.decide_runtime_backend",
+        lambda profile, php_available: RuntimeDecision(
+            backend_kind="static",
+            reason="php_unavailable",
+        ),
+    )
+
+    controller.select_project(project_dir)
+
+    assert stopped == ["stopped"]
+    assert controller._backend is None
+    assert controller.state.server_status == "stopped"
+    assert controller.state.local_url == ""
+
+
 def test_start_moves_controller_to_running_and_stores_local_url(tmp_path):
     controller = FesiumController(config=None, cwd=tmp_path)
     controller.state = controller.state.__class__(
@@ -134,6 +187,32 @@ def test_start_moves_controller_to_running_and_stores_local_url(tmp_path):
     assert controller.state.server_status == "running"
     assert controller.state.local_url == "http://localhost:8000"
     assert controller.state.last_error == ""
+
+
+def test_start_converts_backend_exceptions_into_error_state(tmp_path):
+    controller = FesiumController(config=None, cwd=tmp_path)
+    controller.state = controller.state.__class__(
+        project_root=tmp_path,
+        project_kind="standard",
+        document_root=tmp_path,
+        backend_kind="static",
+        server_status="stopped",
+        local_url="",
+        php_available=False,
+        last_error="",
+        log_lines=(),
+    )
+
+    class FakeBackend:
+        def start(self, document_root, port):
+            raise OSError("Port 8000 is already in use")
+
+    controller._backend = FakeBackend()
+
+    assert controller.start() is False
+    assert controller.state.server_status == "error"
+    assert controller.state.last_error == "Port 8000 is already in use"
+    assert controller.state.log_lines[-1] == "[Fesium] ERROR: Port 8000 is already in use"
 
 
 def test_restart_is_rejected_while_stopped(tmp_path):
