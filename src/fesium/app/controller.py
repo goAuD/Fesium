@@ -57,6 +57,9 @@ class FesiumController:
             project_kind=profile.kind,
             document_root=profile.document_root,
             backend_kind=runtime_decision.backend_kind,
+            server_status="stopped",
+            local_url="",
+            last_error="",
             php_available=environment_status.php_available,
         )
         self.append_log(f"Selected project: {profile.root}")

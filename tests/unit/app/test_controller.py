@@ -1,6 +1,9 @@
 from pathlib import Path
 
 from fesium.app.controller import FesiumController
+from fesium.core.environment import EnvironmentStatus
+from fesium.core.project_detection import ProjectProfile
+from fesium.core.runtime_detection import RuntimeDecision
 
 
 def test_controller_starts_with_stopped_state(tmp_path):
@@ -47,30 +50,37 @@ def test_controller_select_project_updates_state_and_persists_last_project(
             calls.append((key, value))
 
     controller = FesiumController(config=FakeConfig(), cwd=tmp_path)
+    controller.state = controller.state.__class__(
+        project_root=Path("C:/old-project"),
+        project_kind="legacy",
+        document_root=Path("C:/old-project/public"),
+        backend_kind="php",
+        server_status="running",
+        local_url="http://localhost:8000",
+        php_available=True,
+        last_error="boom",
+        log_lines=("previous log",),
+    )
 
     monkeypatch.setattr(
         "fesium.app.controller.detect_project_profile",
-        lambda path: type(
-            "Profile",
-            (),
-            {
-                "root": Path(path).resolve(),
-                "kind": "standard",
-                "document_root": Path(path).resolve() / "public",
-            },
-        )(),
+        lambda path: ProjectProfile(
+            root=Path(path).resolve(),
+            kind="standard",
+            document_root=Path(path).resolve() / "public",
+            database_path=None,
+        ),
     )
     monkeypatch.setattr(
         "fesium.app.controller.summarize_php_environment",
-        lambda: type("EnvironmentStatus", (), {"php_available": True})(),
+        lambda: EnvironmentStatus(php_available=True, php_version="8.3.0", summary="PHP 8.3.0"),
     )
     monkeypatch.setattr(
         "fesium.app.controller.decide_runtime_backend",
-        lambda profile, php_available: type(
-            "RuntimeDecision",
-            (),
-            {"backend_kind": "php"},
-        )(),
+        lambda profile, php_available: RuntimeDecision(
+            backend_kind="php",
+            reason=f"php_available_for_{profile.kind}" if php_available else "php_unavailable",
+        ),
     )
 
     controller.select_project(project_dir)
@@ -80,8 +90,12 @@ def test_controller_select_project_updates_state_and_persists_last_project(
     assert state.project_kind == "standard"
     assert state.document_root == project_dir.resolve() / "public"
     assert state.backend_kind == "php"
+    assert state.server_status == "stopped"
+    assert state.local_url == ""
     assert state.php_available is True
+    assert state.last_error == ""
     assert state.log_lines == (
+        "previous log",
         f"Selected project: {project_dir.resolve()}",
         "Backend selected: php",
     )
