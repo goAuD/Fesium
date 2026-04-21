@@ -188,6 +188,41 @@ def test_select_project_stops_running_backend_before_resetting_state(tmp_path, m
     assert controller.state.local_url == ""
 
 
+def test_select_project_rejects_missing_directory_without_stopping_running_backend(tmp_path):
+    missing = tmp_path / "missing-project"
+    stopped = []
+    controller = FesiumController(config=None, cwd=tmp_path)
+    controller.state = controller.state.__class__(
+        project_root=tmp_path / "old-project",
+        project_kind="standard",
+        document_root=tmp_path / "old-project",
+        database_path=None,
+        database_source="none",
+        database_read_only=True,
+        database_last_query="",
+        database_last_result={"kind": "none"},
+        database_last_error="",
+        backend_kind="static",
+        server_status="running",
+        local_url="http://localhost:8000",
+        php_available=False,
+        php_summary="PHP not found",
+        last_error="",
+        log_lines=(),
+    )
+
+    class FakeBackend:
+        def stop(self):
+            stopped.append("stopped")
+
+    controller._backend = FakeBackend()
+
+    assert controller.select_project(missing) is False
+    assert stopped == []
+    assert controller.state.server_status == "running"
+    assert "does not exist" in controller.state.last_error
+
+
 def test_start_moves_controller_to_running_and_stores_local_url(tmp_path):
     controller = FesiumController(config=None, cwd=tmp_path)
     controller.state = controller.state.__class__(
@@ -262,6 +297,33 @@ def test_start_converts_backend_exceptions_into_error_state(tmp_path):
     assert controller.state.log_lines[-1] == "[Fesium] ERROR: Port 8000 is already in use"
 
 
+def test_start_rejects_missing_document_root_with_specific_error(tmp_path):
+    controller = FesiumController(config=None, cwd=tmp_path)
+    missing_root = tmp_path / "missing"
+    controller.state = controller.state.__class__(
+        project_root=tmp_path,
+        project_kind="standard",
+        document_root=missing_root,
+        database_path=None,
+        database_source="none",
+        database_read_only=True,
+        database_last_query="",
+        database_last_result={"kind": "none"},
+        database_last_error="",
+        backend_kind="static",
+        server_status="stopped",
+        local_url="",
+        php_available=False,
+        php_summary="PHP not found",
+        last_error="",
+        log_lines=(),
+    )
+
+    assert controller.start() is False
+    assert controller.state.server_status == "error"
+    assert str(missing_root.resolve()) in controller.state.last_error
+
+
 def test_restart_is_rejected_while_stopped(tmp_path):
     controller = FesiumController(config=None, cwd=tmp_path)
 
@@ -323,6 +385,31 @@ def test_select_database_marks_manual_source_and_preserves_choice(tmp_path):
     assert controller.state.database_source == "manual"
 
 
+def test_select_database_populates_schema_browser_state(tmp_path, monkeypatch):
+    db_file = tmp_path / "manual.sqlite"
+    db_file.write_text("", encoding="utf-8")
+    controller = FesiumController(config=None, cwd=tmp_path)
+
+    class FakeDatabaseManager:
+        def __init__(self, db_path, read_only):
+            assert db_path == str(db_file.resolve())
+            assert read_only is True
+
+        def list_tables(self):
+            return ["posts", "users"]
+
+        def get_table_info(self, table_name):
+            return [{"name": "id", "type": "INTEGER", "nullable": False, "primary_key": True}]
+
+    monkeypatch.setattr("fesium.app.controller.DatabaseManager", FakeDatabaseManager)
+
+    controller.select_database(db_file)
+
+    assert controller.state.database_tables == ("posts", "users")
+    assert controller.state.database_selected_table == "posts"
+    assert controller.state.database_selected_table_info[0]["name"] == "id"
+
+
 def test_manual_database_choice_survives_project_refresh(tmp_path, monkeypatch):
     project_dir = tmp_path / "demo-project"
     project_dir.mkdir()
@@ -358,6 +445,30 @@ def test_manual_database_choice_survives_project_refresh(tmp_path, monkeypatch):
     assert controller.state.database_path == manual_db.resolve()
     assert controller.state.database_source == "manual"
     assert controller.state.database_read_only is True
+
+
+def test_select_database_table_switches_schema_focus(tmp_path, monkeypatch):
+    db_file = tmp_path / "manual.sqlite"
+    db_file.write_text("", encoding="utf-8")
+    controller = FesiumController(config=None, cwd=tmp_path)
+
+    class FakeDatabaseManager:
+        def __init__(self, db_path, read_only):
+            pass
+
+        def list_tables(self):
+            return ["posts", "users"]
+
+        def get_table_info(self, table_name):
+            return [{"name": f"{table_name}_id", "type": "INTEGER", "nullable": False, "primary_key": True}]
+
+    monkeypatch.setattr("fesium.app.controller.DatabaseManager", FakeDatabaseManager)
+
+    controller.select_database(db_file)
+    assert controller.select_database_table("users") is True
+
+    assert controller.state.database_selected_table == "users"
+    assert controller.state.database_selected_table_info[0]["name"] == "users_id"
 
 
 def test_reset_to_project_database_restores_detected_database(tmp_path):
@@ -409,3 +520,41 @@ def test_run_database_query_stores_read_result(tmp_path, monkeypatch):
     assert controller.state.database_last_result["kind"] == "read"
     assert controller.state.database_last_result["count"] == 1
     assert controller.state.database_last_error == ""
+
+
+def test_preview_database_table_runs_select_star_limit_query(tmp_path, monkeypatch):
+    db_file = tmp_path / "manual.sqlite"
+    db_file.write_text("", encoding="utf-8")
+    controller = FesiumController(config=None, cwd=tmp_path)
+    controller.state = controller.state.__class__(
+        **{
+            **controller.state.__dict__,
+            "database_path": db_file.resolve(),
+            "database_source": "manual",
+            "database_tables": ("users",),
+            "database_selected_table": "users",
+            "database_selected_table_info": (
+                {"name": "id", "type": "INTEGER", "nullable": False, "primary_key": True},
+            ),
+        }
+    )
+
+    class FakeDatabaseManager:
+        def __init__(self, db_path, read_only):
+            assert db_path == str(db_file.resolve())
+
+        def execute(self, query, params=()):
+            assert query == "SELECT * FROM users LIMIT 100"
+            return True, {"columns": ["id"], "rows": [(1,)], "count": 1}
+
+        def list_tables(self):
+            return ["users"]
+
+        def get_table_info(self, table_name):
+            return [{"name": "id", "type": "INTEGER", "nullable": False, "primary_key": True}]
+
+    monkeypatch.setattr("fesium.app.controller.DatabaseManager", FakeDatabaseManager)
+
+    assert controller.preview_database_table() is True
+    assert controller.state.database_last_query == "SELECT * FROM users LIMIT 100"
+    assert controller.state.database_last_result["kind"] == "read"

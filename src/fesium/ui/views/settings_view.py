@@ -5,20 +5,29 @@ from fesium.ui.widgets.panel_card import PanelCard
 from fesium.ui.widgets.scrollable_view_body import ScrollableViewBody
 
 
-def build_settings_rows(config_data: dict):
-    return [
-        {"label": "Default Port", "value": str(config_data.get("port", 8000))},
-        {"label": "Last Active View", "value": config_data.get("active_view", "overview")},
-    ]
+def build_settings_placeholder(config_data: dict) -> dict[str, str]:
+    return {
+        "title": "No in-app settings yet",
+        "body": (
+            "This page stays intentionally minimal until Fesium has real app preferences to expose. "
+            "The old summary tables were removed so this screen does not pretend to be configurable."
+        ),
+        "footnote": (
+            "Current defaults remain automatic: the last valid workspace can be restored, "
+            "server startup stays manual, and SQLite opens in read-only mode each launch."
+        ),
+    }
 
 
 class SettingsView(ctk.CTkFrame):
-    """Application settings summary view."""
+    """Placeholder view for future application preferences."""
 
     def __init__(self, master, config_data: dict):
         super().__init__(master, fg_color="transparent")
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(2, weight=1)
+
+        placeholder = build_settings_placeholder(config_data)
 
         title = ctk.CTkLabel(
             self,
@@ -30,7 +39,7 @@ class SettingsView(ctk.CTkFrame):
 
         subtitle = ctk.CTkLabel(
             self,
-            text="Preferences and defaults",
+            text="Reserved for future app preferences",
             text_color=get_color_token("text.secondary"),
             font=get_font_token("body"),
         )
@@ -43,28 +52,32 @@ class SettingsView(ctk.CTkFrame):
         panel = PanelCard(body, surface_variant="inset")
         panel.grid(row=0, column=0, sticky="ew")
         panel_content = panel.content_frame
+        panel_content.grid_columnconfigure(0, weight=1)
 
-        rows = build_settings_rows(config_data)
-        for row_index, row in enumerate(rows):
-            label = ctk.CTkLabel(
-                panel_content,
-                text=row["label"],
-                text_color=get_color_token("text.primary"),
-                font=get_font_token("body_medium"),
-            )
-            label.grid(row=row_index * 2, column=0, sticky="w", padx=16, pady=(16 if row_index == 0 else 10, 4))
+        panel_title = ctk.CTkLabel(
+            panel_content,
+            text=placeholder["title"],
+            text_color=get_color_token("accent.primary"),
+            font=get_font_token("section_heading"),
+        )
+        panel_title.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 12))
 
-            value = ctk.CTkLabel(
-                panel_content,
-                text=row["value"],
-                text_color=get_color_token("text.secondary"),
-                font=get_font_token("body"),
-                justify="left",
-            )
-            value.grid(
-                row=row_index * 2 + 1,
-                column=0,
-                sticky="w",
-                padx=16,
-                pady=(0, 4 if row_index < len(rows) - 1 else 16),
-            )
+        body_label = ctk.CTkLabel(
+            panel_content,
+            text=placeholder["body"],
+            text_color=get_color_token("text.primary"),
+            font=get_font_token("body"),
+            justify="left",
+            wraplength=860,
+        )
+        body_label.grid(row=1, column=0, sticky="w", padx=16, pady=(0, 12))
+
+        footnote_label = ctk.CTkLabel(
+            panel_content,
+            text=placeholder["footnote"],
+            text_color=get_color_token("text.secondary"),
+            font=get_font_token("body"),
+            justify="left",
+            wraplength=860,
+        )
+        footnote_label.grid(row=2, column=0, sticky="w", padx=16, pady=(0, 16))

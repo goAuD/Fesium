@@ -348,8 +348,7 @@ Fesium/
 │  └─ unit/
 ├─ docs/
 │  ├─ decisions/
-│  └─ superpowers/
-│     └─ specs/
+│  └─ specs/
 ├─ scripts/
 ├─ .github/
 │  └─ workflows/
@@ -419,7 +418,7 @@ The repository should support pause-and-resume collaboration without relying on 
 - major implementation work should reference a spec or decision record
 - architectural decisions should be tracked under `docs/decisions/`
 - docs should explain enough for another contributor to continue the project without reverse-engineering intent
-- local collaboration artifacts such as `.superpowers/` must remain untracked through `.gitignore`
+- local workspace artifacts such as `.fesium/` must remain untracked through `.gitignore`
 
 ## 14. AGENTS.md Direction
 

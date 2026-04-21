@@ -1,7 +1,5 @@
 # Fesium Brand Rollout Implementation Plan
 
-> **For Codex/Claude:** Use `${SUPERPOWERS_SKILLS_ROOT}/skills/collaboration/executing-plans/SKILL.md` to implement this plan task-by-task.
-
 **Goal:** Complete the first public `Fesium` brand rollout: add the approved logo and social preview assets, clean up legacy public docs, wire the runtime app icon, consolidate dependencies around a single full `requirements.txt`, rename the GitHub repository, prepare the new screenshot asset path, and ship the work as `v2.0.0`.
 
 **Architecture:** Treat `docs/assets/brand/` as the source of truth for repository-facing brand assets and `src/fesium/assets/` as the runtime asset location for the desktop app. Keep the rollout brand-first: create the controlled SVG and PNG assets first, update public docs and metadata second, then add the fresh screenshot as a separate follow-up asset. Consolidate dependencies so `requirements.txt` is the complete install surface, with `requirements-dev.txt` reduced to a compatibility shim or removed only after all references are updated. Do not rename the local workspace folder until the very end, after the session is finished, because the current tooling is rooted in `D:\GitHub\NanoServer`.
@@ -14,7 +12,7 @@
 
 Read these before starting implementation:
 
-- `docs/superpowers/specs/2026-04-18-fesium-brand-rollout-design.md`
+- `docs/specs/2026-04-18-fesium-brand-rollout-design.md`
 - `README.md`
 - `ROADMAP.md`
 - `DESIGN_SYSTEM.md`

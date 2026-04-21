@@ -34,22 +34,15 @@ def get_subprocess_flags() -> Dict[str, object]:
 
 @trace_execution
 def check_php_installed() -> bool:
-    """Check if PHP is available in PATH."""
-    try:
-        result = subprocess.run(
-            ["php", "-v"],
-            capture_output=True,
-            text=True,
-            **get_subprocess_flags(),
-        )
-        if result.returncode == 0:
-            version_line = result.stdout.splitlines()[0] if result.stdout else "PHP available"
-            logger.info("PHP found: %s", version_line)
-            return True
-        return False
-    except FileNotFoundError:
-        logger.warning("PHP not found in PATH")
-        return False
+    """Check if PHP is available in PATH.
+
+    Thin shim over ``fesium.core.environment.detect_php`` — the authoritative
+    PHP probe with a subprocess timeout. Kept as a boolean helper for call
+    sites that only need availability.
+    """
+    from fesium.core.environment import detect_php
+
+    return detect_php().php_available
 
 
 def is_port_in_use(port: int) -> bool:
@@ -75,6 +68,7 @@ class PHPServer:
         self.is_running = False
         self.port = 8000
         self.document_root = os.getcwd()
+        self.last_error = ""
         self.on_log = on_log or (lambda message: None)
         self._log_thread: Optional[threading.Thread] = None
         self._stop_logging = threading.Event()
@@ -84,20 +78,25 @@ class PHPServer:
         """Start the PHP development server."""
         if self.is_running:
             logger.warning("Server already running")
+            self.last_error = "Server already running"
             return False
 
         if not os.path.isdir(document_root):
             error_message = f"Document root does not exist: {document_root}"
             logger.error(error_message)
+            self.last_error = error_message
             self.on_log(f"[Fesium] ERROR: {error_message}")
             return False
 
         if is_port_in_use(port):
             available_port = find_available_port(port)
             if available_port is None:
-                logger.error("Ports %s-%s are all in use", port, port + 9)
+                self.last_error = f"Ports {port}-{port + 9} are all in use"
+                logger.error(self.last_error)
+                self.on_log(f"[Fesium] ERROR: {self.last_error}")
                 return False
             logger.info("Port %s busy, using %s", port, available_port)
+            self.on_log(f"[Fesium] Port {port} busy, using {available_port}")
             port = available_port
 
         self.port = port
@@ -105,6 +104,7 @@ class PHPServer:
         command = ["php", "-S", f"localhost:{port}", "-t", document_root]
 
         try:
+            self.last_error = ""
             self.process = subprocess.Popen(
                 command,
                 stdout=subprocess.PIPE,
@@ -124,9 +124,11 @@ class PHPServer:
             return True
         except FileNotFoundError:
             logger.error("PHP not found - cannot start server")
+            self.last_error = "PHP not found - cannot start server"
             return False
         except Exception as exc:
             logger.error("Failed to start server: %s", exc)
+            self.last_error = str(exc) or exc.__class__.__name__
             return False
 
     def _capture_logs(self) -> None:
@@ -158,6 +160,7 @@ class PHPServer:
                 self.process = None
 
         self.is_running = False
+        self.last_error = ""
         logger.info("Server stopped")
         self.on_log("[Fesium] Server stopped")
 

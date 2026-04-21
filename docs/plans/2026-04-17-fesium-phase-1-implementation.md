@@ -1,7 +1,5 @@
 # Fesium Phase 1 Implementation Plan
 
-> **For Claude:** Use `${SUPERPOWERS_SKILLS_ROOT}/skills/collaboration/executing-plans/SKILL.md` to implement this plan task-by-task.
-
 **Goal:** Transform the current NanoServer repository into the first `Fesium` release: a modular `CustomTkinter` desktop app with a sidebar shell, offline-bundled fonts, security-first defaults, and a public-repo-ready structure.
 
 **Architecture:** Keep the proven backend behavior from the current flat files, move it into `src/fesium/core/`, build a thin UI shell in `src/fesium/ui/`, and preserve a thin launcher at the repo root. Do not delete the legacy flat modules until the new package bootstraps, core tests pass, and the new launch path works end-to-end.
@@ -14,7 +12,7 @@
 
 Read these before starting implementation:
 
-- `docs/superpowers/specs/2026-04-17-fesium-redesign-design.md`
+- `docs/specs/2026-04-17-fesium-redesign-design.md`
 - `config.py`
 - `database.py`
 - `server.py`
@@ -30,11 +28,11 @@ Read these before starting implementation:
 - Keep SQLite read-only mode enabled by default.
 - Keep server binding local-only by default.
 - Do not remove the legacy root files until Task 12.
-- Add `.superpowers/` to `.gitignore` before doing any other repo hygiene work.
 
 ## Task 1: Package Bootstrap and Repo Scaffold
 
 **Files:**
+
 - Create: `pyproject.toml`
 - Create: `src/fesium/__init__.py`
 - Create: `src/fesium/app.py`
@@ -139,7 +137,6 @@ testpaths = ["tests"]
 Update `.gitignore` to include:
 
 ```gitignore
-.superpowers/
 .fesium/
 build/
 dist/
@@ -166,6 +163,7 @@ git commit -m "chore: bootstrap Fesium src package"
 ## Task 2: Config and Path Migration
 
 **Files:**
+
 - Create: `src/fesium/core/config.py`
 - Create: `src/fesium/core/paths.py`
 - Create: `tests/unit/core/test_config.py`
@@ -318,6 +316,7 @@ git commit -m "feat: add Fesium config and path helpers"
 ## Task 3: Database Core Migration
 
 **Files:**
+
 - Create: `src/fesium/core/database.py`
 - Create: `tests/unit/core/test_database.py`
 - Reference: `database.py`
@@ -410,6 +409,7 @@ git commit -m "feat: migrate database core into Fesium package"
 ## Task 4: Server Core and Environment Diagnostics
 
 **Files:**
+
 - Create: `src/fesium/core/server.py`
 - Create: `src/fesium/core/environment.py`
 - Create: `tests/unit/core/test_server.py`
@@ -516,6 +516,7 @@ git commit -m "feat: migrate server core and add environment diagnostics"
 ## Task 5: Project Detection and Security Guards
 
 **Files:**
+
 - Create: `src/fesium/core/project_detection.py`
 - Create: `src/fesium/core/security.py`
 - Create: `tests/unit/core/test_project_detection.py`
@@ -649,6 +650,7 @@ git commit -m "feat: add project detection and security guard helpers"
 ## Task 6: Theme Tokens and Offline Font Assets
 
 **Files:**
+
 - Create: `src/fesium/ui/theme/tokens.py`
 - Create: `src/fesium/ui/theme/styles.py`
 - Create: `src/fesium/assets/fonts/font_manifest.py`
@@ -786,6 +788,7 @@ git commit -m "feat: add Graphite Grid tokens and bundled fonts"
 ## Task 7: Navigation Model and Shell Skeleton
 
 **Files:**
+
 - Create: `src/fesium/ui/navigation.py`
 - Create: `src/fesium/ui/shell.py`
 - Create: `src/fesium/ui/widgets/panel_card.py`
@@ -875,6 +878,7 @@ git commit -m "feat: add sidebar navigation and shell scaffold"
 ## Task 8: Overview and Server Views
 
 **Files:**
+
 - Create: `src/fesium/ui/views/overview_view.py`
 - Create: `src/fesium/ui/views/server_view.py`
 - Create: `tests/unit/ui/test_overview_view.py`
@@ -968,6 +972,7 @@ git commit -m "feat: add overview and server views"
 ## Task 9: Database, Environment, and Settings Views
 
 **Files:**
+
 - Create: `src/fesium/ui/views/database_view.py`
 - Create: `src/fesium/ui/views/environment_view.py`
 - Create: `src/fesium/ui/views/settings_view.py`
@@ -1073,6 +1078,7 @@ git commit -m "feat: add database environment and settings views"
 ## Task 10: App Orchestration and Thin Launchers
 
 **Files:**
+
 - Modify: `src/fesium/app.py`
 - Create: `fesium.py`
 - Modify: `nanoserver.py`
@@ -1190,6 +1196,7 @@ git commit -m "feat: wire Fesium app bootstrap and launchers"
 ## Task 11: Public Repo Files and Contributor Guidance
 
 **Files:**
+
 - Create: `AGENTS.md`
 - Create: `CONTRIBUTING.md`
 - Create: `.editorconfig`
@@ -1215,11 +1222,6 @@ def test_required_repo_files_exist():
         ".github/workflows/python-tests.yml",
     ]:
         assert Path(relative).exists(), relative
-
-
-def test_gitignore_blocks_local_superpowers_artifacts():
-    content = Path(".gitignore").read_text(encoding="utf-8")
-    assert ".superpowers/" in content
 
 
 def test_readme_mentions_fesium():
@@ -1298,6 +1300,7 @@ git commit -m "docs: add Fesium repo guidance and CI"
 ## Task 12: Legacy Cleanup and Full Verification
 
 **Files:**
+
 - Delete: `config.py`
 - Delete: `database.py`
 - Delete: `server.py`

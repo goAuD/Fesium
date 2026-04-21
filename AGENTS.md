@@ -36,7 +36,7 @@
 
 ## Documentation Policy
 
-- Update `README.md` and `CHANGELOG.md` when user-facing behavior changes.
-- Record major planning or design shifts under `docs/plans/` or `docs/superpowers/specs/`.
-- When architectural decisions become durable and reusable, add a decision record under `docs/decisions/`.
-
+- Update [README.md](README.md) and [CHANGELOG.md](CHANGELOG.md) when user-facing behavior changes.
+- Record major planning or design shifts under [docs/specs/](docs/specs/) (intent) and [docs/plans/](docs/plans/) (step-by-step).
+- When architectural decisions become durable and reusable, add a decision record under [docs/decisions/](docs/decisions/).
+- Point contributors at [docs/dev/](docs/dev/) for setup, testing, and conventions rather than duplicating those into new files.

@@ -1,6 +1,8 @@
 from fesium.ui.views.database_view import (
     build_database_result_view_model,
+    build_database_schema_view_model,
     build_database_summary,
+    format_schema_table,
     format_query_result_table,
 )
 
@@ -38,6 +40,7 @@ def test_build_database_result_view_model_handles_read_results():
     assert model["title"] == "1 row"
     assert "id | name" in model["body"]
     assert "1  | Ada " in model["body"]
+    assert "Columns: 2" in model["body"]
 
 
 def test_build_database_result_view_model_prefers_explicit_error():
@@ -61,3 +64,29 @@ def test_format_query_result_table_aligns_variable_width_columns():
     assert lines[2] == "1   | Test User"
     assert lines[3] == "22  | Alice    "
     assert lines[4] == "333 | Bob      "
+
+
+def test_build_database_schema_view_model_selects_first_table_by_default():
+    model = build_database_schema_view_model(
+        tables=("posts", "users"),
+        selected_table="",
+        selected_table_info=(
+            {"name": "id", "type": "INTEGER", "nullable": False, "primary_key": True},
+        ),
+    )
+
+    assert model["selected_table"] == "posts"
+    assert model["tables"][0]["active"] is True
+
+
+def test_format_schema_table_renders_column_metadata():
+    body = format_schema_table(
+        (
+            {"name": "id", "type": "INTEGER", "nullable": False, "primary_key": True},
+            {"name": "email", "type": "TEXT", "nullable": True, "primary_key": False},
+        )
+    )
+
+    assert "name  | type" in body
+    assert "id" in body
+    assert "email" in body

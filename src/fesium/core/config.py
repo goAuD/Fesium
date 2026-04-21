@@ -34,7 +34,7 @@ class Config:
     DEFAULT_CONFIG: Dict[str, Any] = {
         "last_project": "",
         "port": 8000,
-        "window_geometry": "1280x860",
+        "window_geometry": "1400x960",
         "active_view": "overview",
     }
 
@@ -96,6 +96,10 @@ class Config:
     def set(self, key: str, value) -> None:
         self._data[key] = value
         self.save()
+
+    def snapshot(self) -> Dict[str, Any]:
+        """Return a shallow copy of the current config — read-only view for callers."""
+        return dict(self._data)
 
     @property
     def last_project(self) -> str:

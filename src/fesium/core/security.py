@@ -1,6 +1,15 @@
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple, Union
+
+
+DESTRUCTIVE_KEYWORDS = ("DROP", "DELETE", "TRUNCATE", "ALTER", "UPDATE", "INSERT", "REPLACE")
+
+_DESTRUCTIVE_IN_BODY = re.compile(
+    r"\b(" + "|".join(DESTRUCTIVE_KEYWORDS) + r")\b",
+    re.IGNORECASE,
+)
 
 
 @dataclass(frozen=True)
@@ -10,12 +19,38 @@ class QueryRisk:
     first_word: str
 
 
+def strip_sql_leading_noise(query: str) -> str:
+    """Strip leading semicolons, whitespace, and SQL comments.
+
+    Shared by :func:`classify_query_risk` and
+    :func:`fesium.core.database.is_read_query` so comment-only prefixes can't
+    smuggle destructive statements past one check while tripping the other.
+    """
+    remaining = query.lstrip("; \t\r\n")
+    while remaining.startswith("--") or remaining.startswith("/*"):
+        if remaining.startswith("--"):
+            newline = remaining.find("\n")
+            remaining = remaining[newline + 1 :] if newline != -1 else ""
+        else:
+            end = remaining.find("*/")
+            remaining = remaining[end + 2 :] if end != -1 else ""
+        remaining = remaining.lstrip("; \t\r\n")
+    return remaining
+
+
 def classify_query_risk(query: str) -> QueryRisk:
-    first_word = query.lstrip("; \t\n").split()[0].upper() if query.strip() else ""
-    destructive = {"DROP", "DELETE", "TRUNCATE", "ALTER", "UPDATE"}
+    body = strip_sql_leading_noise(query)
+    first_word = body.split()[0].upper() if body.split() else ""
+
+    requires_confirmation = first_word in DESTRUCTIVE_KEYWORDS
+
+    if first_word == "WITH" and _DESTRUCTIVE_IN_BODY.search(body):
+        # WITH ... UPDATE/DELETE/INSERT CTE — treat as destructive.
+        requires_confirmation = True
+
     return QueryRisk(
-        level="danger" if first_word in destructive else "safe",
-        requires_confirmation=first_word in destructive,
+        level="danger" if requires_confirmation else "safe",
+        requires_confirmation=requires_confirmation,
         first_word=first_word,
     )
 

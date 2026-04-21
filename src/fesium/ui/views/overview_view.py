@@ -28,9 +28,17 @@ def build_overview_cards(
     php_summary: str,
     server_status: str,
     local_url: str,
+    log_lines: tuple[str, ...] = (),
 ) -> List[Dict[str, str]]:
     quick_action_value = (
         f"Running at {local_url}" if server_status == "running" and local_url else "Open the Server view to manage the active site"
+    )
+    recent_lines = log_lines[-3:]
+    has_error = any("ERROR" in line for line in recent_lines)
+    activity_value = (
+        "\n".join(recent_lines)
+        if recent_lines
+        else "No recent activity yet. Select a project or start a server to populate this feed."
     )
 
     return [
@@ -52,6 +60,12 @@ def build_overview_cards(
             "badge": "Healthy" if php_summary else "Missing",
             "tone": "accent.success" if php_summary else "accent.danger",
         },
+        {
+            "title": "Recent Activity",
+            "value": activity_value,
+            "badge": "Attention" if has_error else "Recent" if recent_lines else "Idle",
+            "tone": "accent.danger" if has_error else "accent.warning" if recent_lines else "accent.primary",
+        },
     ]
 
 
@@ -69,6 +83,7 @@ class OverviewView(ctk.CTkFrame):
         project_kind: str = "",
         server_status: Optional[str] = None,
         local_url: str = "",
+        log_lines: tuple[str, ...] = (),
     ):
         super().__init__(master, fg_color="transparent")
         self.grid_columnconfigure((0, 1), weight=1)
@@ -100,30 +115,44 @@ class OverviewView(ctk.CTkFrame):
                 php_summary=php_summary,
                 server_status=resolved_server_status,
                 local_url=local_url,
+                log_lines=log_lines,
             ),
-            start=2,
+            start=0,
         ):
             panel = PanelCard(self)
-            panel.grid(row=index, column=0, columnspan=2, sticky="ew", pady=8)
-            panel.grid_columnconfigure(0, weight=1)
+            row = 2 + index // 2
+            column = index % 2
+            panel.grid(
+                row=row,
+                column=column,
+                sticky="nsew",
+                padx=(0, 8) if column == 0 else (8, 0),
+                pady=8,
+            )
+            content = panel.content_frame
+            content.grid_columnconfigure(0, weight=1)
 
             label = ctk.CTkLabel(
-                panel,
+                content,
                 text=card["title"],
-                text_color=get_color_token("text.primary"),
-                font=get_font_token("body_medium"),
+                text_color=get_color_token("accent.primary"),
+                font=get_font_token("section_heading"),
             )
             label.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 8))
 
-            badge = StatusBadge(panel, text=card["badge"], tone=card["tone"])
+            badge = StatusBadge(
+                content,
+                text=card["badge"],
+                tone=card["tone"],
+            )
             badge.grid(row=0, column=1, sticky="e", padx=16, pady=(16, 8))
 
             value = ctk.CTkLabel(
-                panel,
+                content,
                 text=card["value"],
                 text_color=get_color_token("text.secondary"),
                 font=get_font_token("body"),
                 justify="left",
-                wraplength=800,
+                wraplength=420,
             )
             value.grid(row=1, column=0, columnspan=2, sticky="w", padx=16, pady=(0, 16))

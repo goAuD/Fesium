@@ -1,7 +1,5 @@
 # Fesium Database Flow Implementation Plan
 
-> **For Claude:** Use `${SUPERPOWERS_SKILLS_ROOT}/skills/collaboration/executing-plans/SKILL.md` to implement this plan task-by-task.
-
 **Goal:** Restore the first real SQLite interaction workflow in `Fesium` with manual database selection, session-only read/write mode, one-statement SQL execution, clear result rendering, destructive-query confirmation, and a fix for the inset panel corner artifact.
 
 **Architecture:** Keep the implementation inside the existing app/controller/core/view boundaries. The `FesiumController` owns database state and orchestration, `DatabaseManager` remains the execution engine, `DatabaseView` stays render-only with callbacks, and `bootstrap.py` handles file dialogs and confirmation dialogs. The inset-corner fix stays inside the reusable `PanelCard` widget so every inset panel benefits from the same rendering correction.
@@ -14,7 +12,7 @@
 
 Read these before starting implementation:
 
-- `docs/superpowers/specs/2026-04-19-fesium-database-flow-design.md`
+- `docs/specs/2026-04-19-fesium-database-flow-design.md`
 - `src/fesium/app/controller.py`
 - `src/fesium/app/bootstrap.py`
 - `src/fesium/core/database.py`

@@ -6,38 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+_No user-facing changes yet after v2.0.0. See [ROADMAP.md](ROADMAP.md) for the planned v2.1.0 focus._
+
+## [2.0.0] - 2026-04-19
+
+See [docs/release/v2.0.0.md](docs/release/v2.0.0.md) for the narrative release notes.
+
 ### Added
+
+- Bootstrapped the `src/fesium/` package and thin launchers for the `Fesium` migration
+- Migrated config, database, server, environment, project detection, and security helpers into modular core packages
+- Added the first sidebar shell and real view modules for overview, server, database, environment, guide, and settings
+- Bundled offline font assets and Graphite Grid theme tokens
+- Added repository guidance files, editor configuration, and a GitHub Actions pytest workflow
+- Added the `Pure Orbit` brand assets, controlled GitHub social preview sources, and a new `Overview` screenshot
+- Added runtime window icon assets sourced from the master brand SVG
 - Added a static fallback server when PHP is unavailable
 - Added controller-based runtime orchestration for project selection and local serving
 - Added a live server log panel in the `Server` view
 - Added interactive SQLite workflow in the `Database` view with manual database file selection
 - Added one-statement SQL execution with result rendering and write-query confirmations
+- Added a focused SQLite schema browser with table list, schema inspect, and quick preview queries
+- Added a student-facing `Guide` view that explains when and how to use Fesium
 
 ### Changed
-- Restored the server interaction flow for selecting a project, starting the local server, stopping it, restarting it, and opening the site in a browser
-- Increased the default desktop shell size and baseline typography for better readability
-- Made the `Server`, `Database`, `Environment`, and `Settings` views scroll-safe instead of relying on manual window resizing
-- Added responsive `Server` control layout behavior and inset panel surfaces to preserve hierarchy at smaller window sizes
-- Kept `Read-only` mode session-scoped and reset to enabled on every app launch
-- Fixed the inset panel corner rendering so rounded cards no longer show chipped inner corners
-- Simplified contributor dependency setup to a single `requirements.txt`
-- Polished the `Database` view with clearer secondary button styling and aligned SQL result formatting
 
-### Security
-- Hardened the GitHub Actions pytest workflow with explicit minimal `contents: read` permissions
-
-## [2.0.0] - 2026-04-19
-
-### Added
-- Bootstrapped the `src/fesium/` package and thin launchers for the `Fesium` migration
-- Migrated config, database, server, environment, project detection, and security helpers into modular core packages
-- Added the first sidebar shell and real view modules for overview, server, database, environment, and settings
-- Bundled offline font assets and Graphite Grid theme tokens
-- Added repository guidance files, editor configuration, and a GitHub Actions pytest workflow
-- Added the `Pure Orbit` brand assets, controlled GitHub social preview sources, and a new `Overview` screenshot
-- Added runtime window icon assets sourced from the master brand SVG
-
-### Changed
 - Repositioned the project under the `Fesium` brand while preserving the original local-dev purpose
 - Updated the top-level documentation to reflect the current migration state honestly
 - Kept SQLite read-only mode and local-first assumptions as explicit product defaults
@@ -46,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - Switched the repository license from MIT to Apache-2.0
 
 ### Removed
+
 - Removed the legacy flat runtime modules in favor of the `src/fesium/` package layout
 - Removed the old root-level `test_nanoserver.py` suite after replacing it with the new `tests/` structure
 - Removed obsolete root brand images and the legacy design-system document
@@ -53,12 +47,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 ## [1.2.2] - 2026-01-27
 
 ### Security
+
 - Added table name validation with regex pattern to prevent SQL injection in dynamic queries
 - Added read-only SQL mode (enabled by default) that blocks INSERT/UPDATE/DELETE operations
 - Added confirmation dialog for destructive queries (DROP, DELETE, UPDATE, TRUNCATE, ALTER)
 - Added document root validation before server start
 
 ### Changed
+
 - Updated misleading "SQL Injection Protection" claim to accurately describe raw SQL execution
 - Added Docker and MySQL clarification to ROADMAP
 - Added Development Setup section with testing instructions
@@ -66,23 +62,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - Removed unused "Pro Edition" branding
 
 ### Added
+
 - Created `requirements-dev.txt` for development dependencies (pytest)
 - Added version constraints to `requirements.txt`
 
 ## [1.2.1] - 2026-01-23
 
 ### Added
+
 - Nano Design System theme module (`nano_theme.py`)
 - Unified color palette across Nano product family
 - NANO_COLORS constants for consistent styling
 
 ### Changed
+
 - Updated UI to use Nano Design System colors
 - Improved screenshot with dark theme background
 
 ## [1.2.0] - 2026-01-16
 
 ### Added
+
 - Modular architecture: separated server, database, and config modules
 - Real-time server log display in UI
 - Config persistence (remembers last project folder and settings)
@@ -91,12 +91,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - Comprehensive unit test suite
 
 ### Changed
+
 - Refactored codebase for better maintainability
 - Improved transaction handling in database operations
 
 ## [1.0.0] - 2026-01-15
 
 ### Added
+
 - Initial public release
 - PHP built-in server management with GUI
 - Laravel project auto-detection (serves from /public)
@@ -104,4 +106,3 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - Cross-platform support (Windows, Linux, macOS)
 - Dark mode UI with CustomTkinter
 - Port collision detection with auto-increment
-

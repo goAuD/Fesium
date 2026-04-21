@@ -2,11 +2,11 @@ from dataclasses import dataclass, replace
 from pathlib import Path
 
 from fesium.core.browser import open_local_url
-from fesium.core.database import DatabaseManager, is_read_query
+from fesium.core.database import DatabaseManager, build_table_preview_query, is_read_query
 from fesium.core.environment import summarize_php_environment
 from fesium.core.project_detection import detect_project_profile
 from fesium.core.runtime_detection import decide_runtime_backend
-from fesium.core.security import validate_single_sql_statement
+from fesium.core.security import normalize_existing_directory, validate_single_sql_statement
 from fesium.core.server import PHPServer
 from fesium.core.static_server import StaticServer
 
@@ -29,6 +29,9 @@ class ControllerState:
     php_summary: str
     last_error: str
     log_lines: tuple[str, ...]
+    database_tables: tuple[str, ...] = ()
+    database_selected_table: str = ""
+    database_selected_table_info: tuple[dict, ...] = ()
 
 
 class FesiumController:
@@ -67,11 +70,49 @@ class FesiumController:
     def project_database_available(self) -> bool:
         return self._project_database_path is not None
 
-    def select_project(self, path: Path) -> None:
+    def _database_browser_snapshot(self, preferred_table: str = "") -> tuple[tuple[str, ...], str, tuple[dict, ...]]:
+        if self.state.database_path is None:
+            return (), "", ()
+
+        database = DatabaseManager(str(self.state.database_path), read_only=True)
+        if not hasattr(database, "list_tables") or not hasattr(database, "get_table_info"):
+            return (
+                self.state.database_tables,
+                self.state.database_selected_table,
+                self.state.database_selected_table_info,
+            )
+        tables = tuple(database.list_tables())
+        if not tables:
+            return (), "", ()
+
+        resolved_table = preferred_table or self.state.database_selected_table
+        if resolved_table not in tables:
+            resolved_table = tables[0]
+
+        columns = tuple(database.get_table_info(resolved_table))
+        return tables, resolved_table, columns
+
+    def _refresh_database_browser(self, preferred_table: str = "") -> None:
+        tables, selected_table, selected_table_info = self._database_browser_snapshot(preferred_table)
+        self.state = replace(
+            self.state,
+            database_tables=tables,
+            database_selected_table=selected_table,
+            database_selected_table_info=selected_table_info,
+        )
+
+    def select_project(self, path: Path) -> bool:
+        ok, normalized = normalize_existing_directory(path)
+        if not ok:
+            message = str(normalized)
+            self.state = replace(self.state, last_error=message)
+            self.append_log(f"[Fesium] ERROR: {message}")
+            return False
+
         if self._backend is not None:
             self.stop()
 
-        project_root = Path(path).resolve()
+        project_root = Path(normalized)
         profile = detect_project_profile(project_root)
         environment_status = summarize_php_environment()
         runtime_decision = decide_runtime_backend(
@@ -104,13 +145,18 @@ class FesiumController:
             last_error="",
             php_available=environment_status.php_available,
             php_summary=environment_status.summary,
+            database_tables=(),
+            database_selected_table="",
+            database_selected_table_info=(),
         )
+        self._refresh_database_browser()
         self._backend = None
         self.append_log(f"Selected project: {profile.root}")
         self.append_log(f"Backend selected: {runtime_decision.backend_kind}")
 
         if self.config is not None:
             self.config.set("last_project", str(profile.root))
+        return True
 
     def select_database(self, path: Path) -> bool:
         candidate = Path(path).expanduser().resolve()
@@ -129,7 +175,11 @@ class FesiumController:
             database_source="manual",
             database_last_result={"kind": "none"},
             database_last_error="",
+            database_tables=(),
+            database_selected_table="",
+            database_selected_table_info=(),
         )
+        self._refresh_database_browser()
         return True
 
     def reset_to_project_database(self) -> bool:
@@ -142,11 +192,35 @@ class FesiumController:
             database_source="project",
             database_last_result={"kind": "none"},
             database_last_error="",
+            database_tables=(),
+            database_selected_table="",
+            database_selected_table_info=(),
         )
+        self._refresh_database_browser()
         return True
 
     def set_database_read_only(self, enabled: bool) -> None:
         self.state = replace(self.state, database_read_only=enabled)
+
+    def select_database_table(self, table_name: str) -> bool:
+        if not table_name:
+            return False
+
+        self._refresh_database_browser(preferred_table=table_name)
+        return self.state.database_selected_table == table_name
+
+    def preview_database_table(self, limit: int = 100) -> bool:
+        if not self.state.database_selected_table:
+            message = "Select a table to preview rows"
+            self.state = replace(
+                self.state,
+                database_last_error=message,
+                database_last_result={"kind": "error", "message": message},
+            )
+            return False
+
+        query = build_table_preview_query(self.state.database_selected_table, limit=limit)
+        return self.run_database_query(query)
 
     def run_database_query(self, query: str) -> bool:
         self.state = replace(self.state, database_last_query=query)
@@ -209,6 +283,7 @@ class FesiumController:
             database_last_result=normalized_result,
             database_last_error="",
         )
+        self._refresh_database_browser(self.state.database_selected_table)
         return True
 
     def _build_backend(self):
@@ -237,13 +312,26 @@ class FesiumController:
             self.append_log("[Fesium] ERROR: No project selected")
             return False
 
+        ok, normalized_document_root = normalize_existing_directory(self.state.document_root)
+        if not ok:
+            message = str(normalized_document_root)
+            self.state = replace(
+                self.state,
+                server_status="error",
+                last_error=message,
+                local_url="",
+            )
+            self.append_log(f"[Fesium] ERROR: {message}")
+            return False
+
         if self._backend is None:
             self._backend = self._build_backend()
 
         try:
-            result = self._backend.start(self.state.document_root, self._resolve_port())
+            result = self._backend.start(normalized_document_root, self._resolve_port())
         except Exception as exc:
-            message = str(exc) or exc.__class__.__name__
+            backend_message = getattr(self._backend, "last_error", "")
+            message = backend_message or str(exc) or exc.__class__.__name__
             self.state = replace(
                 self.state,
                 server_status="error",
@@ -254,13 +342,14 @@ class FesiumController:
             return False
 
         if not result:
+            message = getattr(self._backend, "last_error", "") or "Failed to start server"
             self.state = replace(
                 self.state,
                 server_status="error",
-                last_error="Failed to start server",
+                last_error=message,
                 local_url="",
             )
-            self.append_log("[Fesium] ERROR: Failed to start server")
+            self.append_log(f"[Fesium] ERROR: {message}")
             return False
 
         local_url = result if isinstance(result, str) else getattr(self._backend, "url", "")

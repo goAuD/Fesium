@@ -1,6 +1,7 @@
 from fesium.core.security import (
     classify_query_risk,
     normalize_existing_directory,
+    strip_sql_leading_noise,
     validate_single_sql_statement,
 )
 
@@ -17,6 +18,44 @@ def test_classify_query_risk_marks_select_as_safe():
 
     assert risk.level == "safe"
     assert risk.requires_confirmation is False
+
+
+def test_classify_query_risk_sees_through_line_comments():
+    risk = classify_query_risk("-- looks harmless\nDROP TABLE users")
+
+    assert risk.requires_confirmation is True
+    assert risk.first_word == "DROP"
+
+
+def test_classify_query_risk_sees_through_block_comments_and_semicolons():
+    risk = classify_query_risk(";;/* wrapper */ DELETE FROM audit")
+
+    assert risk.requires_confirmation is True
+    assert risk.first_word == "DELETE"
+
+
+def test_classify_query_risk_flags_with_cte_containing_update():
+    risk = classify_query_risk(
+        "WITH moved AS (SELECT id FROM tmp) UPDATE users SET active = 0 FROM moved"
+    )
+
+    assert risk.requires_confirmation is True
+    assert risk.first_word == "WITH"
+
+
+def test_classify_query_risk_leaves_pure_with_cte_safe():
+    risk = classify_query_risk(
+        "WITH active_users AS (SELECT id FROM users) SELECT * FROM active_users"
+    )
+
+    assert risk.requires_confirmation is False
+    assert risk.first_word == "WITH"
+
+
+def test_strip_sql_leading_noise_removes_mixed_prefixes():
+    cleaned = strip_sql_leading_noise(";;  -- note\n/* block */  SELECT 1")
+
+    assert cleaned.startswith("SELECT")
 
 
 def test_normalize_existing_directory_rejects_missing_path(tmp_path):

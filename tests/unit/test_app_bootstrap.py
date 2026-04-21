@@ -22,6 +22,7 @@ def test_build_app_context_uses_last_project_or_cwd(tmp_path):
 
 
 def test_build_app_context_preserves_last_project(tmp_path):
+    (tmp_path / "demo").mkdir()
     context = build_app_context(
         cwd=tmp_path,
         config_data={"last_project": str(tmp_path / "demo"), "active_view": "server"},
@@ -29,6 +30,15 @@ def test_build_app_context_preserves_last_project(tmp_path):
 
     assert context.project_root == (tmp_path / "demo").resolve()
     assert context.active_view == "server"
+
+
+def test_build_app_context_falls_back_to_cwd_when_last_project_is_missing(tmp_path):
+    context = build_app_context(
+        cwd=tmp_path,
+        config_data={"last_project": str(tmp_path / "missing")},
+    )
+
+    assert context.project_root == tmp_path.resolve()
 
 
 def test_replace_runtime_views_rebuilds_database_view_for_current_project(
@@ -70,6 +80,10 @@ def test_replace_runtime_views_rebuilds_database_view_for_current_project(
     )
     monkeypatch.setattr("fesium.app.bootstrap.OverviewView", lambda *args, **kwargs: None)
     monkeypatch.setattr("fesium.app.bootstrap.ServerView", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        "fesium.app.bootstrap.summarize_php_environment",
+        lambda: SimpleNamespace(php_available=False, php_version="", summary="PHP not found in PATH"),
+    )
 
     shell = FakeShell()
     config = SimpleNamespace(port=8000)
@@ -96,3 +110,6 @@ def test_replace_runtime_views_rebuilds_database_view_for_current_project(
     assert database_view["read_only"] is False
     assert database_view["source"] == "manual"
     assert database_view["project_database_available"] is True
+    assert database_view["tables"] == ()
+    assert database_view["selected_table"] == ""
+    assert "guide" in shell.factories

@@ -1,7 +1,5 @@
 # Fesium Server Flow Implementation Plan
 
-> **For Claude:** Use `${SUPERPOWERS_SKILLS_ROOT}/skills/collaboration/executing-plans/SKILL.md` to implement this plan task-by-task.
-
 **Goal:** Restore the first real interactive server workflow inside the new `Fesium` shell: project selection, automatic runtime detection, `Start` / `Stop` / `Restart` / `Open in Browser`, and a real server log panel.
 
 **Architecture:** Keep the UI view layer thin and move the new interaction logic into a dedicated controller plus small core helpers. Because the repository currently has `src/fesium/app.py` as a single module, first convert that module into an `src/fesium/app/` package so `controller.py` can exist cleanly under it. The milestone uses `PHPServer` when PHP exists and a new static fallback server when it does not.
@@ -14,7 +12,7 @@
 
 Read these before starting implementation:
 
-- `docs/superpowers/specs/2026-04-19-fesium-server-flow-design.md`
+- `docs/specs/2026-04-19-fesium-server-flow-design.md`
 - `src/fesium/app.py`
 - `src/fesium/core/project_detection.py`
 - `src/fesium/core/server.py`

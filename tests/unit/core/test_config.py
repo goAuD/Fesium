@@ -28,3 +28,9 @@ def test_config_prefers_legacy_directory_when_migrating(tmp_path):
         legacy_config_dir=paths.legacy_config_dir,
     )
     assert config.port == 8123
+
+
+def test_config_uses_updated_shell_geometry_by_default(tmp_path):
+    config = Config(config_dir=tmp_path / ".fesium")
+
+    assert config.get("window_geometry") == "1400x960"

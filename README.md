@@ -17,9 +17,12 @@ The repository is currently in a structured migration. The new `src/fesium/` pac
 - local project selection from the desktop app
 - Laravel-aware and standard project detection
 - PHP-backed local serving when PHP is available
+- static local hosting for plain HTML, CSS, and JavaScript projects
 - static local serving fallback when PHP is unavailable
 - opening the running local site in the default browser
 - SQLite inspection and raw SQL execution with read-only defaults
+- lightweight SQLite schema browsing and table preview
+- an in-app guide for students and first-time users
 - offline-first desktop usage
 - a cleaner public-repo structure for ongoing iteration
 
@@ -42,8 +45,11 @@ The `Fesium` migration is in progress. Right now the repository includes:
 - sidebar navigation and the first real views
 - a larger default desktop shell with improved baseline readability
 - responsive `Server` controls with a visible log panel at the default window size
-- scroll-safe `Server`, `Database`, `Environment`, and `Settings` views
-- refined inset panel surfaces for operational panels and logs
+- scroll-safe `Server`, `Database`, `Diagnostics`, `Guide`, and `Settings` views
+- consistent bordered panel surfaces for operational panels and logs
+- a recent-activity overview, clearer diagnostics, and an honest settings placeholder
+- a student-facing `Guide` page that frames static and PHP hosting as valid Fesium workflows
+- a focused SQLite schema browser with table list, column inspect, and quick preview queries
 - root launchers for both the new `fesium.py` path and the temporary `nanoserver.py` compatibility shim
 
 The old flat runtime modules have been removed. The only legacy bridge left at the repo root is `nanoserver.py`, which now forwards into the `Fesium` package for compatibility.
@@ -69,68 +75,33 @@ From the `Database` view, `Fesium` can:
 - use a project-detected SQLite database when one is available
 - let you manually select a `.sqlite`, `.db`, or `.db3` file
 - reset back to the detected project database
+- browse detected tables in the active SQLite file
+- inspect column names, types, nullability, and primary-key flags
+- generate a quick `SELECT * LIMIT 100` preview for the selected table
 - run one SQL statement at a time
 - keep `Read-only` mode enabled by default on every launch
 - require confirmation before destructive queries run in write mode
 
-The first milestone is intentionally SQLite-only and text-first. It does not try to be a full schema browser yet.
+The database tooling is still intentionally SQLite-only and lightweight. It now includes a focused schema browser, but it does not try to be a full database IDE.
 
-## Overview
+## Current UI Preview
+
+The current preview asset shows the live `Server` workspace inside the Graphite Grid shell.
 
 ![Fesium Overview screenshot](docs/assets/screenshots/fesium-overview.png)
 
-## Requirements
-
-- Python 3.8+
-- PHP on your system `PATH` for PHP-backed serving
-
-Check PHP availability:
-
-```bash
-php -v
-```
-
-## Installation
+## Quickstart
 
 ```bash
 git clone https://github.com/goAuD/Fesium.git
 cd Fesium
 python -m pip install -r requirements.txt
-```
-
-## Running the App
-
-Primary launcher:
-
-```bash
 python fesium.py
 ```
 
-Temporary compatibility launcher:
+Requires Python 3.8+. PHP on your `PATH` is optional — Fesium falls back to a built-in static server when PHP is unavailable.
 
-```bash
-python nanoserver.py
-```
-
-## Development
-
-Install development dependencies:
-
-```bash
-python -m pip install -r requirements.txt
-```
-
-Run tests:
-
-```bash
-python -m pytest tests/unit -v
-```
-
-Run the full test suite:
-
-```bash
-python -m pytest -v
-```
+Full install, launcher, and test instructions live in [docs/dev/setup.md](docs/dev/setup.md) and [docs/dev/testing.md](docs/dev/testing.md).
 
 ## Project Layout
 
@@ -154,7 +125,7 @@ The project started as `NanoServer`, built as a free alternative for school envi
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, test commands, and repo conventions.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the contributor entry point, and [docs/](docs/) for the full documentation tree (setup, testing, conventions, specs, plans, decisions, release notes).
 
 ## License
 

@@ -1,7 +1,5 @@
 # Fesium Shell Density Implementation Plan
 
-> **For Claude:** Use `${SUPERPOWERS_SKILLS_ROOT}/skills/collaboration/executing-plans/SKILL.md` to implement this plan task-by-task.
-
 **Goal:** Improve the default desktop usability of the current `Fesium` shell through a moderate window-size bump, larger baseline typography, scroll-safe content bodies, responsive `Server` controls, and inset-style panel surfaces.
 
 **Architecture:** Keep this milestone inside the existing UI layer. The shell remains a thin frame, `PanelCard` becomes the reusable depth primitive, and a small scroll-body widget is introduced so `Server`, `Database`, `Environment`, and `Settings` do not each invent their own scroll behavior. `Overview` stays status-first and should not be turned into an operational surface.
@@ -14,7 +12,7 @@
 
 Read these before starting implementation:
 
-- `docs/superpowers/specs/2026-04-19-fesium-shell-density-design.md`
+- `docs/specs/2026-04-19-fesium-shell-density-design.md`
 - `src/fesium/ui/shell.py`
 - `src/fesium/ui/theme/tokens.py`
 - `src/fesium/ui/widgets/panel_card.py`

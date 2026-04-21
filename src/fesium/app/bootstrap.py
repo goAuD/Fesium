@@ -10,19 +10,29 @@ from fesium.core.config import Config
 from fesium.core.environment import summarize_php_environment
 from fesium.core.paths import AppPaths
 from fesium.core.security import classify_query_risk, validate_single_sql_statement
-from fesium.ui.shell import FesiumShell
+from fesium.ui.shell import DEFAULT_WINDOW_GEOMETRY, FesiumShell
 from fesium.ui.views.database_view import DatabaseView
 from fesium.ui.views.environment_view import EnvironmentView
+from fesium.ui.views.guide_view import GuideView
 from fesium.ui.views.overview_view import OverviewView
 from fesium.ui.views.server_view import ServerView
 from fesium.ui.views.settings_view import SettingsView
 
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
 logger = logging.getLogger(__name__)
+
+
+def _configure_logging() -> None:
+    """Install the default console log handler.
+
+    Kept out of module scope so importing :mod:`fesium.app.bootstrap` (for
+    tests or for other entrypoints) does not mutate root-logger configuration
+    as a side effect. :func:`main` calls it once at startup.
+    """
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
 
 
 @dataclass(frozen=True)
@@ -46,9 +56,16 @@ def build_default_paths(home_dir: Path = None) -> AppPaths:
 
 
 def build_app_context(cwd: Path, config_data: Dict[str, str]) -> AppContext:
-    project_root = Path(config_data.get("last_project") or cwd).resolve()
+    configured_root = Path(config_data.get("last_project") or cwd).resolve()
+    project_root = configured_root if configured_root.exists() and configured_root.is_dir() else cwd.resolve()
     active_view = config_data.get("active_view", "overview")
     return AppContext(project_root=project_root, active_view=active_view)
+
+
+def resolve_window_geometry(window_geometry: str | None) -> str:
+    if not window_geometry or window_geometry == "1280x860":
+        return DEFAULT_WINDOW_GEOMETRY
+    return window_geometry
 
 
 def _build_metadata() -> AppMetadata:
@@ -72,9 +89,12 @@ def _replace_runtime_views(
     select_database_action,
     reset_project_database_action,
     toggle_database_read_only_action,
-    run_sql_action,
+    select_database_table_action=None,
+    preview_database_table_action=None,
+    run_sql_action=None,
 ) -> None:
     state = controller.state
+    environment_status = summarize_php_environment()
 
     shell.replace_view(
         "overview",
@@ -85,6 +105,7 @@ def _replace_runtime_views(
             php_summary=state.php_summary,
             server_status=state.server_status,
             local_url=state.local_url,
+            log_lines=state.log_lines,
         ),
     )
     shell.replace_view(
@@ -118,15 +139,39 @@ def _replace_runtime_views(
             last_query=state.database_last_query,
             last_result=state.database_last_result,
             last_error=state.database_last_error,
+            tables=getattr(state, "database_tables", ()),
+            selected_table=getattr(state, "database_selected_table", ""),
+            selected_table_info=getattr(state, "database_selected_table_info", ()),
             on_select_database=select_database_action,
             on_reset_project_database=reset_project_database_action,
             on_toggle_read_only=toggle_database_read_only_action,
+            on_select_table=select_database_table_action,
+            on_preview_table=preview_database_table_action,
             on_run_sql=run_sql_action,
         ),
+    )
+    shell.replace_view(
+        "environment",
+        lambda parent: EnvironmentView(
+            parent,
+            status=environment_status,
+            project_root=state.project_root,
+            project_kind=state.project_kind,
+            document_root=state.document_root,
+        ),
+    )
+    shell.replace_view(
+        "guide",
+        lambda parent: GuideView(parent),
+    )
+    shell.replace_view(
+        "settings",
+        lambda parent: SettingsView(parent, config_data=config.snapshot()),
     )
 
 
 def main() -> None:
+    _configure_logging()
     metadata = _build_metadata()
     paths = build_default_paths()
     cwd = Path.cwd()
@@ -134,15 +179,14 @@ def main() -> None:
         config_dir=paths.config_dir,
         legacy_config_dir=paths.legacy_config_dir,
     )
-    context = build_app_context(cwd, config._data)
+    context = build_app_context(cwd, config.snapshot())
     controller = FesiumController(config=config, cwd=cwd)
     startup_project = context.project_root if context.project_root else cwd
     controller.select_project(startup_project)
-    environment_status = summarize_php_environment()
 
     shell = FesiumShell()
     shell.title(build_window_title(__version__))
-    shell.geometry(config.get("window_geometry", "1280x860"))
+    shell.geometry(resolve_window_geometry(config.get("window_geometry")))
 
     def refresh_runtime_views() -> None:
         _replace_runtime_views(
@@ -158,6 +202,8 @@ def main() -> None:
             select_database_action=select_database_action,
             reset_project_database_action=reset_project_database_action,
             toggle_database_read_only_action=toggle_database_read_only_action,
+            select_database_table_action=select_database_table_action,
+            preview_database_table_action=preview_database_table_action,
             run_sql_action=run_sql_action,
         )
 
@@ -211,6 +257,14 @@ def main() -> None:
         controller.set_database_read_only(enabled)
         refresh_runtime_views()
 
+    def select_database_table_action(table_name: str) -> None:
+        controller.select_database_table(table_name)
+        refresh_runtime_views()
+
+    def preview_database_table_action() -> None:
+        controller.preview_database_table()
+        refresh_runtime_views()
+
     def run_sql_action(query: str) -> None:
         is_single_statement, _ = validate_single_sql_statement(query)
         if is_single_statement and not controller.state.database_read_only:
@@ -227,14 +281,6 @@ def main() -> None:
         refresh_runtime_views()
 
     refresh_runtime_views()
-    shell.register_view(
-        "environment",
-        lambda parent: EnvironmentView(parent, status=environment_status),
-    )
-    shell.register_view(
-        "settings",
-        lambda parent: SettingsView(parent, config_data=config._data),
-    )
     requested_view = context.active_view if context.active_view in shell._view_factories else "overview"
     shell.set_active_view(requested_view)
 

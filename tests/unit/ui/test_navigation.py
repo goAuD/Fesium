@@ -8,5 +8,8 @@ def test_navigation_matches_design_spec():
         "server",
         "database",
         "environment",
+        "guide",
         "settings",
     ]
+    assert items[3].label == "Diagnostics"
+    assert items[4].label == "Guide"

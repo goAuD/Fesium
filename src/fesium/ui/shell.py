@@ -3,7 +3,12 @@ from typing import Callable, Dict
 import customtkinter as ctk
 
 from fesium.ui.navigation import build_navigation_items
-from fesium.ui.theme.styles import apply_graphite_grid_theme, get_color_token, get_font_token
+from fesium.ui.theme.styles import (
+    apply_graphite_grid_theme,
+    get_button_style,
+    get_color_token,
+    get_font_token,
+)
 from fesium.ui.theme.window_icon import apply_window_icon
 
 DEFAULT_WINDOW_GEOMETRY = "1400x960"
@@ -25,6 +30,7 @@ class FesiumShell(ctk.CTk):
 
         self._view_factories: Dict[str, Callable[[ctk.CTkFrame], ctk.CTkBaseClass]] = {}
         self._view_instances: Dict[str, ctk.CTkBaseClass] = {}
+        self._navigation_buttons: Dict[str, ctk.CTkButton] = {}
         self.active_view_id = None
 
         self.grid_columnconfigure(1, weight=1)
@@ -77,14 +83,11 @@ class FesiumShell(ctk.CTk):
                 text=item.label,
                 anchor="w",
                 width=192,
-                height=40,
-                corner_radius=12,
-                fg_color=get_color_token("bg.panel"),
-                hover_color=get_color_token("bg.panel_alt"),
-                text_color=get_color_token("text.primary"),
+                **get_button_style("nav"),
                 command=lambda view_id=item.id: self.set_active_view(view_id),
             )
             button.pack(anchor="w", padx=24, pady=6)
+            self._navigation_buttons[item.id] = button
 
     def register_view(self, view_id: str, factory: Callable[[ctk.CTkFrame], ctk.CTkBaseClass]) -> None:
         self._view_factories[view_id] = factory
@@ -118,3 +121,8 @@ class FesiumShell(ctk.CTk):
         next_view = self._view_instances[view_id]
         next_view.grid(row=0, column=0, sticky="nsew", padx=24, pady=24)
         self.active_view_id = view_id
+        self._update_navigation_state()
+
+    def _update_navigation_state(self) -> None:
+        for view_id, button in self._navigation_buttons.items():
+            button.configure(**get_button_style("nav", active=view_id == self.active_view_id))

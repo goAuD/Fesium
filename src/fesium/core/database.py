@@ -12,6 +12,7 @@ from contextlib import contextmanager
 from typing import Any, List, Optional, Tuple
 
 from fesium.core.config import trace_execution
+from fesium.core.security import classify_query_risk, strip_sql_leading_noise
 
 
 logger = logging.getLogger(__name__)
@@ -20,24 +21,20 @@ logger = logging.getLogger(__name__)
 def is_read_query(query: str) -> bool:
     """
     Safely detect if query is read-only.
-    Handles injection tricks like ';;;SELECT * FROM users;'
+    Handles injection tricks like ';;;SELECT * FROM users;' and leading
+    comments that would otherwise mask the real first keyword.
     """
-    cleaned = query.lstrip("; \t\n")
-
-    while cleaned.startswith("--") or cleaned.startswith("/*"):
-        if cleaned.startswith("--"):
-            newline = cleaned.find("\n")
-            cleaned = cleaned[newline + 1 :] if newline != -1 else ""
-        elif cleaned.startswith("/*"):
-            end = cleaned.find("*/")
-            cleaned = cleaned[end + 2 :] if end != -1 else ""
-        cleaned = cleaned.lstrip("; \t\n")
-
-    if not cleaned:
+    body = strip_sql_leading_noise(query)
+    if not body:
         return True
 
-    first_word = cleaned.split()[0].upper() if cleaned.split() else ""
+    first_word = body.split()[0].upper() if body.split() else ""
     read_only_keywords = {"SELECT", "PRAGMA", "EXPLAIN", "WITH"}
+
+    if first_word == "WITH" and classify_query_risk(query).requires_confirmation:
+        # WITH CTE that contains a destructive body — not read-only.
+        return False
+
     return first_word in read_only_keywords
 
 
@@ -47,6 +44,15 @@ TABLE_NAME_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 def validate_table_name(table_name: str) -> bool:
     """Validate that a table name is safe to use in SQL."""
     return bool(TABLE_NAME_PATTERN.match(table_name))
+
+
+def build_table_preview_query(table_name: str, *, limit: int = 100) -> str:
+    """Build a safe preview query for a known SQLite table."""
+    if not validate_table_name(table_name):
+        raise ValueError(f"Invalid table name: {table_name}")
+
+    resolved_limit = max(1, int(limit))
+    return f"SELECT * FROM {table_name} LIMIT {resolved_limit}"
 
 
 class DatabaseManager:
