@@ -66,6 +66,8 @@ Not planned when this section was written, but it is what the release turned out
 
 ### MySQL Support
 
+Fesium detects that a project wants MySQL and reports whether it is reachable. What it does not do is run one - and it is worth being clear that these are different jobs. Bundling a database server is what Laragon did; matching that is a much larger commitment than a connection option.
+
 - [ ] MySQL / MariaDB connection option
 - [ ] phpMyAdmin-style query interface
 - [ ] Connection string configuration

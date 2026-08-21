@@ -1,6 +1,9 @@
 import customtkinter as ctk
 
+from fesium.core.project_database import DatabaseReadiness, describe_database_readiness
+from fesium.ui.theme.styles import get_color_token, get_font_token
 from fesium.ui.widgets.bento import BentoGrid
+from fesium.ui.widgets.body_text import BodyText
 from fesium.ui.widgets.meta_list import MetaList
 from fesium.ui.widgets.tile import Tile
 from fesium.ui.widgets.view_header import HEADER_GAP, ViewHeader
@@ -55,7 +58,16 @@ def split_environment_rows(rows) -> tuple[list, list]:
 class EnvironmentView(ctk.CTkFrame):
     """Environment diagnostics: is the runtime ready, is the workspace ready."""
 
-    def __init__(self, master, status, *, project_root=None, project_kind: str = "", document_root=None):
+    def __init__(
+        self,
+        master,
+        status,
+        *,
+        project_root=None,
+        project_kind: str = "",
+        document_root=None,
+        database_readiness: DatabaseReadiness | None = None,
+    ):
         super().__init__(master, fg_color="transparent")
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
@@ -81,7 +93,7 @@ class EnvironmentView(ctk.CTkFrame):
         grid = BentoGrid(self)
         grid.grid(row=1, column=0, sticky="nsew")
 
-        runtime = Tile(grid, "PHP Runtime", meta=status.php_version or "not detected")
+        runtime = Tile(grid, "PHP Runtime", meta="detected" if status.php_available else "not detected")
         MetaList(runtime.body, tuple((row["label"], row["value"]) for row in runtime_rows)).grid(
             row=0, column=0, sticky="new"
         )
@@ -92,3 +104,29 @@ class EnvironmentView(ctk.CTkFrame):
             row=0, column=0, sticky="new"
         )
         grid.place_tile(workspace, row=0, column=6, span=6, row_weight=1)
+
+        grid.place_tile(self._build_database_tile(grid, database_readiness), row=1, column=0, span=12)
+
+    def _build_database_tile(self, parent, database_readiness):
+        """What the project's own config asks for, and whether it is there.
+
+        Fesium serves PHP but runs no database server, so a project pointed at
+        MySQL starts and then fails on its first query. This is the warning
+        that used to arrive as a framework stack trace.
+        """
+        readiness = database_readiness or DatabaseReadiness(requirement=None, reachable=None)
+        described = describe_database_readiness(readiness)
+
+        tile = Tile(parent, "Project Database", meta=described["meta"], meta_tone=described["tone"])
+        label = ctk.CTkLabel(
+            tile.body,
+            text=described["label"],
+            text_color=get_color_token(described["tone"]),
+            font=get_font_token("body_medium"),
+            anchor="w",
+        )
+        label.grid(row=0, column=0, sticky="w")
+
+        detail = BodyText(tile.body, described["detail"], tone="text.secondary")
+        detail.grid(row=1, column=0, sticky="ew", pady=(4, 0))
+        return tile

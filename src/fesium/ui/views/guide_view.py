@@ -41,6 +41,15 @@ def build_guide_sections() -> tuple[dict[str, str], ...]:
             ),
         },
         {
+            "title": "Databases Are Yours To Run",
+            "body": (
+                "Fesium serves your site; it does not run a database server. A Laravel "
+                "project pointed at MySQL needs MySQL running separately, or every query "
+                "fails with a connection error. Diagnostics reads your .env and tells you "
+                "before you open the site. SQLite needs nothing - it is just a file."
+            ),
+        },
+        {
             "title": "Safety Defaults",
             "body": (
                 "SQLite starts in read-only mode, destructive queries ask for "
@@ -51,14 +60,15 @@ def build_guide_sections() -> tuple[dict[str, str], ...]:
     )
 
 
-# The opening section is the thesis, so it runs full width; the four that
-# follow are peers and pair off.
+# The opening section is the thesis, so it runs full width. The rest are peers:
+# a pair, then a row of three.
 GUIDE_LAYOUT = (
     {"row": 0, "column": 0, "span": 12, "row_weight": 2},
     {"row": 1, "column": 0, "span": 6, "row_weight": 3},
     {"row": 1, "column": 6, "span": 6, "row_weight": 3},
-    {"row": 2, "column": 0, "span": 6, "row_weight": 3},
-    {"row": 2, "column": 6, "span": 6, "row_weight": 3},
+    {"row": 2, "column": 0, "span": 4, "row_weight": 3},
+    {"row": 2, "column": 4, "span": 4, "row_weight": 3},
+    {"row": 2, "column": 8, "span": 4, "row_weight": 3},
 )
 
 
