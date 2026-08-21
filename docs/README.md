@@ -23,10 +23,10 @@ docs/
 
 ## How the Plan/Spec/ADR Split Works
 
-- `specs/` — design intent for a feature before it is built. Dated by the day the design was approved.
-- `plans/` — the step-by-step implementation plan derived from a spec. Also dated.
-- `decisions/` — short, durable ADRs for architectural choices that outlive a single feature (numbered).
-- `release/` — user-facing summary of what shipped in each tagged version.
+- `specs/` - design intent for a feature before it is built. Dated by the day the design was approved.
+- `plans/` - the step-by-step implementation plan derived from a spec. Also dated.
+- `decisions/` - short, durable ADRs for architectural choices that outlive a single feature (numbered).
+- `release/` - user-facing summary of what shipped in each tagged version.
 
 Plans and specs are **frozen historical records**. If a design changes after it was written, the change is captured in a newer spec or an ADR, not by rewriting the old file.
 

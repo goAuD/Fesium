@@ -1,8 +1,6 @@
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Tuple, Union
-
 
 DESTRUCTIVE_KEYWORDS = ("DROP", "DELETE", "TRUNCATE", "ALTER", "UPDATE", "INSERT", "REPLACE")
 
@@ -45,7 +43,7 @@ def classify_query_risk(query: str) -> QueryRisk:
     requires_confirmation = first_word in DESTRUCTIVE_KEYWORDS
 
     if first_word == "WITH" and _DESTRUCTIVE_IN_BODY.search(body):
-        # WITH ... UPDATE/DELETE/INSERT CTE — treat as destructive.
+        # WITH ... UPDATE/DELETE/INSERT CTE - treat as destructive.
         requires_confirmation = True
 
     return QueryRisk(
@@ -67,7 +65,7 @@ def validate_single_sql_statement(query: str) -> tuple[bool, str]:
     return True, ""
 
 
-def normalize_existing_directory(pathlike) -> Tuple[bool, Union[str, Path]]:
+def normalize_existing_directory(pathlike) -> tuple[bool, str | Path]:
     candidate = Path(pathlike).expanduser().resolve()
     if not candidate.exists():
         return False, f"Path does not exist: {candidate}"

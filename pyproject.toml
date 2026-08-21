@@ -4,14 +4,35 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fesium"
-version = "2.0.0"
+dynamic = ["version"]
 description = "Local dev tools for students and developers"
 readme = "README.md"
-requires-python = ">=3.8"
+# 3.10 is the real floor: PEP 604 annotations (`Path | None`) are built at
+# import time, and type.__or__ only exists from 3.10 on.
+requires-python = ">=3.10"
 license = {text = "Apache-2.0"}
 dependencies = [
   "customtkinter>=5.0.0",
 ]
+
+[project.scripts]
+fesium = "fesium.app:main"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+# E/W pycodestyle, F pyflakes, I import order, UP pyupgrade, B bugbear,
+# C4 comprehensions. UP is worth having now that the floor is 3.10: it keeps
+# the annotations in one style instead of a mix of typing.Dict and dict.
+select = ["E", "F", "W", "I", "UP", "B", "C4"]
+
+[tool.ruff.lint.per-file-ignores]
+# Both files put sys.path in order before importing the package, which is the
+# whole reason they exist.
+"fesium.py" = ["E402"]
+"scripts/*" = ["E402"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -19,5 +40,18 @@ testpaths = ["tests"]
 [tool.setuptools]
 package-dir = {"" = "src"}
 
+# The version lives in src/fesium/_version.py so the package and the package
+# metadata can never drift apart.
+[tool.setuptools.dynamic]
+version = {attr = "fesium._version.__version__"}
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+# Fesium is offline-first: the fonts and icons it renders with are bundled, so
+# they have to travel with the package. Font licences ship alongside the fonts,
+# as the OFL requires. `icons/` has no __init__.py, so it is declared as data
+# of its parent package.
+[tool.setuptools.package-data]
+"fesium.assets" = ["icons/*.png", "icons/*.ico"]
+"fesium.assets.fonts" = ["*.ttf", "*.md", "licenses/*.txt"]

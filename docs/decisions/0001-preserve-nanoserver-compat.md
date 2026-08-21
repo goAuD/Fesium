@@ -1,8 +1,8 @@
-# ADR 0001 — Preserve NanoServer Compatibility During Fesium Migration
+# ADR 0001 - Preserve NanoServer Compatibility During Fesium Migration
 
 - Status: Accepted
 - Date: 2026-04-19
-- Superseded by: —
+- Superseded by: -
 
 ## Context
 
@@ -23,7 +23,7 @@ During the v2.x line, Fesium preserves two explicit compatibility surfaces:
 
 ## Consequences
 
-- New users should never see `.nanoserver/` created. The legacy directory is read-only from Fesium's perspective — we never write there.
+- New users should never see `.nanoserver/` created. The legacy directory is read-only from Fesium's perspective - we never write there.
 - The shim and the legacy fallback will be removed in the next major release (v3.0.0). This ADR does not commit to a date, but the intent is to scope the compat window to the v2.x line.
 - Until removal, tests must cover the legacy read-path so it does not silently break.
 - Docs (README, CONTRIBUTING, release notes) mention `nanoserver.py` as a compatibility launcher, not as a recommended entry point.

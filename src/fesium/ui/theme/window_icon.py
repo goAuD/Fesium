@@ -2,7 +2,6 @@ import sys
 import tkinter as tk
 from pathlib import Path
 
-
 ICON_DIR = Path(__file__).resolve().parents[2] / "assets" / "icons"
 
 

@@ -31,7 +31,7 @@ When you change source code under `src/fesium/`, add or update the matching test
 - Prefer testing pure view-model functions (e.g. `build_server_view_model`, `build_database_summary`) over rendered widgets.
 - Use `tmp_path` for any filesystem interaction; never touch `~/.fesium` from a test.
 - Use `monkeypatch` to stub subprocess calls (`php -v`, server startup).
-- Do not introduce tests that require a display server, a running PHP, or network access — the GitHub Actions workflow runs headless.
+- Do not introduce tests that require a display server, a running PHP, or network access - the GitHub Actions workflow runs headless.
 
 ## CI
 

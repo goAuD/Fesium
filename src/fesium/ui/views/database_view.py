@@ -1,6 +1,8 @@
 import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_button_style, get_color_token, get_font_token
+from fesium.ui.widgets.body_text import BodyText
+from fesium.ui.widgets.button import Button
 from fesium.ui.widgets.panel_card import PanelCard
 from fesium.ui.widgets.scrollable_view_body import ScrollableViewBody
 from fesium.ui.widgets.status_badge import StatusBadge
@@ -105,8 +107,10 @@ def build_database_result_view_model(result: dict, last_error: str) -> dict[str,
         }
 
     return {
-        "title": "Results",
-        "body": "Run a query to see results",
+        # Not "Results": the panel this sits in is already titled Results, and
+        # the two stacked headings read as a rendering bug.
+        "title": "Nothing run yet",
+        "body": "Run a query, or use Preview 100 Rows, to see results here",
         "tone": "accent.primary",
     }
 
@@ -235,15 +239,8 @@ class DatabaseView(ctk.CTkFrame):
         )
         label.grid(row=1, column=0, sticky="w", padx=16, pady=(0, 8))
 
-        path_value = ctk.CTkLabel(
-            summary_content,
-            text=summary["path"],
-            text_color=get_color_token("text.secondary"),
-            font=get_font_token("body"),
-            justify="left",
-            wraplength=720,
-        )
-        path_value.grid(row=2, column=0, columnspan=2, sticky="w", padx=16, pady=(0, 16))
+        path_value = BodyText(summary_content, summary["path"], tone="text.secondary")
+        path_value.grid(row=2, column=0, columnspan=2, sticky="ew", padx=16, pady=(0, 16))
 
         actions_panel = PanelCard(body, surface_variant="inset")
         actions_panel.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(16, 0))
@@ -258,22 +255,21 @@ class DatabaseView(ctk.CTkFrame):
         )
         actions_title.grid(row=0, column=0, columnspan=2, sticky="w", padx=16, pady=(16, 12))
 
-        select_database_button = ctk.CTkButton(
+        select_database_button = Button(
             actions_content,
-            text="Select Database File",
-            **get_button_style("secondary"),
+            "Select Database File",
             command=on_select_database,
         )
-        select_database_button.grid(row=1, column=0, sticky="ew", padx=(16, 8), pady=(0, 12))
+        select_database_button.grid(row=1, column=0, sticky="w", padx=(16, 8), pady=(0, 12))
 
-        reset_database_button = ctk.CTkButton(
+        reset_database_button = Button(
             actions_content,
-            text="Reset to Project Database",
-            state="normal" if summary["can_reset"] else "disabled",
-            **get_button_style("secondary"),
+            "Reset to Project Database",
+            enabled=summary["can_reset"],
+            width=210,
             command=on_reset_project_database,
         )
-        reset_database_button.grid(row=1, column=1, sticky="ew", padx=8, pady=(0, 12))
+        reset_database_button.grid(row=1, column=1, sticky="w", padx=8, pady=(0, 12))
 
         self.read_only_switch = ctk.CTkSwitch(
             actions_content,
@@ -293,15 +289,12 @@ class DatabaseView(ctk.CTkFrame):
             self.read_only_switch.deselect()
         self.read_only_switch.grid(row=2, column=0, columnspan=2, sticky="w", padx=16, pady=(0, 4))
 
-        read_only_hint = ctk.CTkLabel(
+        read_only_hint = BodyText(
             actions_content,
-            text="Session-scoped. Re-enabled on every launch; write mode lasts only for the current session.",
-            text_color=get_color_token("text.secondary"),
-            font=get_font_token("body"),
-            justify="left",
-            wraplength=720,
+            "Session-scoped. Re-enabled on every launch; write mode lasts only for the current session.",
+            tone="text.secondary",
         )
-        read_only_hint.grid(row=3, column=0, columnspan=2, sticky="w", padx=16, pady=(0, 16))
+        read_only_hint.grid(row=3, column=0, columnspan=2, sticky="ew", padx=16, pady=(0, 16))
 
         tables_panel = PanelCard(body, surface_variant="inset")
         tables_panel.grid(row=2, column=0, sticky="nsew", pady=(16, 0), padx=(0, 8))
@@ -336,26 +329,24 @@ class DatabaseView(ctk.CTkFrame):
             table_list.grid_columnconfigure(0, weight=1)
 
             for row_index, table_entry in enumerate(schema_model["tables"]):
-                button = ctk.CTkButton(
+                button = Button(
                     table_list,
-                    text=table_entry["name"],
+                    table_entry["name"],
+                    variant="nav",
+                    active=table_entry["active"],
                     anchor="w",
-                    **get_button_style("nav", active=table_entry["active"]),
                     command=lambda table_name=table_entry["name"]: on_select_table(table_name)
                     if on_select_table
                     else None,
                 )
                 button.grid(row=row_index, column=0, sticky="ew", padx=4, pady=4)
         else:
-            empty_tables = ctk.CTkLabel(
+            empty_tables = BodyText(
                 tables_content,
-                text="The active database does not expose any browseable tables yet.",
-                text_color=get_color_token("text.secondary"),
-                font=get_font_token("body"),
-                justify="left",
-                wraplength=240,
+                "The active database does not expose any browseable tables yet.",
+                tone="text.secondary",
             )
-            empty_tables.grid(row=2, column=0, sticky="w", padx=16, pady=(0, 16))
+            empty_tables.grid(row=2, column=0, sticky="ew", padx=16, pady=(0, 16))
 
         schema_panel = PanelCard(body, surface_variant="inset")
         schema_panel.grid(row=2, column=1, sticky="nsew", pady=(16, 0), padx=(8, 0))
@@ -380,7 +371,11 @@ class DatabaseView(ctk.CTkFrame):
 
         schema_meta = ctk.CTkLabel(
             schema_content,
-            text=f"{schema_model['column_count']} columns" if schema_model["preview_enabled"] else "Select a table from the list",
+            text=(
+                f"{schema_model['column_count']} columns"
+                if schema_model["preview_enabled"]
+                else "Select a table from the list"
+            ),
             text_color=get_color_token("text.secondary"),
             font=get_font_token("body"),
         )
@@ -397,11 +392,10 @@ class DatabaseView(ctk.CTkFrame):
         self.schema_textbox.insert("1.0", schema_model["body"])
         self.schema_textbox.configure(state="disabled")
 
-        preview_button = ctk.CTkButton(
+        preview_button = Button(
             schema_content,
-            text="Preview 100 Rows",
-            state="normal" if schema_model["preview_enabled"] else "disabled",
-            **get_button_style("secondary"),
+            "Preview 100 Rows",
+            enabled=schema_model["preview_enabled"],
             command=on_preview_table,
         )
         preview_button.grid(row=4, column=0, sticky="e", padx=16, pady=(0, 16))
@@ -419,15 +413,12 @@ class DatabaseView(ctk.CTkFrame):
         )
         editor_label.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 12))
 
-        editor_hint = ctk.CTkLabel(
+        editor_hint = BodyText(
             editor_content,
-            text="Start with SELECT * FROM users; or use Preview 100 Rows above for a quick table sample.",
-            text_color=get_color_token("text.secondary"),
-            font=get_font_token("body"),
-            justify="left",
-            wraplength=820,
+            "Start with SELECT * FROM users; or use Preview 100 Rows above for a quick table sample.",
+            tone="text.secondary",
         )
-        editor_hint.grid(row=1, column=0, sticky="w", padx=16, pady=(0, 12))
+        editor_hint.grid(row=1, column=0, sticky="ew", padx=16, pady=(0, 12))
 
         self.query_textbox = ctk.CTkTextbox(
             editor_content,

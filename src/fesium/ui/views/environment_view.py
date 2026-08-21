@@ -1,6 +1,7 @@
 import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_font_token
+from fesium.ui.widgets.body_text import BodyText
 from fesium.ui.widgets.panel_card import PanelCard
 from fesium.ui.widgets.scrollable_view_body import ScrollableViewBody
 
@@ -21,7 +22,10 @@ def build_environment_rows(
         validation_message = "Select a project folder to evaluate runtime readiness."
         project_summary = "No project selected"
     elif not status.php_available and project_kind == "laravel":
-        validation_message = "PHP is missing. Laravel can only use the reduced static fallback for the public directory."
+        validation_message = (
+            "PHP is missing. Laravel can only use the reduced static fallback "
+            "for the public directory."
+        )
         project_summary = f"{project_kind.title()} project at {project_root}"
     elif not status.php_available:
         validation_message = "PHP is missing. Fesium will use the static fallback for standard sites."
@@ -101,18 +105,11 @@ class EnvironmentView(ctk.CTkFrame):
                 )
                 label.grid(row=row_index * 2 - 1, column=0, sticky="w", padx=16, pady=(8, 4))
 
-                value = ctk.CTkLabel(
-                    panel_content,
-                    text=row["value"],
-                    text_color=get_color_token("text.secondary"),
-                    font=get_font_token("body"),
-                    justify="left",
-                    wraplength=820,
-                )
+                value = BodyText(panel_content, row["value"], tone="text.secondary")
                 value.grid(
                     row=row_index * 2,
                     column=0,
-                    sticky="w",
+                    sticky="ew",
                     padx=16,
                     pady=(0, 4 if row_index < len(section_rows) else 16),
                 )

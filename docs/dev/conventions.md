@@ -2,25 +2,26 @@
 
 ## Code Organization
 
-- `src/fesium/core/` — server, database, config, environment, path, detection, and security logic (framework-free)
-- `src/fesium/app/` — application bootstrap and controller
-- `src/fesium/ui/` — navigation, shell, views, widgets, and theme
-- `src/fesium/assets/` — bundled offline assets (fonts, icons)
-- `tests/unit/` — unit coverage that mirrors the source layout
+- `src/fesium/core/` - server, database, config, environment, path, detection, preference, and security logic (framework-free)
+- `src/fesium/app/` - application bootstrap and controller
+- `src/fesium/ui/` - navigation, shell, views, widgets, and theme
+- `src/fesium/assets/` - bundled offline assets (fonts, icons)
+- `tests/unit/` - unit coverage that mirrors the source layout
 
 ### Guardrails
 
 - No new flat root-level runtime modules. Everything runtime-facing lives under `src/fesium/`.
 - Keep `app.py`-style god files out. Prefer small focused modules.
 - `core/` never imports from `ui/`.
-- Root launchers (`fesium.py`, `nanoserver.py`) stay thin — they only start the app.
+- Root launchers (`fesium.py`, `nanoserver.py`) stay thin - they only start the app.
 
 ## Design
 
 - Follow the approved **Graphite Grid** direction: dark graphite shell, restrained matte accent, and clear panel hierarchy.
 - Prefer muted/matte accents over bright neon for dev-tool UIs.
 - Buttons must use the right variant: `primary` for the main call-to-action, `secondary` for supporting actions, `danger` for destructive ones. Never use the same variant for every control in a view.
-- Badges must be visually subordinate to the buttons they sit next to — equal or smaller in height, with balanced horizontal padding.
+- Paragraph text uses `BodyText` from `ui/widgets/`. Never hardcode `wraplength` in a view: a constant pixel wrap is only correct at one window size and clips the text at every smaller one. Grid paragraphs with `sticky="ew"` so the cell drives the width.
+- Badges must be visually subordinate to the buttons they sit next to - equal or smaller in height, with balanced horizontal padding.
 - Bundle fonts in-repo only. Do not load fonts or other runtime assets from the network.
 - Preserve offline-first behavior. The app must remain useful without internet access.
 

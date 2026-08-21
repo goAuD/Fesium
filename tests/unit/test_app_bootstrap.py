@@ -1,4 +1,3 @@
-from pathlib import Path
 from types import SimpleNamespace
 
 from fesium.app import build_app_context, build_default_paths, main
@@ -44,7 +43,6 @@ def test_build_app_context_falls_back_to_cwd_when_last_project_is_missing(tmp_pa
 def test_replace_runtime_views_rebuilds_database_view_for_current_project(
     tmp_path, monkeypatch
 ):
-    startup_project = (tmp_path / "startup").resolve()
     current_project = (tmp_path / "current").resolve()
 
     state = SimpleNamespace(
@@ -92,7 +90,6 @@ def test_replace_runtime_views_rebuilds_database_view_for_current_project(
         shell=shell,
         controller=controller,
         config=config,
-        fallback_project=startup_project,
         select_project_action=lambda: None,
         start_action=lambda: None,
         stop_action=lambda: None,
@@ -113,3 +110,48 @@ def test_replace_runtime_views_rebuilds_database_view_for_current_project(
     assert database_view["tables"] == ()
     assert database_view["selected_table"] == ""
     assert "guide" in shell.factories
+
+
+def test_build_app_context_skips_the_last_project_when_restore_is_off(tmp_path):
+    (tmp_path / "last").mkdir()
+    (tmp_path / "default").mkdir()
+
+    context = build_app_context(
+        cwd=tmp_path,
+        config_data={
+            "last_project": str(tmp_path / "last"),
+            "default_project": str(tmp_path / "default"),
+            "restore_last_project": False,
+        },
+    )
+
+    assert context.project_root == (tmp_path / "default").resolve()
+
+
+def test_build_app_context_uses_the_default_folder_when_nothing_was_opened_yet(tmp_path):
+    (tmp_path / "default").mkdir()
+
+    context = build_app_context(
+        cwd=tmp_path,
+        config_data={
+            "last_project": "",
+            "default_project": str(tmp_path / "default"),
+            "restore_last_project": True,
+        },
+    )
+
+    assert context.project_root == (tmp_path / "default").resolve()
+
+
+def test_build_app_context_falls_through_a_default_folder_that_has_gone_missing(tmp_path):
+    """A folder can be moved or deleted between launches. That is not fatal."""
+    context = build_app_context(
+        cwd=tmp_path,
+        config_data={
+            "last_project": str(tmp_path / "gone"),
+            "default_project": str(tmp_path / "also-gone"),
+            "restore_last_project": True,
+        },
+    )
+
+    assert context.project_root == tmp_path.resolve()

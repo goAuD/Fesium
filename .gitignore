@@ -7,9 +7,6 @@ __pycache__/
 # Database
 *.sqlite
 
-# Config (user-specific)
-.nanoserver/
-
 # Internal docs
 INTERNAL_ENGINEERING_LOG.md
 
@@ -25,6 +22,7 @@ Thumbs.db
 # Environment
 .env
 venv/
+.venv/
 
 # Local workspace artifacts
 .fesium/
@@ -32,3 +30,8 @@ venv/
 # Build outputs
 build/
 dist/
+*.egg-info/
+
+# Local assistant workspaces (AGENTS.md and CLAUDE.md are tracked on purpose)
+.sam/
+.claude/

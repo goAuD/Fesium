@@ -4,6 +4,7 @@ from pathlib import Path
 def test_required_repo_files_exist():
     for relative in [
         "AGENTS.md",
+        "CLAUDE.md",
         "CONTRIBUTING.md",
         "LICENSE",
         ".editorconfig",

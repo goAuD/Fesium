@@ -6,7 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
-_No user-facing changes yet after v2.0.0. See [ROADMAP.md](ROADMAP.md) for the planned v2.1.0 focus._
+### Added
+
+- `CLAUDE.md` at the repo root, alongside `AGENTS.md`, covering the commands, the verification bar for UI work, and the traps specific to this codebase.
+- Ruff lint, configured in `pyproject.toml` and enforced by its own CI job.
+- The `Settings` view now holds real preferences instead of a placeholder: a default project folder, a reopen-last-project toggle, and the default server port. It states in one line which folder the next launch will open.
+- `python -m fesium` and a `fesium` console script, so an installed copy does not need the root launcher.
+- `secondary`, `danger`, and `danger_secondary` button variants, so destructive controls no longer look like primary actions.
+- A sub-label under the `Read-only` switch explaining that write mode is session-scoped and resets on every launch.
+- A cross-platform CI matrix (Ubuntu, Windows, macOS) replacing the single-runner workflow.
+
+### Security
+
+- CI actions are pinned to full commit SHAs instead of mutable `v4` / `v5` tags, which an action owner can silently repoint.
+- The root launcher no longer `exec()`s the package `__init__` to read the version. `fesium._version` is now the single source, read by a plain import and by setuptools.
+- Schema inspection binds the table name as a SQL parameter instead of formatting it into `PRAGMA table_info(...)`, using SQLite's `pragma_table_info()` table-valued function.
+- Destructive-query detection now sees through leading comments and `WITH ... UPDATE` CTEs, so read-only mode cannot be talked past with a comment prefix.
+
+### Changed
+
+- `requires-python` is now `>=3.10`, matching what the code actually needs. CI runs that floor so the claim stays tested.
+- Softened the accent palette to a matte tone so the shell reads calm in long sessions.
+- Status badges are sized and centered to sit subordinate to the buttons beside them.
+- The schema browser hides SQLite's internal `sqlite_*` bookkeeping tables.
+
+### Fixed
+
+- Disabled buttons are readable again. CustomTkinter only swaps the text colour on a disabled button and leaves the fill alone, so a disabled primary rendered grey text on a full-strength accent at roughly 1.05:1 contrast. Disabled buttons now change surface too, and every button pairing is held to WCAG AA by a test.
+- The `Results` panel showed its heading twice, because the empty-state view model also used "Results" as its title.
+- Installing the package no longer drops the bundled fonts and icons. They were never declared as package data, so a `pip install` produced an app without its offline assets.
+- Paragraph text no longer gets clipped at the start and end of every line. Views used fixed pixel wrap widths that were wider than the panel at any window below roughly 1400px, including the app's own 1100px minimum size. Paragraphs now wrap to the width they are actually given.
+- `detect_php()` is a single probe with a subprocess timeout. Two chained probes used to freeze the UI on a slow or hanging `php` binary.
 
 ## [2.0.0] - 2026-04-19
 

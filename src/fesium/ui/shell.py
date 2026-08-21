@@ -1,15 +1,15 @@
-from typing import Callable, Dict
+from collections.abc import Callable
 
 import customtkinter as ctk
 
 from fesium.ui.navigation import build_navigation_items
 from fesium.ui.theme.styles import (
     apply_graphite_grid_theme,
-    get_button_style,
     get_color_token,
     get_font_token,
 )
 from fesium.ui.theme.window_icon import apply_window_icon
+from fesium.ui.widgets.button import Button
 
 DEFAULT_WINDOW_GEOMETRY = "1400x960"
 MIN_WINDOW_SIZE = (1100, 760)
@@ -28,9 +28,9 @@ class FesiumShell(ctk.CTk):
         self.configure(fg_color=get_color_token("bg.app"))
         apply_window_icon(self)
 
-        self._view_factories: Dict[str, Callable[[ctk.CTkFrame], ctk.CTkBaseClass]] = {}
-        self._view_instances: Dict[str, ctk.CTkBaseClass] = {}
-        self._navigation_buttons: Dict[str, ctk.CTkButton] = {}
+        self._view_factories: dict[str, Callable[[ctk.CTkFrame], ctk.CTkBaseClass]] = {}
+        self._view_instances: dict[str, ctk.CTkBaseClass] = {}
+        self._navigation_buttons: dict[str, Button] = {}
         self.active_view_id = None
 
         self.grid_columnconfigure(1, weight=1)
@@ -78,12 +78,12 @@ class FesiumShell(ctk.CTk):
         tagline_label.pack(anchor="w", padx=24, pady=(0, 24))
 
         for item in build_navigation_items():
-            button = ctk.CTkButton(
+            button = Button(
                 self.sidebar_frame,
-                text=item.label,
+                item.label,
+                variant="nav",
                 anchor="w",
                 width=192,
-                **get_button_style("nav"),
                 command=lambda view_id=item.id: self.set_active_view(view_id),
             )
             button.pack(anchor="w", padx=24, pady=6)
@@ -125,4 +125,4 @@ class FesiumShell(ctk.CTk):
 
     def _update_navigation_state(self) -> None:
         for view_id, button in self._navigation_buttons.items():
-            button.configure(**get_button_style("nav", active=view_id == self.active_view_id))
+            button.set_active(view_id == self.active_view_id)

@@ -1,6 +1,5 @@
-from urllib.parse import urlsplit
-
 import webbrowser
+from urllib.parse import urlsplit
 
 
 def open_local_url(url: str) -> bool:

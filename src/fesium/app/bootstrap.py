@@ -2,13 +2,17 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 from tkinter import filedialog, messagebox
-from typing import Dict
 
-from fesium import __version__
+from fesium._version import __version__
 from fesium.app.controller import FesiumController
 from fesium.core.config import Config
 from fesium.core.environment import summarize_php_environment
 from fesium.core.paths import AppPaths
+from fesium.core.preferences import (
+    PreferenceResult,
+    normalize_default_project,
+    normalize_port,
+)
 from fesium.core.security import classify_query_risk, validate_single_sql_statement
 from fesium.ui.shell import DEFAULT_WINDOW_GEOMETRY, FesiumShell
 from fesium.ui.views.database_view import DatabaseView
@@ -17,7 +21,6 @@ from fesium.ui.views.guide_view import GuideView
 from fesium.ui.views.overview_view import OverviewView
 from fesium.ui.views.server_view import ServerView
 from fesium.ui.views.settings_view import SettingsView
-
 
 logger = logging.getLogger(__name__)
 
@@ -55,9 +58,27 @@ def build_default_paths(home_dir: Path = None) -> AppPaths:
     return AppPaths(home_dir=home_dir or Path.home())
 
 
-def build_app_context(cwd: Path, config_data: Dict[str, str]) -> AppContext:
-    configured_root = Path(config_data.get("last_project") or cwd).resolve()
-    project_root = configured_root if configured_root.exists() and configured_root.is_dir() else cwd.resolve()
+def build_app_context(cwd: Path, config_data: dict[str, str]) -> AppContext:
+    """Resolve the folder Fesium opens with, honouring the startup preferences.
+
+    Order: the last project (only when the user asked for it to be restored),
+    then the configured default folder, then the working directory. A folder
+    that has since been moved or deleted is skipped rather than fatal.
+    """
+    candidates = []
+    if config_data.get("restore_last_project", True):
+        candidates.append(config_data.get("last_project"))
+    candidates.append(config_data.get("default_project"))
+
+    project_root = cwd.resolve()
+    for candidate in candidates:
+        if not candidate:
+            continue
+        resolved = Path(candidate).resolve()
+        if resolved.is_dir():
+            project_root = resolved
+            break
+
     active_view = config_data.get("active_view", "overview")
     return AppContext(project_root=project_root, active_view=active_view)
 
@@ -80,7 +101,6 @@ def _replace_runtime_views(
     shell: FesiumShell,
     controller: FesiumController,
     config: Config,
-    fallback_project: Path,
     select_project_action,
     start_action,
     stop_action,
@@ -92,6 +112,7 @@ def _replace_runtime_views(
     select_database_table_action=None,
     preview_database_table_action=None,
     run_sql_action=None,
+    settings_actions=None,
 ) -> None:
     state = controller.state
     environment_status = summarize_php_environment()
@@ -166,7 +187,11 @@ def _replace_runtime_views(
     )
     shell.replace_view(
         "settings",
-        lambda parent: SettingsView(parent, config_data=config.snapshot()),
+        lambda parent: SettingsView(
+            parent,
+            config_data=config.snapshot(),
+            **(settings_actions or {}),
+        ),
     )
 
 
@@ -193,7 +218,6 @@ def main() -> None:
             shell=shell,
             controller=controller,
             config=config,
-            fallback_project=startup_project,
             select_project_action=select_project_action,
             start_action=start_action,
             stop_action=stop_action,
@@ -205,6 +229,7 @@ def main() -> None:
             select_database_table_action=select_database_table_action,
             preview_database_table_action=preview_database_table_action,
             run_sql_action=run_sql_action,
+            settings_actions=settings_actions,
         )
 
     def select_project_action() -> None:
@@ -279,6 +304,47 @@ def main() -> None:
 
         controller.run_database_query(query)
         refresh_runtime_views()
+
+    def apply_port_action(raw: str) -> PreferenceResult:
+        result = normalize_port(raw)
+        if result.ok:
+            config.port = result.value
+        return result
+
+    def select_default_project_action() -> PreferenceResult:
+        current = config.default_project
+        selected_directory = filedialog.askdirectory(
+            initialdir=current or str(controller.state.project_root or cwd),
+        )
+        if not selected_directory:
+            # Cancelled: report the value that is still stored, and say nothing.
+            return PreferenceResult(True, current, "")
+
+        result = normalize_default_project(selected_directory)
+        if result.ok:
+            config.default_project = result.value
+        return result
+
+    def clear_default_project_action() -> PreferenceResult:
+        result = normalize_default_project("")
+        config.default_project = result.value
+        return result
+
+    def toggle_restore_last_project_action(enabled: bool) -> PreferenceResult:
+        config.restore_last_project = enabled
+        message = (
+            "Fesium will reopen your last project on the next launch"
+            if enabled
+            else "Fesium will start from the default project folder"
+        )
+        return PreferenceResult(True, enabled, message)
+
+    settings_actions = {
+        "on_apply_port": apply_port_action,
+        "on_select_default_project": select_default_project_action,
+        "on_clear_default_project": clear_default_project_action,
+        "on_toggle_restore_last_project": toggle_restore_last_project_action,
+    }
 
     refresh_runtime_views()
     requested_view = context.active_view if context.active_view in shell._view_factories else "overview"

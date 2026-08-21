@@ -1,0 +1,35 @@
+# Fesium repository attributes
+#
+# Line endings: the repository always stores LF, and the working tree also
+# gets LF on every platform. This matches .editorconfig (end_of_line = lf) so
+# Windows and Unix contributors produce byte-identical diffs.
+* text=auto eol=lf
+
+# Explicit text types — better diffs and hunk headers.
+*.py            text diff=python
+*.md            text diff=markdown
+*.txt           text
+*.toml          text
+*.cfg           text
+*.json          text
+*.svg           text
+*.yml           text
+*.yaml          text
+.editorconfig   text
+.gitattributes  text
+.gitignore      text
+
+# Binary assets — never line-ending converted, never diffed as text.
+*.png           binary
+*.ico           binary
+*.ttf           binary
+*.otf           binary
+*.woff          binary
+*.woff2         binary
+*.sqlite        binary
+*.db            binary
+*.db3           binary
+
+# Keep GitHub's language breakdown honest: Fesium is a Python project.
+docs/**                     linguist-documentation
+src/fesium/assets/fonts/**  linguist-vendored

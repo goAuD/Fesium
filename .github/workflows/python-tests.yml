@@ -1,13 +1,46 @@
 name: Python Tests
 
+# Actions are pinned to full commit SHAs: a tag like `v4` can be silently
+# repointed by its owner, which is how the trivy-action and kics-github-action
+# supply-chain compromises reached their users. The trailing comment records
+# the human-readable version each SHA corresponds to.
+
 on:
+  # A PR branch pushed to this repo would otherwise trigger both events and run
+  # the whole matrix twice. `push` covers main; `pull_request` covers branches.
   push:
+    branches: [main]
   pull_request:
 
 permissions:
   contents: read
 
+# Superseded runs on the same ref are pointless once a newer commit exists.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  lint:
+    name: ruff
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Lint
+        run: python -m ruff check .
+
   test:
     name: ${{ matrix.os }} / py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
@@ -15,14 +48,16 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.11", "3.12"]
+        # Includes the minimum declared in pyproject.toml, so the floor is a
+        # tested claim rather than an assumption.
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ matrix.python-version }}
 

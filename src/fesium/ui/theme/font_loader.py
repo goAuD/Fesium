@@ -5,7 +5,6 @@ from pathlib import Path
 
 from fesium.assets.fonts.font_manifest import FONT_FILES
 
-
 logger = logging.getLogger(__name__)
 
 FR_PRIVATE = 0x10

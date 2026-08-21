@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import List
 
 
 @dataclass(frozen=True)
@@ -9,7 +8,7 @@ class NavigationItem:
     description: str
 
 
-def build_navigation_items() -> List[NavigationItem]:
+def build_navigation_items() -> list[NavigationItem]:
     return [
         NavigationItem("overview", "Overview", "Workspace, health, and quick actions"),
         NavigationItem("server", "Server", "Serve the current project locally"),

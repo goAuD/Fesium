@@ -1,9 +1,9 @@
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_font_token
+from fesium.ui.widgets.body_text import BodyText
 from fesium.ui.widgets.panel_card import PanelCard
 from fesium.ui.widgets.status_badge import StatusBadge
 
@@ -29,9 +29,11 @@ def build_overview_cards(
     server_status: str,
     local_url: str,
     log_lines: tuple[str, ...] = (),
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     quick_action_value = (
-        f"Running at {local_url}" if server_status == "running" and local_url else "Open the Server view to manage the active site"
+        f"Running at {local_url}"
+        if server_status == "running" and local_url
+        else "Open the Server view to manage the active site"
     )
     recent_lines = log_lines[-3:]
     has_error = any("ERROR" in line for line in recent_lines)
@@ -79,9 +81,9 @@ class OverviewView(ctk.CTkFrame):
         php_summary: str = "",
         server_running: bool = False,
         *,
-        project_root: Optional[Path] = None,
+        project_root: Path | None = None,
         project_kind: str = "",
-        server_status: Optional[str] = None,
+        server_status: str | None = None,
         local_url: str = "",
         log_lines: tuple[str, ...] = (),
     ):
@@ -147,12 +149,5 @@ class OverviewView(ctk.CTkFrame):
             )
             badge.grid(row=0, column=1, sticky="e", padx=16, pady=(16, 8))
 
-            value = ctk.CTkLabel(
-                content,
-                text=card["value"],
-                text_color=get_color_token("text.secondary"),
-                font=get_font_token("body"),
-                justify="left",
-                wraplength=420,
-            )
-            value.grid(row=1, column=0, columnspan=2, sticky="w", padx=16, pady=(0, 16))
+            value = BodyText(content, card["value"], tone="text.secondary")
+            value.grid(row=1, column=0, columnspan=2, sticky="ew", padx=16, pady=(0, 16))

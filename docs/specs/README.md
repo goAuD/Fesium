@@ -20,5 +20,5 @@ Dated design specs that back the implementation plans under [../plans/](../plans
 
 ## Related
 
-- [../plans/](../plans/) — implementation plans
-- [../decisions/](../decisions/) — durable ADRs that promote a spec decision into a long-lived rule
+- [../plans/](../plans/) - implementation plans
+- [../decisions/](../decisions/) - durable ADRs that promote a spec decision into a long-lived rule

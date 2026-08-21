@@ -2,7 +2,6 @@ import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token
 
-
 BADGE_FONT = ("IBM Plex Sans", 12, "bold")
 
 

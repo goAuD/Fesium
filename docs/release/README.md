@@ -1,6 +1,6 @@
 # Release Notes
 
-User-facing summary per tagged version. The authoritative dated record is [CHANGELOG.md](../../CHANGELOG.md) at the repo root — the files here are the narrative companion for each release.
+User-facing summary per tagged version. The authoritative dated record is [CHANGELOG.md](../../CHANGELOG.md) at the repo root - the files here are the narrative companion for each release.
 
 ## Index
 

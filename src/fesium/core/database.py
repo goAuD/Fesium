@@ -1,7 +1,10 @@
 """
 Fesium - Database Module
 Handles SQLite database queries with transaction handling and read-only mode support.
-Includes table name validation for safe dynamic queries.
+
+SQLite cannot bind an identifier as a parameter, so the one place a table name
+is interpolated (``build_table_preview_query``) is gated by
+``validate_table_name``. Everything else uses bound parameters.
 """
 
 import logging
@@ -9,11 +12,10 @@ import os
 import re
 import sqlite3
 from contextlib import contextmanager
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 from fesium.core.config import trace_execution
 from fesium.core.security import classify_query_risk, strip_sql_leading_noise
-
 
 logger = logging.getLogger(__name__)
 
@@ -32,7 +34,7 @@ def is_read_query(query: str) -> bool:
     read_only_keywords = {"SELECT", "PRAGMA", "EXPLAIN", "WITH"}
 
     if first_word == "WITH" and classify_query_risk(query).requires_confirmation:
-        # WITH CTE that contains a destructive body — not read-only.
+        # WITH CTE that contains a destructive body - not read-only.
         return False
 
     return first_word in read_only_keywords
@@ -63,7 +65,7 @@ class DatabaseManager:
 
     def __init__(self, db_path: str = None, read_only: bool = True):
         self.db_path = db_path
-        self._connection: Optional[sqlite3.Connection] = None
+        self._connection: sqlite3.Connection | None = None
         self.read_only = read_only
 
     def set_database(self, db_path: str) -> None:
@@ -101,7 +103,7 @@ class DatabaseManager:
                 raise
 
     @trace_execution
-    def execute(self, query: str, params: tuple = ()) -> Tuple[bool, Any]:
+    def execute(self, query: str, params: tuple = ()) -> tuple[bool, Any]:
         """Execute a SQL query with proper transaction handling."""
         if not self.db_path:
             return False, "No database selected"
@@ -143,22 +145,36 @@ class DatabaseManager:
             return False, str(exc)
 
     @trace_execution
-    def list_tables(self) -> List[str]:
-        """Get list of all tables in the database."""
+    def list_tables(self) -> list[str]:
+        """List the browseable tables, skipping SQLite's own bookkeeping.
+
+        SQLite reserves the ``sqlite_`` prefix for internal tables such as
+        ``sqlite_sequence`` and ``sqlite_stat1``. They are noise in a schema
+        browser. GLOB is used rather than LIKE because ``_`` is a literal in a
+        GLOB pattern but a single-character wildcard in LIKE.
+        """
         success, result = self.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+            "SELECT name FROM sqlite_master "
+            "WHERE type='table' AND name NOT GLOB 'sqlite_*' "
+            "ORDER BY name"
         )
         if success:
             return [row[0] for row in result["rows"]]
         return []
 
-    def get_table_info(self, table_name: str) -> List[dict]:
+    def get_table_info(self, table_name: str) -> list[dict]:
         """Get column info for a table."""
         if not validate_table_name(table_name):
             logger.warning("Invalid table name rejected: %s", table_name)
             return []
 
-        success, result = self.execute(f"PRAGMA table_info({table_name})")
+        # pragma_table_info() is the table-valued form of `PRAGMA table_info`,
+        # so the table name travels as a bound parameter instead of being
+        # formatted into the SQL string.
+        success, result = self.execute(
+            "SELECT * FROM pragma_table_info(?)",
+            (table_name,),
+        )
         if success:
             return [
                 {

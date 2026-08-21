@@ -19,7 +19,19 @@ def get_font_token(name: str):
     return FONT_TOKENS[name]
 
 
-def resolve_button_style(variant: str, *, active: bool = False) -> dict[str, object]:
+# CustomTkinter only swaps the text colour on a disabled button and leaves the
+# fill alone. A disabled `primary` therefore renders text.secondary on top of a
+# full-strength accent - roughly 1.05:1 contrast, which is unreadable, and it
+# does not look disabled either. Swapping the surface as well fixes both.
+DISABLED_OVERRIDES = {
+    "fg_color": "bg.panel_alt",
+    "hover_color": "bg.panel_alt",
+    "text_color": "text.secondary",
+    "border_color": "border.soft",
+}
+
+
+def resolve_button_style(variant: str, *, active: bool = False, enabled: bool = True) -> dict[str, object]:
     button_base = {
         "height": 38,
         "corner_radius": 10,
@@ -84,13 +96,15 @@ def resolve_button_style(variant: str, *, active: bool = False) -> dict[str, obj
 
     resolved_key = "nav_active" if variant == "nav" and active else variant
     try:
-        return styles[resolved_key]
+        style = styles[resolved_key]
     except KeyError as exc:
         raise ValueError(f"Unknown button style variant: {variant}") from exc
 
+    return style if enabled else {**style, **DISABLED_OVERRIDES}
 
-def get_button_style(variant: str, *, active: bool = False) -> dict[str, object]:
-    style = resolve_button_style(variant, active=active)
+
+def get_button_style(variant: str, *, active: bool = False, enabled: bool = True) -> dict[str, object]:
+    style = resolve_button_style(variant, active=active, enabled=enabled)
     resolved: dict[str, object] = {}
     for key, value in style.items():
         if isinstance(value, tuple):
