@@ -1,7 +1,10 @@
 """
 Fesium - Database Module
 Handles SQLite database queries with transaction handling and read-only mode support.
-Includes table name validation for safe dynamic queries.
+
+SQLite cannot bind an identifier as a parameter, so the one place a table name
+is interpolated (``build_table_preview_query``) is gated by
+``validate_table_name``. Everything else uses bound parameters.
 """
 
 import logging
@@ -158,7 +161,13 @@ class DatabaseManager:
             logger.warning("Invalid table name rejected: %s", table_name)
             return []
 
-        success, result = self.execute(f"PRAGMA table_info({table_name})")
+        # pragma_table_info() is the table-valued form of `PRAGMA table_info`,
+        # so the table name travels as a bound parameter instead of being
+        # formatted into the SQL string.
+        success, result = self.execute(
+            "SELECT * FROM pragma_table_info(?)",
+            (table_name,),
+        )
         if success:
             return [
                 {
