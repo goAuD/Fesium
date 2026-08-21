@@ -41,6 +41,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Fixed
 
+- Text is no longer clipped to a single character. `CTkLabel` grids its inner label with a sticky taken from `anchor`, so a correctly sized frame could still contain a 9px label once that label stopped asking for width.
 - Panels no longer shimmer, and side-by-side tiles are the same width. A wrapped label asks Tk for its `wraplength` as its width, so it demanded back whatever width it was last given; that stretched one Diagnostics tile to 561px and squeezed its neighbour to 250px, clipping three lines of text, and the tug of war against the grid was visible as a flicker. Labels leave the width to the cell now.
 - The `Server` controls fit on one row again. They wrapped at a hardcoded 980px, which was a guess about how wide five buttons are; the row now wraps only when the buttons measurably do not fit.
 - Views no longer shift when you switch pages. Four of them wrapped their content in a scrolling frame that inset it by 6px, and each built its own header, so content started up to 6px left and 8px high depending on the page. All six share one `ViewHeader` and start at the same place.

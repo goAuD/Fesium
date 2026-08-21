@@ -1,7 +1,7 @@
 import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_font_token, get_shape_token
-from fesium.ui.widgets.label_sizing import detach_width_request
+from fesium.ui.widgets.label_sizing import WidthAgnosticLabel
 
 TILE_PADDING = 16
 
@@ -54,7 +54,7 @@ class Tile(ctk.CTkFrame):
         header.grid(row=0, column=0, sticky="ew", padx=padding, pady=(padding, 10))
         header.grid_columnconfigure(0, weight=1)
 
-        self.title_label = ctk.CTkLabel(
+        self.title_label = WidthAgnosticLabel(
             header,
             text=title.upper(),
             text_color=get_color_token("text.secondary"),
@@ -74,16 +74,14 @@ class Tile(ctk.CTkFrame):
         )
         self.meta_label.grid(row=0, column=1, sticky="e")
 
-        # The title is decoration, not content: a longer tile name must not make
-        # its tile wider than the grid share it was given, or two tiles meant to
-        # be equal come out 43px apart. It asks for one character and takes what
-        # its weighted, stretched cell gives it.
+        # The title is a WidthAgnosticLabel: a longer tile name must not make its
+        # tile wider than the grid share it was given, or two tiles meant to be
+        # equal come out 43px apart. Its cell is weighted and stretched, which
+        # is what makes that safe.
         #
-        # The meta label deliberately keeps its natural width. It sits in an
-        # unweighted column, so asking for one character would render it one
-        # character wide - which is exactly what happened, and the tile titles
-        # and metas vanished from the app. truncate_meta bounds it instead.
-        detach_width_request(self.title_label)
+        # The meta label deliberately stays an ordinary CTkLabel. It sits in an
+        # unweighted column that never stretches, so it needs its natural width.
+        # truncate_meta bounds what it can demand instead.
 
         self.body = ctk.CTkFrame(self, fg_color="transparent")
         self.body.grid(row=1, column=0, sticky="nsew", padx=padding, pady=(0, padding))
