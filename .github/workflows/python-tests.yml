@@ -6,11 +6,19 @@ name: Python Tests
 # the human-readable version each SHA corresponds to.
 
 on:
+  # A PR branch pushed to this repo would otherwise trigger both events and run
+  # the whole matrix twice. `push` covers main; `pull_request` covers branches.
   push:
+    branches: [main]
   pull_request:
 
 permissions:
   contents: read
+
+# Superseded runs on the same ref are pointless once a newer commit exists.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
