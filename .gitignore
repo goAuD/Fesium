@@ -7,9 +7,6 @@ __pycache__/
 # Database
 *.sqlite
 
-# Config (user-specific)
-.nanoserver/
-
 # Internal docs
 INTERNAL_ENGINEERING_LOG.md
 

@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Python 3.8 or newer
+- Python 3.10 or newer (the codebase uses `X | None` annotations, which are evaluated at import time and need PEP 604)
 - PHP on your system `PATH` if you want to test the PHP-backed local server flow (optional; Fesium falls back to a static server when PHP is unavailable)
 
 Check PHP availability:

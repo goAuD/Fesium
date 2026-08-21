@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - The root launcher no longer `exec()`s the package `__init__` to read the version. `fesium._version` is now the single source, read by a plain import and by setuptools.
 - Schema inspection binds the table name as a SQL parameter instead of formatting it into `PRAGMA table_info(...)`, using SQLite's `pragma_table_info()` table-valued function.
 
+### Changed
+
+- `requires-python` is now `>=3.10`, matching what the code actually needs. CI runs that floor so the claim stays tested.
+
 ### Fixed
 
 - Installing the package no longer drops the bundled fonts and icons. They were never declared as package data, so a `pip install` produced an app without its offline assets.

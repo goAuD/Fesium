@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 
@@ -19,3 +20,30 @@ def test_repo_docs_install_from_requirements_txt():
     assert "python -m pip install -r requirements.txt" in readme
     assert "python -m pip install -r requirements.txt" in setup_doc
     assert "python -m pip install -r requirements.txt" in workflow
+
+
+def _declared_minimum_python() -> str:
+    pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
+    match = re.search(r'requires-python = ">=([\d.]+)"', pyproject)
+    assert match, "pyproject.toml must declare requires-python"
+    return match.group(1)
+
+
+def test_ci_runs_the_minimum_python_version_the_project_claims():
+    """An untested floor is a guess.
+
+    The repo claimed 3.8 for a long time while CI only ever ran 3.11 and 3.12,
+    so nobody noticed that `X | None` annotations need 3.10 at import time.
+    """
+    workflow = Path(".github/workflows/python-tests.yml").read_text(encoding="utf-8")
+
+    assert f'"{_declared_minimum_python()}"' in workflow
+
+
+def test_docs_quote_the_same_minimum_python_version():
+    minimum = _declared_minimum_python()
+    readme = Path("README.md").read_text(encoding="utf-8")
+    setup_doc = Path("docs/dev/setup.md").read_text(encoding="utf-8")
+
+    assert f"Python {minimum}" in readme
+    assert f"Python {minimum}" in setup_doc

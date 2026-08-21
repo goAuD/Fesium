@@ -20,7 +20,9 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.11", "3.12"]
+        # Includes the minimum declared in pyproject.toml, so the floor is a
+        # tested claim rather than an assumption.
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
       - name: Check out repository

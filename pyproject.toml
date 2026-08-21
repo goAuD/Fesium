@@ -7,7 +7,9 @@ name = "fesium"
 dynamic = ["version"]
 description = "Local dev tools for students and developers"
 readme = "README.md"
-requires-python = ">=3.8"
+# 3.10 is the real floor: PEP 604 annotations (`Path | None`) are built at
+# import time, and type.__or__ only exists from 3.10 on.
+requires-python = ">=3.10"
 license = {text = "Apache-2.0"}
 dependencies = [
   "customtkinter>=5.0.0",
