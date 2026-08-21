@@ -35,7 +35,7 @@ def is_read_query(query: str) -> bool:
     read_only_keywords = {"SELECT", "PRAGMA", "EXPLAIN", "WITH"}
 
     if first_word == "WITH" and classify_query_risk(query).requires_confirmation:
-        # WITH CTE that contains a destructive body — not read-only.
+        # WITH CTE that contains a destructive body - not read-only.
         return False
 
     return first_word in read_only_keywords

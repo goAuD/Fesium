@@ -18,7 +18,7 @@ class BodyText(ctk.CTkLabel):
 
     ``CTkLabel`` takes ``wraplength`` in pixels, so a hardcoded value is only
     correct at one window size. When it exceeds the width grid hands the label,
-    Tk still lays out full-width lines and the panel clips them — the start and
+    Tk still lays out full-width lines and the panel clips them - the start and
     end of every line disappear. Recomputing the wrap on every ``<Configure>``
     keeps paragraphs inside their panel at any window size.
 
@@ -39,7 +39,7 @@ class BodyText(ctk.CTkLabel):
         )
         # CTkLabel.bind() forwards to the inner canvas and tkinter.Label, whose
         # widths are not the cell width. Bind on the CTkLabel frame itself, and
-        # add to — never replace — CustomTkinter's own <Configure> handler.
+        # add to - never replace - CustomTkinter's own <Configure> handler.
         tkinter.Frame.bind(self, "<Configure>", self._sync_wraplength, add="+")
 
     def _sync_wraplength(self, event) -> None:

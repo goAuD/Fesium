@@ -24,7 +24,7 @@ An updated app screenshot is explicitly a second asset step, not part of the fir
 - Replace the `NanoServer` GitHub presentation with `Fesium`
 - Establish a durable umbrella-brand identity suitable for future toolbox expansion
 - Keep the brand visually modern, dark, precise, and restrained
-- Avoid generic “dev tool” branding and avoid over-explaining the product in the social preview
+- Avoid generic "dev tool" branding and avoid over-explaining the product in the social preview
 
 ### Repo Goals
 
@@ -57,7 +57,7 @@ This means:
 
 - the GitHub brand language should feel expandable
 - the icon should feel system-oriented rather than feature-specific
-- the repo presentation should not center “alternative to XAMPP” language
+- the repo presentation should not center "alternative to XAMPP" language
 
 ### Chosen Symbol Direction
 

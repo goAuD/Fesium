@@ -51,5 +51,5 @@ python -m fesium  # module entry point
 
 ## Next Steps
 
-- [testing.md](testing.md) — how to run the test suite
-- [conventions.md](conventions.md) — repo structure, code organization, and design/security rules
+- [testing.md](testing.md) - how to run the test suite
+- [conventions.md](conventions.md) - repo structure, code organization, and design/security rules

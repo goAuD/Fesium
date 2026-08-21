@@ -36,7 +36,7 @@ def get_subprocess_flags() -> Dict[str, object]:
 def check_php_installed() -> bool:
     """Check if PHP is available in PATH.
 
-    Thin shim over ``fesium.core.environment.detect_php`` — the authoritative
+    Thin shim over ``fesium.core.environment.detect_php`` - the authoritative
     PHP probe with a subprocess timeout. Kept as a boolean helper for call
     sites that only need availability.
     """

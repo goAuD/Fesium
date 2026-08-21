@@ -24,7 +24,7 @@ def test_is_read_query_flags_with_cte_containing_destructive_keyword():
     assert is_read_query(
         "WITH recent AS (SELECT id FROM users LIMIT 10) SELECT * FROM recent"
     ) is True
-    # CTE that hides a write — read-only mode must still block it.
+    # CTE that hides a write - read-only mode must still block it.
     assert is_read_query(
         "WITH doomed AS (SELECT id FROM users) DELETE FROM users WHERE id IN (SELECT id FROM doomed)"
     ) is False
@@ -70,8 +70,8 @@ def test_build_table_preview_query_uses_limit_and_rejects_invalid_name():
 
 def _seed_database(tmp_path):
     db_path = tmp_path / "schema.sqlite"
-    # DatabaseManager only opens databases that already exist — it never
-    # creates one — so the empty file has to be there first.
+    # DatabaseManager only opens databases that already exist - it never
+    # creates one - so the empty file has to be there first.
     db_path.touch()
     manager = DatabaseManager(str(db_path), read_only=False)
     ok, _ = manager.execute(

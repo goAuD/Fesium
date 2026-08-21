@@ -15,9 +15,9 @@ Dated, step-by-step plans that were followed when implementing the matching desi
 ## Conventions
 
 - One plan per dated feature. Filename: `YYYY-MM-DD-topic-implementation.md`.
-- Plans are frozen historical records. They describe the work as planned, not the work as it ended up in the code — the code is authoritative for what shipped.
+- Plans are frozen historical records. They describe the work as planned, not the work as it ended up in the code - the code is authoritative for what shipped.
 
 ## Related
 
-- [../specs/](../specs/) — design specs that back these plans
-- [../release/](../release/) — user-facing summary of what shipped
+- [../specs/](../specs/) - design specs that back these plans
+- [../release/](../release/) - user-facing summary of what shipped

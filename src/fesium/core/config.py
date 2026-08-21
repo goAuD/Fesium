@@ -98,7 +98,7 @@ class Config:
         self.save()
 
     def snapshot(self) -> Dict[str, Any]:
-        """Return a shallow copy of the current config — read-only view for callers."""
+        """Return a shallow copy of the current config - read-only view for callers."""
         return dict(self._data)
 
     @property

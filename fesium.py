@@ -1,7 +1,7 @@
 """Root launcher for Fesium.
 
 This file shares its name with the real package in ``src/fesium/``. Running
-``python fesium.py`` is fine — the file becomes ``__main__`` — but anything
+``python fesium.py`` is fine - the file becomes ``__main__`` - but anything
 that does ``import fesium`` from the repo root resolves the name to *this*
 file instead of the package. Two lines keep both paths working:
 

@@ -45,7 +45,7 @@ def classify_query_risk(query: str) -> QueryRisk:
     requires_confirmation = first_word in DESTRUCTIVE_KEYWORDS
 
     if first_word == "WITH" and _DESTRUCTIVE_IN_BODY.search(body):
-        # WITH ... UPDATE/DELETE/INSERT CTE — treat as destructive.
+        # WITH ... UPDATE/DELETE/INSERT CTE - treat as destructive.
         requires_confirmation = True
 
     return QueryRisk(
