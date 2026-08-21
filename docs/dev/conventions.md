@@ -20,6 +20,7 @@
 - Follow the approved **Graphite Grid** direction: dark graphite shell, restrained matte accent, and clear panel hierarchy.
 - Prefer muted/matte accents over bright neon for dev-tool UIs.
 - Buttons must use the right variant: `primary` for the main call-to-action, `secondary` for supporting actions, `danger` for destructive ones. Never use the same variant for every control in a view.
+- Paragraph text uses `BodyText` from `ui/widgets/`. Never hardcode `wraplength` in a view: a constant pixel wrap is only correct at one window size and clips the text at every smaller one. Grid paragraphs with `sticky="ew"` so the cell drives the width.
 - Badges must be visually subordinate to the buttons they sit next to — equal or smaller in height, with balanced horizontal padding.
 - Bundle fonts in-repo only. Do not load fonts or other runtime assets from the network.
 - Preserve offline-first behavior. The app must remain useful without internet access.

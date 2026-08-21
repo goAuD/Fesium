@@ -5,6 +5,7 @@ from urllib.parse import urlsplit
 import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_button_style, get_color_token, get_font_token
+from fesium.ui.widgets.body_text import BodyText
 from fesium.ui.widgets.panel_card import PanelCard
 from fesium.ui.widgets.scrollable_view_body import ScrollableViewBody
 from fesium.ui.widgets.status_badge import StatusBadge
@@ -205,18 +206,11 @@ class ServerView(ctk.CTkFrame):
             )
             label.grid(row=row * 2 + 1, column=0, sticky="w", padx=16, pady=(8 if row == 0 else 10, 4))
 
-            value = ctk.CTkLabel(
-                details_content,
-                text=value_text,
-                text_color=get_color_token("text.secondary"),
-                font=get_font_token("body"),
-                justify="left",
-                wraplength=800,
-            )
+            value = BodyText(details_content, value_text, tone="text.secondary")
             value.grid(
                 row=row * 2 + 2,
                 column=0,
-                sticky="w",
+                sticky="ew",
                 padx=16,
                 pady=(0, 4 if row < len(details) - 1 else 16),
             )
@@ -285,15 +279,8 @@ class ServerView(ctk.CTkFrame):
         self.log_textbox.configure(state="disabled")
 
         if model["last_error"]:
-            error_label = ctk.CTkLabel(
-                body,
-                text=model["last_error"],
-                text_color=get_color_token("accent.danger"),
-                font=get_font_token("body"),
-                justify="left",
-                wraplength=900,
-            )
-            error_label.grid(row=3, column=0, sticky="w", pady=(16, 0))
+            error_label = BodyText(body, model["last_error"], tone="accent.danger")
+            error_label.grid(row=3, column=0, sticky="ew", pady=(16, 0))
 
         self._render_action_buttons(resolve_server_action_layout(self.winfo_reqwidth()))
         self.bind("<Configure>", self._on_resize)

@@ -6,7 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
-_No user-facing changes yet after v2.0.0. See [ROADMAP.md](ROADMAP.md) for the planned v2.1.0 focus._
+### Fixed
+
+- Paragraph text no longer gets clipped at the start and end of every line. Views used fixed pixel wrap widths that were wider than the panel at any window below roughly 1400px, including the app's own 1100px minimum size. Paragraphs now wrap to the width they are actually given.
 
 ## [2.0.0] - 2026-04-19
 

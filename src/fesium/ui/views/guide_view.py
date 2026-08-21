@@ -1,6 +1,7 @@
 import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_font_token
+from fesium.ui.widgets.body_text import BodyText
 from fesium.ui.widgets.panel_card import PanelCard
 from fesium.ui.widgets.scrollable_view_body import ScrollableViewBody
 
@@ -87,12 +88,5 @@ class GuideView(ctk.CTkFrame):
             )
             panel_title.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 8))
 
-            panel_body = ctk.CTkLabel(
-                panel_content,
-                text=section["body"],
-                text_color=get_color_token("text.primary"),
-                font=get_font_token("body"),
-                justify="left",
-                wraplength=900,
-            )
-            panel_body.grid(row=1, column=0, sticky="w", padx=16, pady=(0, 16))
+            panel_body = BodyText(panel_content, section["body"])
+            panel_body.grid(row=1, column=0, sticky="ew", padx=16, pady=(0, 16))

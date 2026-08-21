@@ -1,6 +1,7 @@
 import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_font_token
+from fesium.ui.widgets.body_text import BodyText
 from fesium.ui.widgets.panel_card import PanelCard
 from fesium.ui.widgets.scrollable_view_body import ScrollableViewBody
 
@@ -62,22 +63,12 @@ class SettingsView(ctk.CTkFrame):
         )
         panel_title.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 12))
 
-        body_label = ctk.CTkLabel(
-            panel_content,
-            text=placeholder["body"],
-            text_color=get_color_token("text.primary"),
-            font=get_font_token("body"),
-            justify="left",
-            wraplength=860,
-        )
-        body_label.grid(row=1, column=0, sticky="w", padx=16, pady=(0, 12))
+        body_label = BodyText(panel_content, placeholder["body"])
+        body_label.grid(row=1, column=0, sticky="ew", padx=16, pady=(0, 12))
 
-        footnote_label = ctk.CTkLabel(
+        footnote_label = BodyText(
             panel_content,
-            text=placeholder["footnote"],
-            text_color=get_color_token("text.secondary"),
-            font=get_font_token("body"),
-            justify="left",
-            wraplength=860,
+            placeholder["footnote"],
+            tone="text.secondary",
         )
-        footnote_label.grid(row=2, column=0, sticky="w", padx=16, pady=(0, 16))
+        footnote_label.grid(row=2, column=0, sticky="ew", padx=16, pady=(0, 16))

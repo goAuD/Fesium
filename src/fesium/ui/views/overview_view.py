@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_font_token
+from fesium.ui.widgets.body_text import BodyText
 from fesium.ui.widgets.panel_card import PanelCard
 from fesium.ui.widgets.status_badge import StatusBadge
 
@@ -147,12 +148,5 @@ class OverviewView(ctk.CTkFrame):
             )
             badge.grid(row=0, column=1, sticky="e", padx=16, pady=(16, 8))
 
-            value = ctk.CTkLabel(
-                content,
-                text=card["value"],
-                text_color=get_color_token("text.secondary"),
-                font=get_font_token("body"),
-                justify="left",
-                wraplength=420,
-            )
-            value.grid(row=1, column=0, columnspan=2, sticky="w", padx=16, pady=(0, 16))
+            value = BodyText(content, card["value"], tone="text.secondary")
+            value.grid(row=1, column=0, columnspan=2, sticky="ew", padx=16, pady=(0, 16))
