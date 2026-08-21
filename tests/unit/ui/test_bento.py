@@ -63,3 +63,12 @@ def test_views_do_not_build_raw_buttons():
     )
 
     assert offenders == []
+
+
+def test_button_width_leaves_room_around_the_label():
+    """Squaring the corners dropped CustomTkinter's horizontal padding from
+    10px to 2px, because it derives that padding from the corner radius."""
+    from fesium.ui.widgets.button import BUTTON_TEXT_PADDING, MIN_BUTTON_WIDTH
+
+    assert BUTTON_TEXT_PADDING >= 12
+    assert MIN_BUTTON_WIDTH >= 2 * BUTTON_TEXT_PADDING
