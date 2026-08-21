@@ -1,7 +1,7 @@
 import customtkinter as ctk
 
 from fesium.core.preferences import MAX_PORT, MIN_PORT, describe_startup_project
-from fesium.ui.theme.styles import get_color_token, get_font_token
+from fesium.ui.theme.styles import get_color_token, get_font_token, get_shape_token
 from fesium.ui.widgets.body_text import BodyText
 from fesium.ui.widgets.button import Button
 from fesium.ui.widgets.panel_card import PanelCard
@@ -185,6 +185,7 @@ class SettingsView(ctk.CTkFrame):
             fg_color=get_color_token("bg.app"),
             text_color=get_color_token("text.primary"),
             border_color=get_color_token("border.default"),
+            corner_radius=get_shape_token("input.radius"),
             font=get_font_token("mono"),
             height=38,
         )

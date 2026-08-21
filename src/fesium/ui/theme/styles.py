@@ -1,7 +1,7 @@
 import customtkinter as ctk
 
 from fesium.ui.theme.font_loader import register_bundled_fonts
-from fesium.ui.theme.tokens import COLOR_TOKENS, FONT_TOKENS
+from fesium.ui.theme.tokens import COLOR_TOKENS, FONT_TOKENS, SHAPE_TOKENS
 
 
 def apply_graphite_grid_theme() -> None:
@@ -31,10 +31,14 @@ DISABLED_OVERRIDES = {
 }
 
 
+def get_shape_token(name: str):
+    return SHAPE_TOKENS[name]
+
+
 def resolve_button_style(variant: str, *, active: bool = False, enabled: bool = True) -> dict[str, object]:
     button_base = {
         "height": 38,
-        "corner_radius": 10,
+        "corner_radius": SHAPE_TOKENS["button.radius"],
         "font": FONT_TOKENS["body_medium"],
     }
     styles = {
@@ -45,7 +49,7 @@ def resolve_button_style(variant: str, *, active: bool = False, enabled: bool = 
             "text_color": "bg.app",
             "text_color_disabled": "text.secondary",
             "border_color": "accent.primary",
-            "border_width": 1,
+            "border_width": SHAPE_TOKENS["button.border"],
         },
         "secondary": {
             **button_base,
@@ -54,7 +58,7 @@ def resolve_button_style(variant: str, *, active: bool = False, enabled: bool = 
             "text_color": "accent.primary",
             "text_color_disabled": "text.secondary",
             "border_color": "accent.primary",
-            "border_width": 1,
+            "border_width": SHAPE_TOKENS["button.border"],
         },
         "danger": {
             **button_base,
@@ -63,7 +67,7 @@ def resolve_button_style(variant: str, *, active: bool = False, enabled: bool = 
             "text_color": "bg.app",
             "text_color_disabled": "text.secondary",
             "border_color": "accent.danger",
-            "border_width": 1,
+            "border_width": SHAPE_TOKENS["button.border"],
         },
         "danger_secondary": {
             **button_base,
@@ -72,7 +76,7 @@ def resolve_button_style(variant: str, *, active: bool = False, enabled: bool = 
             "text_color": "accent.danger",
             "text_color_disabled": "text.secondary",
             "border_color": "accent.danger",
-            "border_width": 1,
+            "border_width": SHAPE_TOKENS["button.border"],
         },
         "nav": {
             **button_base,
@@ -81,7 +85,7 @@ def resolve_button_style(variant: str, *, active: bool = False, enabled: bool = 
             "text_color": "text.primary",
             "text_color_disabled": "text.secondary",
             "border_color": "border.soft",
-            "border_width": 1,
+            "border_width": SHAPE_TOKENS["button.border"],
         },
         "nav_active": {
             **button_base,
@@ -90,7 +94,7 @@ def resolve_button_style(variant: str, *, active: bool = False, enabled: bool = 
             "text_color": "text.primary",
             "text_color_disabled": "text.secondary",
             "border_color": "accent.primary",
-            "border_width": 1,
+            "border_width": SHAPE_TOKENS["button.border"],
         },
     }
 

@@ -105,3 +105,27 @@ def test_resolve_button_style_nav_active_uses_accent_border():
     nav_active = resolve_button_style("nav", active=True)
 
     assert nav_active["border_color"] == "accent.primary"
+
+
+def test_no_shape_pairs_a_radius_with_a_border():
+    """A rounded corner and a border cannot coexist cleanly in CustomTkinter.
+
+    The corner arc is an anti-aliased circle glyph and the straight edges are
+    hard-edged rectangles, drawn as separate canvas items. Where they meet the
+    edges do not line up and the corner renders as two arcs. Every role either
+    has square corners or no border.
+    """
+    from fesium.ui.theme.tokens import SHAPE_TOKENS
+
+    for role in ("tile", "button", "input"):
+        radius = SHAPE_TOKENS[f"{role}.radius"]
+        border = SHAPE_TOKENS[f"{role}.border"]
+        assert radius == 0 or border == 0, f"{role} pairs radius {radius} with border {border}"
+
+
+def test_badge_keeps_its_capsule():
+    """A badge is a CTkLabel, which has no border, so the pill always renders clean."""
+    from fesium.ui.theme.tokens import SHAPE_TOKENS
+
+    assert SHAPE_TOKENS["badge.radius"] >= 999
+    assert "badge.border" not in SHAPE_TOKENS

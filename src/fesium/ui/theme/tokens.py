@@ -18,6 +18,24 @@ COLOR_TOKENS = {
     "accent.danger_soft": "#2e1e1e",
 }
 
+# Corner geometry, in one place because it is a single design decision.
+#
+# CustomTkinter draws a rounded corner as an anti-aliased circle glyph and the
+# straight edges as hard-edged rectangles, on the same canvas. Where a radius
+# meets a border the two never line up, and the corner reads as doubled. Every
+# pairing below therefore avoids a border or avoids a radius, never both.
+SHAPE_TOKENS = {
+    "tile.radius": 0,
+    "tile.border": 1,
+    "button.radius": 0,
+    "button.border": 1,
+    "input.radius": 0,
+    "input.border": 1,
+    # A badge is a CTkLabel, which cannot take a border at all, so the capsule
+    # draws one clean arc and the pill shape survives any decision above.
+    "badge.radius": 999,
+}
+
 FONT_TOKENS = {
     "heading": ("Sora", 28, "bold"),
     "section_heading": ("Sora", 18, "bold"),

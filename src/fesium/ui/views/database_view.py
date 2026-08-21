@@ -1,6 +1,6 @@
 import customtkinter as ctk
 
-from fesium.ui.theme.styles import get_color_token, get_font_token
+from fesium.ui.theme.styles import get_color_token, get_font_token, get_shape_token
 from fesium.ui.widgets.bento import BentoGrid
 from fesium.ui.widgets.body_text import BodyText
 from fesium.ui.widgets.button import Button
@@ -337,6 +337,7 @@ class DatabaseView(ctk.CTkFrame):
             text_color=get_color_token("text.primary"),
             font=get_font_token("mono"),
             border_width=0,
+            corner_radius=get_shape_token("input.radius"),
             height=TEXTBOX_MIN_HEIGHT,
         )
         self.schema_textbox.grid(row=0, column=0, sticky="nsew")
@@ -363,6 +364,7 @@ class DatabaseView(ctk.CTkFrame):
             text_color=get_color_token("text.primary"),
             font=get_font_token("mono"),
             border_width=0,
+            corner_radius=get_shape_token("input.radius"),
             height=TEXTBOX_MIN_HEIGHT,
         )
         self.query_textbox.grid(row=0, column=0, columnspan=2, sticky="nsew")
@@ -416,6 +418,7 @@ class DatabaseView(ctk.CTkFrame):
             text_color=get_color_token("text.primary"),
             font=get_font_token("mono"),
             border_width=0,
+            corner_radius=get_shape_token("input.radius"),
             height=TEXTBOX_MIN_HEIGHT,
         )
         self.result_textbox.grid(row=0, column=0, sticky="nsew")

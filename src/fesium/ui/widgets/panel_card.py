@@ -1,6 +1,6 @@
 import customtkinter as ctk
 
-from fesium.ui.theme.styles import get_color_token
+from fesium.ui.theme.styles import get_color_token, get_shape_token
 
 
 def resolve_panel_surface(variant: str) -> dict[str, str | int]:
@@ -37,7 +37,7 @@ class PanelCard(ctk.CTkFrame):
             fg_color=get_color_token(surface["fg_color"]),
             border_color=get_color_token(surface["border_color"]),
             border_width=surface["border_width"],
-            corner_radius=16,
+            corner_radius=get_shape_token("tile.radius"),
             **kwargs,
         )
         self.grid_columnconfigure(0, weight=1)

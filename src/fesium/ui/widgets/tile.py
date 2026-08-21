@@ -1,6 +1,6 @@
 import customtkinter as ctk
 
-from fesium.ui.theme.styles import get_color_token, get_font_token
+from fesium.ui.theme.styles import get_color_token, get_font_token, get_shape_token
 
 TILE_PADDING = 16
 
@@ -32,8 +32,8 @@ class Tile(ctk.CTkFrame):
             master,
             fg_color=get_color_token(surface),
             border_color=get_color_token("border.default"),
-            border_width=1,
-            corner_radius=14,
+            border_width=get_shape_token("tile.border"),
+            corner_radius=get_shape_token("tile.radius"),
             **kwargs,
         )
         self.grid_columnconfigure(0, weight=1)

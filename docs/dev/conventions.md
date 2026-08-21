@@ -20,6 +20,7 @@
 - Follow the approved **Graphite Grid** direction: dark graphite shell, restrained matte accent, and clear panel hierarchy.
 - Prefer muted/matte accents over bright neon for dev-tool UIs.
 - Buttons must use the right variant: `primary` for the main call-to-action, `secondary` for supporting actions, `danger` for destructive ones. Never use the same variant for every control in a view.
+- Corner geometry lives in `SHAPE_TOKENS`. Never pair a corner radius with a border on the same widget: CustomTkinter draws the arc and the straight edges as separate canvas items and they do not meet, so the corner renders doubled. A test enforces it.
 - Views are laid out as a bento grid: `BentoGrid` from `ui/widgets/` plus `Tile` for each cell. Size carries the hierarchy - a tile that matters spans more columns or takes more row weight - so headings can stay quiet.
 - Never give a widget inside a tile a fixed pixel height. `CTkTextbox` asks for 200px by default; stack three and grid stops honouring row weights, and the tiles clip instead of sharing the space.
 - Every button is `Button` from `ui/widgets/`. A raw `CTkButton` misses the disabled styling, and CustomTkinter only swaps the text colour on a disabled button, which leaves it unreadable.

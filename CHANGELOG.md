@@ -34,6 +34,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Fixed
 
+- Corners no longer render doubled. CustomTkinter draws a rounded corner as an anti-aliased circle glyph and the straight edges as hard-edged rectangles, so wherever a radius met a border the two failed to line up. Structural surfaces are square now; status badges keep their capsule, which has no border and draws one clean arc.
+- Badge text is optically centred. Tk centres a label on the font's line box, which reserves space above the caps for accents the label never uses, leaving the text a pixel low.
 - Disabled buttons are readable again. CustomTkinter only swaps the text colour on a disabled button and leaves the fill alone, so a disabled primary rendered grey text on a full-strength accent at roughly 1.05:1 contrast. Disabled buttons now change surface too, and every button pairing is held to WCAG AA by a test.
 - The `Results` panel showed its heading twice, because the empty-state view model also used "Results" as its title.
 - Installing the package no longer drops the bundled fonts and icons. They were never declared as package data, so a `pip install` produced an app without its offline assets.
