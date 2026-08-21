@@ -32,6 +32,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Fixed
 
+- Disabled buttons are readable again. CustomTkinter only swaps the text colour on a disabled button and leaves the fill alone, so a disabled primary rendered grey text on a full-strength accent at roughly 1.05:1 contrast. Disabled buttons now change surface too, and every button pairing is held to WCAG AA by a test.
+- The `Results` panel showed its heading twice, because the empty-state view model also used "Results" as its title.
 - Installing the package no longer drops the bundled fonts and icons. They were never declared as package data, so a `pip install` produced an app without its offline assets.
 - Paragraph text no longer gets clipped at the start and end of every line. Views used fixed pixel wrap widths that were wider than the panel at any window below roughly 1400px, including the app's own 1100px minimum size. Paragraphs now wrap to the width they are actually given.
 - `detect_php()` is a single probe with a subprocess timeout. Two chained probes used to freeze the UI on a slow or hanging `php` binary.

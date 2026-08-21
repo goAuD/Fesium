@@ -1,8 +1,9 @@
 import customtkinter as ctk
 
 from fesium.core.preferences import MAX_PORT, MIN_PORT, describe_startup_project
-from fesium.ui.theme.styles import get_button_style, get_color_token, get_font_token
+from fesium.ui.theme.styles import get_color_token, get_font_token
 from fesium.ui.widgets.body_text import BodyText
+from fesium.ui.widgets.button import Button
 from fesium.ui.widgets.panel_card import PanelCard
 from fesium.ui.widgets.scrollable_view_body import ScrollableViewBody
 
@@ -133,22 +134,20 @@ class SettingsView(ctk.CTkFrame):
             row=4, column=0, columnspan=2, sticky="ew", padx=16, pady=(0, 12)
         )
 
-        select_button = ctk.CTkButton(
+        select_button = Button(
             content,
-            text="Choose Folder",
-            **get_button_style("secondary"),
+            "Choose Folder",
             command=self._handle_select_default_project,
         )
-        select_button.grid(row=5, column=0, sticky="ew", padx=(16, 8), pady=(0, 16))
+        select_button.grid(row=5, column=0, sticky="w", padx=(16, 8), pady=(0, 16))
 
-        self.clear_button = ctk.CTkButton(
+        self.clear_button = Button(
             content,
-            text="Clear",
-            state="normal" if self._model["has_default_project"] else "disabled",
-            **get_button_style("secondary"),
+            "Clear",
+            enabled=self._model["has_default_project"],
             command=self._handle_clear_default_project,
         )
-        self.clear_button.grid(row=5, column=1, sticky="ew", padx=(8, 16), pady=(0, 16))
+        self.clear_button.grid(row=5, column=1, sticky="w", padx=(8, 16), pady=(0, 16))
 
         self.startup_summary_label = BodyText(
             content,
@@ -193,13 +192,13 @@ class SettingsView(ctk.CTkFrame):
         self.port_entry.grid(row=2, column=0, sticky="ew", padx=(16, 8), pady=(0, 12))
         self.port_entry.bind("<Return>", lambda _event: self._handle_apply_port())
 
-        apply_button = ctk.CTkButton(
+        apply_button = Button(
             content,
-            text="Apply",
-            **get_button_style("primary"),
+            "Apply",
+            variant="primary",
             command=self._handle_apply_port,
         )
-        apply_button.grid(row=2, column=1, sticky="ew", padx=(8, 16), pady=(0, 12))
+        apply_button.grid(row=2, column=1, sticky="w", padx=(8, 16), pady=(0, 12))
 
         hint = BodyText(content, self._model["port_hint"], tone="text.secondary")
         hint.grid(row=3, column=0, columnspan=2, sticky="ew", padx=16, pady=(0, 16))
@@ -230,9 +229,7 @@ class SettingsView(ctk.CTkFrame):
         self._model = build_settings_model(self._config_data)
         self.default_project_label.configure(text=self._model["default_project"])
         self.startup_summary_label.configure(text=self._model["startup_summary"])
-        self.clear_button.configure(
-            state="normal" if self._model["has_default_project"] else "disabled"
-        )
+        self.clear_button.set_enabled(self._model["has_default_project"])
 
     def _handle_apply_port(self) -> None:
         if self._on_apply_port is None:

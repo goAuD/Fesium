@@ -4,8 +4,9 @@ from urllib.parse import urlsplit
 
 import customtkinter as ctk
 
-from fesium.ui.theme.styles import get_button_style, get_color_token, get_font_token
+from fesium.ui.theme.styles import get_color_token, get_font_token
 from fesium.ui.widgets.body_text import BodyText
+from fesium.ui.widgets.button import Button
 from fesium.ui.widgets.panel_card import PanelCard
 from fesium.ui.widgets.scrollable_view_body import ScrollableViewBody
 from fesium.ui.widgets.status_badge import StatusBadge
@@ -243,11 +244,11 @@ class ServerView(ctk.CTkFrame):
                 "restart": on_restart or _noop,
                 "open_in_browser": on_open_browser or _noop,
             }
-            button = ctk.CTkButton(
+            button = Button(
                 self.actions_content,
-                text=label_text,
-                state="normal" if model["actions"][action_key] else "disabled",
-                **get_button_style(action_variants[action_key]),
+                label_text,
+                variant=action_variants[action_key],
+                enabled=model["actions"][action_key],
                 command=commands[action_key],
             )
             setattr(self, attr_name, button)
