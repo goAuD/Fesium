@@ -101,10 +101,16 @@ def test_resolve_button_style_danger_uses_danger_accent():
     assert danger_secondary["border_color"] == "accent.danger"
 
 
-def test_resolve_button_style_nav_active_uses_accent_border():
+def test_nav_rows_are_borderless_and_marked_by_fill():
+    """Six bordered boxes in a column read as six separate things. The sidebar
+    is one surface, so the current row is marked by its fill and text weight."""
+    nav = resolve_button_style("nav")
     nav_active = resolve_button_style("nav", active=True)
 
-    assert nav_active["border_color"] == "accent.primary"
+    assert nav["border_width"] == 0
+    assert nav_active["border_width"] == 0
+    assert nav_active["fg_color"] != nav["fg_color"]
+    assert nav_active["text_color"] != nav["text_color"]
 
 
 def test_no_shape_pairs_a_radius_with_a_border():

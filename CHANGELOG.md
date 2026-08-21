@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Added
 
+- Lucide icons in the sidebar, bundled as SVG sources plus rasterised PNGs under `src/fesium/assets/icons/lucide/`. They ship white on transparent and are tinted at runtime, so one file covers every state. `scripts/build_icons.py` regenerates them; nothing fetches or rasterises while the app runs.
 - `CLAUDE.md` at the repo root, alongside `AGENTS.md`, covering the commands, the verification bar for UI work, and the traps specific to this codebase.
 - Ruff lint, configured in `pyproject.toml` and enforced by its own CI job.
 - The `Settings` view now holds real preferences instead of a placeholder: a default project folder, a reopen-last-project toggle, and the default server port. It states in one line which folder the next launch will open.
@@ -25,6 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Changed
 
+- The sidebar is one surface with the current row marked, instead of six bordered boxes. Nav rows carry an icon and lose their borders; the active row takes the accent.
+- Pillow is now a declared dependency. customtkinter has always imported it for `CTkImage` without declaring it.
 - The `Database` view is rebuilt as a bento grid. It used to stack six equally weighted panels, which pushed the SQL editor and results below the fold; the table list now runs the full height on the left, and schema, editor and results share the rest. The `Read-only` switch moved next to `Run SQL`, since it decides what Run does.
 - Tile headings are small, uppercase and secondary-coloured. `accent.primary` is reserved for active state and primary actions instead of sitting on every section heading.
 - `requires-python` is now `>=3.10`, matching what the code actually needs. CI runs that floor so the claim stays tested.

@@ -78,23 +78,27 @@ def resolve_button_style(variant: str, *, active: bool = False, enabled: bool = 
             "border_color": "accent.danger",
             "border_width": SHAPE_TOKENS["button.border"],
         },
+        # Nav rows carry no border. Six bordered boxes stacked in a column read
+        # as six separate things; the sidebar is one surface with a marked row.
         "nav": {
             **button_base,
-            "fg_color": "bg.panel",
+            "fg_color": "bg.sidebar",
             "hover_color": "bg.panel_hover",
-            "text_color": "text.primary",
+            "text_color": "text.secondary",
             "text_color_disabled": "text.secondary",
-            "border_color": "border.soft",
-            "border_width": SHAPE_TOKENS["button.border"],
+            "border_color": "bg.sidebar",
+            "border_width": 0,
         },
         "nav_active": {
             **button_base,
-            "fg_color": "bg.panel_alt",
-            "hover_color": "bg.panel_alt",
-            "text_color": "text.primary",
+            "fg_color": "bg.panel",
+            "hover_color": "bg.panel",
+            # The accent earns its keep here: this is the state it exists to
+            # mark, and it carries the icon with it.
+            "text_color": "accent.primary",
             "text_color_disabled": "text.secondary",
-            "border_color": "accent.primary",
-            "border_width": SHAPE_TOKENS["button.border"],
+            "border_color": "bg.panel",
+            "border_width": 0,
         },
     }
 
