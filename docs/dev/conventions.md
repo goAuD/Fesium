@@ -23,6 +23,7 @@
 - Icons come from the bundled Lucide set. Add an SVG under `src/fesium/assets/icons/lucide/`, run `python scripts/build_icons.py`, and reference it by name. Never fetch or rasterise at runtime.
 - Corner geometry lives in `SHAPE_TOKENS`. Never pair a corner radius with a border on the same widget: CustomTkinter draws the arc and the straight edges as separate canvas items and they do not meet, so the corner renders doubled. A test enforces it.
 - Views are laid out as a bento grid: `BentoGrid` from `ui/widgets/` plus `Tile` for each cell. Size carries the hierarchy - a tile that matters spans more columns or takes more row weight - so headings can stay quiet.
+- If you call `detach_width_request` on a label, grid that label with a sticky containing `e` and `w` in a weighted column. The two go together: detached and unstretched means Tk clips the text to one character.
 - Never let a label ask for width. A wrapped label requests its `wraplength` as its width, which stretches its tile, breaks the grid's uniform columns and makes panels shimmer. Paragraphs go through `BodyText`, and a tile's `meta` is for a short qualifier - a count, a unit, a status word - not a sentence.
 - Never give a widget inside a tile a fixed pixel height. `CTkTextbox` asks for 200px by default; stack three and grid stops honouring row weights, and the tiles clip instead of sharing the space.
 - Every button is `Button` from `ui/widgets/`. A raw `CTkButton` misses the disabled styling, and CustomTkinter only swaps the text colour on a disabled button, which leaves it unreadable.

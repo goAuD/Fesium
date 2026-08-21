@@ -1,6 +1,7 @@
 import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_font_token, get_shape_token
+from fesium.ui.widgets.label_sizing import detach_width_request
 
 TILE_PADDING = 16
 
@@ -60,7 +61,9 @@ class Tile(ctk.CTkFrame):
             font=get_font_token("tile_title"),
             anchor="w",
         )
-        self.title_label.grid(row=0, column=0, sticky="w")
+        # sticky="ew" is load-bearing: the label asks for one character of width
+        # (see below), so it is the cell that has to hand it the real width.
+        self.title_label.grid(row=0, column=0, sticky="ew")
 
         self.meta_label = ctk.CTkLabel(
             header,
@@ -71,12 +74,16 @@ class Tile(ctk.CTkFrame):
         )
         self.meta_label.grid(row=0, column=1, sticky="e")
 
-        # Header labels are decoration, not content: a longer tile name must not
-        # make its tile wider than the grid share it was given, or two tiles
-        # meant to be equal come out 43px apart. Width is the grid's decision;
-        # these ask for one character and take what the cell gives them.
-        for label in (self.title_label, self.meta_label):
-            label._label.configure(width=1)
+        # The title is decoration, not content: a longer tile name must not make
+        # its tile wider than the grid share it was given, or two tiles meant to
+        # be equal come out 43px apart. It asks for one character and takes what
+        # its weighted, stretched cell gives it.
+        #
+        # The meta label deliberately keeps its natural width. It sits in an
+        # unweighted column, so asking for one character would render it one
+        # character wide - which is exactly what happened, and the tile titles
+        # and metas vanished from the app. truncate_meta bounds it instead.
+        detach_width_request(self.title_label)
 
         self.body = ctk.CTkFrame(self, fg_color="transparent")
         self.body.grid(row=1, column=0, sticky="nsew", padx=padding, pady=(0, padding))

@@ -3,6 +3,7 @@ import tkinter
 import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_font_token
+from fesium.ui.widgets.label_sizing import detach_width_request
 
 # Provisional wrap used before the widget has been given a real size.
 MIN_WRAPLENGTH = 160
@@ -64,8 +65,12 @@ class BodyText(ctk.CTkLabel):
         tkinter.Frame.bind(self, "<Configure>", self._sync_wraplength, add="+")
 
     def _detach_width_request(self) -> None:
-        """Stop the inner label from asking for width. Width is the cell's job."""
-        self._label.configure(width=1)
+        """Stop the inner label from asking for width. Width is the cell's job.
+
+        Every BodyText in the app is gridded with a sticky containing "e" and
+        "w", which is what makes this safe. See ui/widgets/label_sizing.py.
+        """
+        detach_width_request(self)
 
     def _sync_wraplength(self, event) -> None:
         # event.width is in real pixels; wraplength is in unscaled CTk units.
