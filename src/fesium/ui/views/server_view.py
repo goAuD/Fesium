@@ -9,7 +9,7 @@ from fesium.ui.widgets.bento import BentoGrid
 from fesium.ui.widgets.body_text import BodyText
 from fesium.ui.widgets.button import Button
 from fesium.ui.widgets.meta_list import MetaList
-from fesium.ui.widgets.tile import Tile
+from fesium.ui.widgets.tile import TILE_PADDING, Tile
 from fesium.ui.widgets.view_header import HEADER_GAP, ViewHeader
 
 ACTION_BUTTON_SPECS = (
@@ -19,6 +19,8 @@ ACTION_BUTTON_SPECS = (
     ("restart_button", "Restart", "restart"),
     ("open_browser_button", "Open in Browser", "open_in_browser"),
 )
+
+ACTION_ROW_GAP = 8
 
 ONE_ROW_SERVER_ACTION_LAYOUT = [["select_project", "start", "stop", "restart", "open_in_browser"]]
 TWO_ROW_SERVER_ACTION_LAYOUT = [["select_project", "start", "stop"], ["restart", "open_in_browser"]]
@@ -103,10 +105,21 @@ def build_server_view_model(
     }
 
 
-def resolve_server_action_layout(available_width: int) -> list[list[str]]:
-    if available_width >= 980:
-        return ONE_ROW_SERVER_ACTION_LAYOUT
-    return TWO_ROW_SERVER_ACTION_LAYOUT
+def resolve_server_action_layout(
+    available_width: int,
+    *,
+    required_width: int | None = None,
+) -> list[list[str]]:
+    """Wrap the control row only when it genuinely does not fit.
+
+    This used to compare against a hardcoded 980px, which was a guess about
+    how wide five buttons are. Measuring them instead means the row wraps when
+    it has to and not a pixel sooner - and it keeps working when a label
+    changes length.
+    """
+    if required_width is None:
+        required_width = 980
+    return ONE_ROW_SERVER_ACTION_LAYOUT if available_width >= required_width else TWO_ROW_SERVER_ACTION_LAYOUT
 
 
 class ServerView(ctk.CTkFrame):
@@ -251,8 +264,15 @@ class ServerView(ctk.CTkFrame):
         self.log_textbox.configure(state="disabled")
         return tile
 
+    def _measured_action_row_width(self) -> int:
+        gaps = ACTION_ROW_GAP * (len(self._action_buttons) - 1)
+        return sum(button.winfo_reqwidth() for button in self._action_buttons.values()) + gaps
+
     def _on_resize(self, _event=None) -> None:
-        self._render_action_buttons(resolve_server_action_layout(self.winfo_width()))
+        available = self.winfo_width() - 2 * TILE_PADDING
+        self._render_action_buttons(
+            resolve_server_action_layout(available, required_width=self._measured_action_row_width())
+        )
 
     def _render_action_buttons(self, layout) -> None:
         max_columns = max(len(row) for row in layout)
@@ -268,7 +288,7 @@ class ServerView(ctk.CTkFrame):
                     row=row_index,
                     column=column,
                     sticky="w",
-                    padx=(0 if column == 0 else 8, 0),
+                    padx=(0 if column == 0 else ACTION_ROW_GAP, 0),
                     pady=(0 if row_index == 0 else 8, 0),
                 )
         # Spare width goes to the far right so the row stays left-aligned.

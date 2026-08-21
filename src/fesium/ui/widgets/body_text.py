@@ -4,12 +4,24 @@ import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_font_token
 
+# Provisional wrap used before the widget has been given a real size.
 MIN_WRAPLENGTH = 160
+# Below this a wrap is meaningless, so stop shrinking rather than produce a
+# column one character wide.
+MIN_USABLE_WRAPLENGTH = 32
 
 
 def resolve_wraplength(available_width: int, *, inner_padding: int = 0) -> int:
-    """Return the wrap width a paragraph may use inside ``available_width``."""
-    return max(MIN_WRAPLENGTH, int(available_width) - 2 * int(inner_padding))
+    """Return the wrap width a paragraph may use inside ``available_width``.
+
+    Never wider than the space actually available: wrapping past the cell is
+    exactly what pushes text outside its panel. The floor applies only before
+    the first layout pass, when the widget has no width yet.
+    """
+    usable = int(available_width) - 2 * int(inner_padding)
+    if usable <= 0:
+        return MIN_WRAPLENGTH
+    return max(MIN_USABLE_WRAPLENGTH, usable)
 
 
 class BodyText(ctk.CTkLabel):
@@ -36,10 +48,24 @@ class BodyText(ctk.CTkLabel):
             wraplength=MIN_WRAPLENGTH,
             **kwargs,
         )
+        # A wrapped label asks Tk for a width equal to its wraplength, which
+        # makes it a ratchet: whatever width it is given once, it demands from
+        # then on. That defeats the bento grid's uniform columns - one long
+        # paragraph stretched its tile from 405px to 635px and squeezed its
+        # neighbour - and the tug of war between the demand and the clamp is
+        # what makes a panel visibly shimmer. Asking for one character instead
+        # leaves the cell in charge of the width; wraplength still decides
+        # where lines break, so the height stays correct.
+        self._detach_width_request()
+
         # CTkLabel.bind() forwards to the inner canvas and tkinter.Label, whose
         # widths are not the cell width. Bind on the CTkLabel frame itself, and
         # add to - never replace - CustomTkinter's own <Configure> handler.
         tkinter.Frame.bind(self, "<Configure>", self._sync_wraplength, add="+")
+
+    def _detach_width_request(self) -> None:
+        """Stop the inner label from asking for width. Width is the cell's job."""
+        self._label.configure(width=1)
 
     def _sync_wraplength(self, event) -> None:
         # event.width is in real pixels; wraplength is in unscaled CTk units.
@@ -50,3 +76,5 @@ class BodyText(ctk.CTkLabel):
         )
         if target != self.cget("wraplength"):
             self.configure(wraplength=target)
+            # configure() can rebuild the inner label's options, so re-assert.
+            self._detach_width_request()

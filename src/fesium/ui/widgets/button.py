@@ -5,9 +5,11 @@ import customtkinter as ctk
 from fesium.ui.theme.styles import get_button_style, resolve_button_style
 from fesium.ui.widgets.icon import DEFAULT_ICON_SIZE, get_icon
 
-# Buttons never render narrower than this, so the same action is the same size
-# wherever it appears.
-MIN_BUTTON_WIDTH = 150
+# Floor for the width, so a one-word button still reads as a button and stays a
+# comfortable target. Kept modest deliberately: at 150 it inflated Start, Stop
+# and Restart far past their labels and pushed the Server control row onto a
+# second line at window widths where it would otherwise have fitted.
+MIN_BUTTON_WIDTH = 110
 
 # Breathing room either side of the label.
 #
