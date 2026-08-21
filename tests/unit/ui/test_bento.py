@@ -72,3 +72,27 @@ def test_button_width_leaves_room_around_the_label():
 
     assert BUTTON_TEXT_PADDING >= 12
     assert MIN_BUTTON_WIDTH >= 2 * BUTTON_TEXT_PADDING
+
+
+VIEW_FILES = sorted(p for p in Path("src/fesium/ui/views").glob("*.py") if p.name != "__init__.py")
+
+
+def test_every_view_builds_its_header_from_the_shared_widget():
+    """Six hand-rolled headers drifted apart: content started up to 6px left
+    and 8px high depending on the view, which read as a jump on every page
+    change. One widget, gridded at row 0, keeps them identical."""
+    offenders = [path.name for path in VIEW_FILES if "ViewHeader(" not in path.read_text(encoding="utf-8")]
+
+    assert offenders == []
+
+
+def test_no_view_still_uses_the_superseded_containers():
+    """PanelCard and ScrollableViewBody are gone. The scroll frame is what inset
+    four of the views and caused the misalignment in the first place."""
+    offenders = sorted(
+        path.name
+        for path in VIEW_FILES
+        if any(name in path.read_text(encoding="utf-8") for name in ("PanelCard", "ScrollableViewBody"))
+    )
+
+    assert offenders == []

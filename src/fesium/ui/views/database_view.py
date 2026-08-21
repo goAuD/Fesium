@@ -4,8 +4,8 @@ from fesium.ui.theme.styles import get_color_token, get_font_token, get_shape_to
 from fesium.ui.widgets.bento import BentoGrid
 from fesium.ui.widgets.body_text import BodyText
 from fesium.ui.widgets.button import Button
-from fesium.ui.widgets.status_badge import StatusBadge
 from fesium.ui.widgets.tile import Tile
+from fesium.ui.widgets.view_header import HEADER_GAP, ViewHeader
 
 # CTkTextbox asks for 200px by default. Stacked, that overflows the window and
 # grid stops honouring row weights, so the tiles clip instead of sharing the
@@ -178,7 +178,7 @@ class DatabaseView(ctk.CTkFrame):
     ):
         super().__init__(master, fg_color="transparent")
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(1, weight=1)
 
         summary = build_database_summary(
             db_path,
@@ -193,10 +193,19 @@ class DatabaseView(ctk.CTkFrame):
             selected_table_info=selected_table_info,
         )
 
-        self._build_header(summary)
+        header = ViewHeader(
+            self,
+            "Database",
+            "SQLite queries with explicit safety defaults",
+            badges=(
+                (summary["source_badge"], summary["source_tone"]),
+                (summary["mode_badge"], summary["mode_tone"]),
+            ),
+        )
+        header.grid(row=0, column=0, sticky="ew", pady=(0, HEADER_GAP))
 
         grid = BentoGrid(self)
-        grid.grid(row=2, column=0, columnspan=2, sticky="nsew")
+        grid.grid(row=1, column=0, sticky="nsew")
 
         grid.place_tile(
             self._build_connection_tile(
@@ -237,31 +246,6 @@ class DatabaseView(ctk.CTkFrame):
             span=12,
             row_weight=3,
         )
-
-    def _build_header(self, summary: dict) -> None:
-        title = ctk.CTkLabel(
-            self,
-            text="Database",
-            text_color=get_color_token("text.primary"),
-            font=get_font_token("heading"),
-        )
-        title.grid(row=0, column=0, sticky="w")
-
-        badge_row = ctk.CTkFrame(self, fg_color="transparent")
-        badge_row.grid(row=0, column=1, sticky="e")
-
-        StatusBadge(badge_row, text=summary["source_badge"], tone=summary["source_tone"]).pack(
-            side="left", padx=(0, 8)
-        )
-        StatusBadge(badge_row, text=summary["mode_badge"], tone=summary["mode_tone"]).pack(side="left")
-
-        subtitle = ctk.CTkLabel(
-            self,
-            text="SQLite queries with explicit safety defaults",
-            text_color=get_color_token("text.secondary"),
-            font=get_font_token("body"),
-        )
-        subtitle.grid(row=1, column=0, columnspan=2, sticky="w", pady=(4, 20))
 
     def _build_connection_tile(self, parent, summary, on_select_database, on_reset_project_database):
         tile = Tile(parent, "Connection")

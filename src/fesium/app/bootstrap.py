@@ -127,6 +127,9 @@ def _replace_runtime_views(
             server_status=state.server_status,
             local_url=state.local_url,
             log_lines=state.log_lines,
+            on_start=start_action,
+            on_stop=stop_action,
+            on_open_browser=open_browser_action,
         ),
     )
     shell.replace_view(

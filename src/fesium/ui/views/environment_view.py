@@ -1,9 +1,9 @@
 import customtkinter as ctk
 
-from fesium.ui.theme.styles import get_color_token, get_font_token
-from fesium.ui.widgets.body_text import BodyText
-from fesium.ui.widgets.panel_card import PanelCard
-from fesium.ui.widgets.scrollable_view_body import ScrollableViewBody
+from fesium.ui.widgets.bento import BentoGrid
+from fesium.ui.widgets.meta_list import MetaList
+from fesium.ui.widgets.tile import Tile
+from fesium.ui.widgets.view_header import HEADER_GAP, ViewHeader
 
 
 def build_environment_rows(
@@ -44,33 +44,21 @@ def build_environment_rows(
     ]
 
 
+def split_environment_rows(rows) -> tuple[list, list]:
+    """Runtime facts on the left, workspace facts on the right."""
+    runtime_labels = {"PHP", "Version", "PATH"}
+    runtime = [row for row in rows if row["label"] in runtime_labels]
+    workspace = [row for row in rows if row["label"] not in runtime_labels]
+    return runtime, workspace
+
+
 class EnvironmentView(ctk.CTkFrame):
-    """Environment diagnostics view."""
+    """Environment diagnostics: is the runtime ready, is the workspace ready."""
 
     def __init__(self, master, status, *, project_root=None, project_kind: str = "", document_root=None):
         super().__init__(master, fg_color="transparent")
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(2, weight=1)
-
-        title = ctk.CTkLabel(
-            self,
-            text="Diagnostics",
-            text_color=get_color_token("text.primary"),
-            font=get_font_token("heading"),
-        )
-        title.grid(row=0, column=0, sticky="w")
-
-        subtitle = ctk.CTkLabel(
-            self,
-            text="Runtime checks and project readiness",
-            text_color=get_color_token("text.secondary"),
-            font=get_font_token("body"),
-        )
-        subtitle.grid(row=1, column=0, sticky="w", pady=(4, 20))
-
-        body = ScrollableViewBody(self)
-        body.grid(row=2, column=0, sticky="nsew")
-        body.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
 
         rows = build_environment_rows(
             status,
@@ -78,38 +66,29 @@ class EnvironmentView(ctk.CTkFrame):
             project_kind=project_kind,
             document_root=document_root,
         )
-        sections = (
-            ("PHP Runtime", rows[:3]),
-            ("Workspace Readiness", rows[3:]),
+        runtime_rows, workspace_rows = split_environment_rows(rows)
+
+        header = ViewHeader(
+            self,
+            "Diagnostics",
+            "Runtime checks and project readiness",
+            badges=(
+                ("PHP Ready", "accent.success") if status.php_available else ("PHP Missing", "accent.danger"),
+            ),
         )
+        header.grid(row=0, column=0, sticky="ew", pady=(0, HEADER_GAP))
 
-        for section_index, (section_title, section_rows) in enumerate(sections):
-            panel = PanelCard(body, surface_variant="inset")
-            panel.grid(row=section_index, column=0, sticky="ew", pady=(0, 16) if section_index == 0 else 0)
-            panel_content = panel.content_frame
+        grid = BentoGrid(self)
+        grid.grid(row=1, column=0, sticky="nsew")
 
-            title_label = ctk.CTkLabel(
-                panel_content,
-                text=section_title,
-                text_color=get_color_token("accent.primary"),
-                font=get_font_token("section_heading"),
-            )
-            title_label.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 8))
+        runtime = Tile(grid, "PHP Runtime", meta=status.php_version or "not detected")
+        MetaList(runtime.body, tuple((row["label"], row["value"]) for row in runtime_rows)).grid(
+            row=0, column=0, sticky="new"
+        )
+        grid.place_tile(runtime, row=0, column=0, span=6, row_weight=1)
 
-            for row_index, row in enumerate(section_rows, start=1):
-                label = ctk.CTkLabel(
-                    panel_content,
-                    text=row["label"],
-                    text_color=get_color_token("text.primary"),
-                    font=get_font_token("body_medium"),
-                )
-                label.grid(row=row_index * 2 - 1, column=0, sticky="w", padx=16, pady=(8, 4))
-
-                value = BodyText(panel_content, row["value"], tone="text.secondary")
-                value.grid(
-                    row=row_index * 2,
-                    column=0,
-                    sticky="ew",
-                    padx=16,
-                    pady=(0, 4 if row_index < len(section_rows) else 16),
-                )
+        workspace = Tile(grid, "Workspace Readiness", meta=project_kind.title() if project_kind else "no project")
+        MetaList(workspace.body, tuple((row["label"], row["value"]) for row in workspace_rows)).grid(
+            row=0, column=0, sticky="new"
+        )
+        grid.place_tile(workspace, row=0, column=6, span=6, row_weight=1)

@@ -8,7 +8,7 @@ TILE_PADDING = 16
 class Tile(ctk.CTkFrame):
     """One tile: a quiet title, optional right-hand meta, and a body to fill.
 
-    Replaces ``PanelCard`` for bento layouts. Two differences matter:
+    Two things matter about it:
 
     * The title is small, uppercase and secondary-coloured. Tile size carries
       the hierarchy, so the accent is free to mean something again - active

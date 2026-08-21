@@ -26,6 +26,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Changed
 
+- Every view is a bento grid now, not just `Database`. `Overview`, `Server`, `Diagnostics`, `Guide` and `Settings` follow, and the scrolling page bodies are gone with them.
+- `Overview` has real controls. The card titled `Quick Actions` used to contain none; serving state now takes the largest tile with Start, Stop and Open in Browser inline.
+- `Server` presents its runtime facts as a two-column list instead of a label above each value, which hands the space back to the live log.
 - The sidebar is one surface with the current row marked, instead of six bordered boxes. Nav rows carry an icon and lose their borders; the active row takes the accent.
 - Pillow is now a declared dependency. customtkinter has always imported it for `CTkImage` without declaring it.
 - The `Database` view is rebuilt as a bento grid. It used to stack six equally weighted panels, which pushed the SQL editor and results below the fold; the table list now runs the full height on the left, and schema, editor and results share the rest. The `Read-only` switch moved next to `Run SQL`, since it decides what Run does.
@@ -37,6 +40,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Fixed
 
+- Views no longer shift when you switch pages. Four of them wrapped their content in a scrolling frame that inset it by 6px, and each built its own header, so content started up to 6px left and 8px high depending on the page. All six share one `ViewHeader` and start at the same place.
+- Buttons have room around their labels again. CustomTkinter derives horizontal padding from the corner radius, so squaring the corners had cut it from 10px to 2px.
+- Nav labels line up with their icons.
 - Corners no longer render doubled. CustomTkinter draws a rounded corner as an anti-aliased circle glyph and the straight edges as hard-edged rectangles, so wherever a radius met a border the two failed to line up. Structural surfaces are square now; status badges keep their capsule, which has no border and draws one clean arc.
 - Badge text is optically centred. Tk centres a label on the font's line box, which reserves space above the caps for accents the label never uses, leaving the text a pixel low.
 - Disabled buttons are readable again. CustomTkinter only swaps the text colour on a disabled button and leaves the fill alone, so a disabled primary rendered grey text on a full-strength accent at roughly 1.05:1 contrast. Disabled buttons now change surface too, and every button pairing is held to WCAG AA by a test.
@@ -76,6 +82,8 @@ See [docs/release/v2.0.0.md](docs/release/v2.0.0.md) for the narrative release n
 - Switched the repository license from MIT to Apache-2.0
 
 ### Removed
+
+- `PanelCard` and `ScrollableViewBody`, superseded by `Tile` and `BentoGrid`.
 
 - Removed the legacy flat runtime modules in favor of the `src/fesium/` package layout
 - Removed the old root-level `test_nanoserver.py` suite after replacing it with the new `tests/` structure
