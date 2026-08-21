@@ -25,6 +25,7 @@ Thumbs.db
 # Environment
 .env
 venv/
+.venv/
 
 # Local workspace artifacts
 .fesium/
@@ -32,3 +33,8 @@ venv/
 # Build outputs
 build/
 dist/
+
+# Agents / local assistant workspaces
+/AGENTS.md
+.sam/
+.claude/
