@@ -147,9 +147,17 @@ class DatabaseManager:
 
     @trace_execution
     def list_tables(self) -> List[str]:
-        """Get list of all tables in the database."""
+        """List the browseable tables, skipping SQLite's own bookkeeping.
+
+        SQLite reserves the ``sqlite_`` prefix for internal tables such as
+        ``sqlite_sequence`` and ``sqlite_stat1``. They are noise in a schema
+        browser. GLOB is used rather than LIKE because ``_`` is a literal in a
+        GLOB pattern but a single-character wildcard in LIKE.
+        """
         success, result = self.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
+            "SELECT name FROM sqlite_master "
+            "WHERE type='table' AND name NOT GLOB 'sqlite_*' "
+            "ORDER BY name"
         )
         if success:
             return [row[0] for row in result["rows"]]

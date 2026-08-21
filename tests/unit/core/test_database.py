@@ -104,3 +104,21 @@ def test_get_table_info_rejects_injection_shaped_table_names(tmp_path):
     assert db.get_table_info("users; DROP TABLE users") == []
     # The guard must not have let anything through to the database.
     assert [column["name"] for column in db.get_table_info("users")] == ["id", "name", "note"]
+
+
+def test_list_tables_hides_sqlite_internal_bookkeeping(tmp_path):
+    db_path = tmp_path / "internals.sqlite"
+    db_path.touch()
+    manager = DatabaseManager(str(db_path), read_only=False)
+    # AUTOINCREMENT makes SQLite create its own sqlite_sequence table.
+    ok, _ = manager.execute("CREATE TABLE notes (id INTEGER PRIMARY KEY AUTOINCREMENT)")
+    assert ok is True
+    ok, _ = manager.execute("CREATE TABLE people (id INTEGER PRIMARY KEY)")
+    assert ok is True
+
+    ok, raw = manager.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    assert ok is True
+    # Guard against a vacuous test: the internal table must really be there.
+    assert "sqlite_sequence" in {row[0] for row in raw["rows"]}
+
+    assert manager.list_tables() == ["notes", "people"]

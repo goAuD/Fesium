@@ -1,33 +1,36 @@
 # Fesium Roadmap
 
-Planned direction for `Fesium` after the v2.0.0 rebrand. Items here are intent, not a commitment — priorities shift as the app is used in classroom and dev environments.
+Planned direction for `Fesium` after the v2.0.0 rebrand. Items here are intent, not a commitment - priorities shift as the app is used in classroom and dev environments.
 
 Current released line: **v2.0.x** (see [docs/release/v2.0.0.md](docs/release/v2.0.0.md)).
 
-## v2.1.0 — Next
+## v2.1.0 - Next
 
 Focus: UI polish and quality-of-life on top of the new shell.
 
+Most of this has shipped and is sitting under `Unreleased` in [CHANGELOG.md](CHANGELOG.md), waiting on a tag. One item is still open.
+
 ### UI / UX
 
-- [ ] Real `secondary` and `danger` button variants so destructive controls (Stop, Reset, destructive SQL) look distinct from primary actions
-- [ ] Matte accent palette pass — soften the default accent so the UI reads calm in long sessions
-- [ ] Badge sizing and text centering pass — badges subordinate to buttons
-- [ ] `Read-only` switch sub-label clarifying session-scoped behavior
-- [ ] Settings view wired to real preferences (port, default project folder, restore-last-project toggle)
+- [x] Real `secondary` and `danger` button variants so destructive controls (Stop, Reset, destructive SQL) look distinct from primary actions
+- [x] Matte accent palette pass - soften the default accent so the UI reads calm in long sessions
+- [x] Badge sizing and text centering pass - badges subordinate to buttons
+- [x] `Read-only` switch sub-label clarifying session-scoped behavior
+- [ ] Settings view wired to real preferences (port, default project folder, restore-last-project toggle) - the view is an honest placeholder until then
 
 ### Reliability
 
-- [ ] Unified `detect_php()` with a subprocess timeout to prevent UI hangs
-- [ ] Consistent destructive-query detection (comments and `WITH ... UPDATE` CTEs)
-- [ ] Hide SQLite internal tables (`sqlite_*`) from the schema browser
+- [x] Unified `detect_php()` with a subprocess timeout to prevent UI hangs
+- [x] Consistent destructive-query detection (comments and `WITH ... UPDATE` CTEs)
+- [x] Hide SQLite internal tables (`sqlite_*`) from the schema browser
 
 ### Tests / CI
 
-- [ ] Cross-platform GitHub Actions matrix (Ubuntu + Windows + macOS, Python 3.11 + 3.12)
-- [ ] Coverage for subprocess timeouts and comment-stripping in SQL risk classification
+- [x] Cross-platform GitHub Actions matrix (Ubuntu + Windows + macOS, Python 3.10-3.12)
+- [x] Coverage for subprocess timeouts and comment-stripping in SQL risk classification
+- [x] Actions pinned to commit SHAs, and the declared minimum Python is a tested claim
 
-## v2.2.0 — Soon After
+## v2.2.0 - Soon After
 
 ### System Tray Integration
 
@@ -42,7 +45,7 @@ Focus: UI polish and quality-of-life on top of the new shell.
 - [ ] Command-line arguments: `--port`, `--root`, `--no-gui`
 - [ ] Daemon mode support
 
-## v2.3.0 — Later
+## v2.3.0 - Later
 
 ### Multi-Project Support
 
@@ -56,7 +59,7 @@ Focus: UI polish and quality-of-life on top of the new shell.
 - [ ] phpMyAdmin-style query interface
 - [ ] Connection string configuration
 
-## v3.0.0 — Major (No Date)
+## v3.0.0 - Major (No Date)
 
 Breaking-change release that drops the v2.x compatibility surface.
 

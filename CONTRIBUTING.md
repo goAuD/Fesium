@@ -8,9 +8,9 @@
 
 The contributor docs live under [docs/dev/](docs/dev/):
 
-- [docs/dev/setup.md](docs/dev/setup.md) — install dependencies and run the app
-- [docs/dev/testing.md](docs/dev/testing.md) — run the unit suite and CI expectations
-- [docs/dev/conventions.md](docs/dev/conventions.md) — code organization, design rules, and security defaults
+- [docs/dev/setup.md](docs/dev/setup.md) - install dependencies and run the app
+- [docs/dev/testing.md](docs/dev/testing.md) - run the unit suite and CI expectations
+- [docs/dev/conventions.md](docs/dev/conventions.md) - code organization, design rules, and security defaults
 
 ## Where Things Go
 
