@@ -1,9 +1,9 @@
 import customtkinter as ctk
 
-from fesium.ui.theme.styles import get_color_token, get_font_token
+from fesium.ui.widgets.bento import BentoGrid
 from fesium.ui.widgets.body_text import BodyText
-from fesium.ui.widgets.panel_card import PanelCard
-from fesium.ui.widgets.scrollable_view_body import ScrollableViewBody
+from fesium.ui.widgets.tile import Tile
+from fesium.ui.widgets.view_header import HEADER_GAP, ViewHeader
 
 
 def build_guide_sections() -> tuple[dict[str, str], ...]:
@@ -41,6 +41,15 @@ def build_guide_sections() -> tuple[dict[str, str], ...]:
             ),
         },
         {
+            "title": "Databases Are Yours To Run",
+            "body": (
+                "Fesium serves your site; it does not run a database server. A Laravel "
+                "project pointed at MySQL needs MySQL running separately, or every query "
+                "fails with a connection error. Diagnostics reads your .env and tells you "
+                "before you open the site. SQLite needs nothing - it is just a file."
+            ),
+        },
+        {
             "title": "Safety Defaults",
             "body": (
                 "SQLite starts in read-only mode, destructive queries ask for "
@@ -51,47 +60,34 @@ def build_guide_sections() -> tuple[dict[str, str], ...]:
     )
 
 
+# The opening section is the thesis, so it runs full width. The rest are peers:
+# a pair, then a row of three.
+GUIDE_LAYOUT = (
+    {"row": 0, "column": 0, "span": 12, "row_weight": 2},
+    {"row": 1, "column": 0, "span": 6, "row_weight": 3},
+    {"row": 1, "column": 6, "span": 6, "row_weight": 3},
+    {"row": 2, "column": 0, "span": 4, "row_weight": 3},
+    {"row": 2, "column": 4, "span": 4, "row_weight": 3},
+    {"row": 2, "column": 8, "span": 4, "row_weight": 3},
+)
+
+
 class GuideView(ctk.CTkFrame):
     """Student-facing introduction and usage guidance for Fesium."""
 
     def __init__(self, master):
         super().__init__(master, fg_color="transparent")
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(1, weight=1)
 
-        title = ctk.CTkLabel(
-            self,
-            text="Guide",
-            text_color=get_color_token("text.primary"),
-            font=get_font_token("heading"),
-        )
-        title.grid(row=0, column=0, sticky="w")
+        header = ViewHeader(self, "Guide", "How Fesium fits student-friendly local development")
+        header.grid(row=0, column=0, sticky="ew", pady=(0, HEADER_GAP))
 
-        subtitle = ctk.CTkLabel(
-            self,
-            text="How Fesium fits student-friendly local development",
-            text_color=get_color_token("text.secondary"),
-            font=get_font_token("body"),
-        )
-        subtitle.grid(row=1, column=0, sticky="w", pady=(4, 20))
+        grid = BentoGrid(self)
+        grid.grid(row=1, column=0, sticky="nsew")
 
-        body = ScrollableViewBody(self)
-        body.grid(row=2, column=0, sticky="nsew")
-        body.grid_columnconfigure(0, weight=1)
-
-        for index, section in enumerate(build_guide_sections()):
-            panel = PanelCard(body, surface_variant="inset")
-            panel.grid(row=index, column=0, sticky="ew", pady=(0, 16) if index < 4 else 0)
-            panel_content = panel.content_frame
-            panel_content.grid_columnconfigure(0, weight=1)
-
-            panel_title = ctk.CTkLabel(
-                panel_content,
-                text=section["title"],
-                text_color=get_color_token("accent.primary"),
-                font=get_font_token("section_heading"),
-            )
-            panel_title.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 8))
-
-            panel_body = BodyText(panel_content, section["body"])
-            panel_body.grid(row=1, column=0, sticky="ew", padx=16, pady=(0, 16))
+        for section, placement in zip(build_guide_sections(), GUIDE_LAYOUT, strict=True):
+            tile = Tile(grid, section["title"])
+            body = BodyText(tile.body, section["body"])
+            body.grid(row=0, column=0, sticky="new")
+            grid.place_tile(tile, **placement)

@@ -1,11 +1,12 @@
 import customtkinter as ctk
 
 from fesium.core.preferences import MAX_PORT, MIN_PORT, describe_startup_project
-from fesium.ui.theme.styles import get_color_token, get_font_token
+from fesium.ui.theme.styles import get_color_token, get_font_token, get_shape_token
+from fesium.ui.widgets.bento import BentoGrid
 from fesium.ui.widgets.body_text import BodyText
 from fesium.ui.widgets.button import Button
-from fesium.ui.widgets.panel_card import PanelCard
-from fesium.ui.widgets.scrollable_view_body import ScrollableViewBody
+from fesium.ui.widgets.tile import Tile
+from fesium.ui.widgets.view_header import HEADER_GAP, ViewHeader
 
 NO_DEFAULT_PROJECT = "Not set - Fesium opens the folder it was started from"
 
@@ -45,7 +46,7 @@ class SettingsView(ctk.CTkFrame):
     ):
         super().__init__(master, fg_color="transparent")
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(1, weight=1)
 
         self._config_data = dict(config_data)
         self._model = build_settings_model(self._config_data)
@@ -54,48 +55,25 @@ class SettingsView(ctk.CTkFrame):
         self._on_clear_default_project = on_clear_default_project
         self._on_toggle_restore_last_project = on_toggle_restore_last_project
 
-        title = ctk.CTkLabel(
-            self,
-            text="Settings",
-            text_color=get_color_token("text.primary"),
-            font=get_font_token("heading"),
-        )
-        title.grid(row=0, column=0, sticky="w")
+        header = ViewHeader(self, "Settings", "Preferences stored in your local Fesium config")
+        header.grid(row=0, column=0, sticky="ew", pady=(0, HEADER_GAP))
 
-        subtitle = ctk.CTkLabel(
-            self,
-            text="Preferences stored in your local Fesium config",
-            text_color=get_color_token("text.secondary"),
-            font=get_font_token("body"),
-        )
-        subtitle.grid(row=1, column=0, sticky="w", pady=(4, 20))
+        grid = BentoGrid(self)
+        grid.grid(row=1, column=0, sticky="nsew")
 
-        body = ScrollableViewBody(self)
-        body.grid(row=2, column=0, sticky="nsew")
+        grid.place_tile(self._build_startup_tile(grid), row=0, column=0, span=7, row_weight=1)
+        grid.place_tile(self._build_server_tile(grid), row=0, column=7, span=5, row_weight=1)
+
+        self.feedback_label = BodyText(self, "", tone="text.secondary")
+        self.feedback_label.grid(row=2, column=0, sticky="ew", pady=(HEADER_GAP, 0))
+
+    def _build_startup_tile(self, parent):
+        tile = Tile(parent, "Startup", meta="applies on next launch")
+        body = tile.body
         body.grid_columnconfigure(0, weight=1)
 
-        self._build_startup_panel(body)
-        self._build_server_panel(body)
-
-        self.feedback_label = BodyText(body, "", tone="text.secondary")
-        self.feedback_label.grid(row=2, column=0, sticky="ew", pady=(16, 0))
-
-    def _build_startup_panel(self, body) -> None:
-        panel = PanelCard(body, surface_variant="inset")
-        panel.grid(row=0, column=0, sticky="ew")
-        content = panel.content_frame
-        content.grid_columnconfigure(0, weight=1)
-
-        heading = ctk.CTkLabel(
-            content,
-            text="Startup",
-            text_color=get_color_token("accent.primary"),
-            font=get_font_token("section_heading"),
-        )
-        heading.grid(row=0, column=0, columnspan=2, sticky="w", padx=16, pady=(16, 12))
-
         self.restore_switch = ctk.CTkSwitch(
-            content,
+            body,
             text="Reopen my last project",
             text_color=get_color_token("text.primary"),
             font=get_font_token("body_medium"),
@@ -108,100 +86,77 @@ class SettingsView(ctk.CTkFrame):
             self.restore_switch.select()
         else:
             self.restore_switch.deselect()
-        self.restore_switch.grid(row=1, column=0, columnspan=2, sticky="w", padx=16, pady=(0, 4))
+        self.restore_switch.grid(row=0, column=0, columnspan=2, sticky="w")
 
         hint = BodyText(
-            content,
+            body,
             "When off, Fesium starts from the default project folder below.",
             tone="text.secondary",
         )
-        hint.grid(row=2, column=0, columnspan=2, sticky="ew", padx=16, pady=(0, 16))
+        hint.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(6, 18))
 
         folder_label = ctk.CTkLabel(
-            content,
+            body,
             text="Default project folder",
-            text_color=get_color_token("text.primary"),
-            font=get_font_token("body_medium"),
+            text_color=get_color_token("text.secondary"),
+            font=get_font_token("body"),
+            anchor="w",
         )
-        folder_label.grid(row=3, column=0, columnspan=2, sticky="w", padx=16, pady=(0, 4))
+        folder_label.grid(row=2, column=0, columnspan=2, sticky="w")
 
-        self.default_project_label = BodyText(
-            content,
-            self._model["default_project"],
-            tone="text.secondary",
-        )
-        self.default_project_label.grid(
-            row=4, column=0, columnspan=2, sticky="ew", padx=16, pady=(0, 12)
-        )
+        self.default_project_label = BodyText(body, self._model["default_project"], tone="text.primary")
+        self.default_project_label.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(4, 12))
 
-        select_button = Button(
-            content,
-            "Choose Folder",
-            command=self._handle_select_default_project,
-        )
-        select_button.grid(row=5, column=0, sticky="w", padx=(16, 8), pady=(0, 16))
+        select_button = Button(body, "Choose Folder", command=self._handle_select_default_project)
+        select_button.grid(row=4, column=0, sticky="w")
 
         self.clear_button = Button(
-            content,
+            body,
             "Clear",
             enabled=self._model["has_default_project"],
             command=self._handle_clear_default_project,
         )
-        self.clear_button.grid(row=5, column=1, sticky="w", padx=(8, 16), pady=(0, 16))
+        self.clear_button.grid(row=4, column=1, sticky="w", padx=(8, 0))
 
-        self.startup_summary_label = BodyText(
-            content,
-            self._model["startup_summary"],
-            tone="text.primary",
-        )
-        self.startup_summary_label.grid(
-            row=6, column=0, columnspan=2, sticky="ew", padx=16, pady=(0, 16)
-        )
+        self.startup_summary_label = BodyText(body, self._model["startup_summary"], tone="text.primary")
+        self.startup_summary_label.grid(row=5, column=0, columnspan=2, sticky="sew", pady=(18, 0))
+        body.grid_rowconfigure(5, weight=1)
+        return tile
 
-    def _build_server_panel(self, body) -> None:
-        panel = PanelCard(body, surface_variant="inset")
-        panel.grid(row=1, column=0, sticky="ew", pady=(16, 0))
-        content = panel.content_frame
-        content.grid_columnconfigure(0, weight=1)
-
-        heading = ctk.CTkLabel(
-            content,
-            text="Local Server",
-            text_color=get_color_token("accent.primary"),
-            font=get_font_token("section_heading"),
-        )
-        heading.grid(row=0, column=0, columnspan=2, sticky="w", padx=16, pady=(16, 12))
+    def _build_server_tile(self, parent):
+        tile = Tile(parent, "Local Server", meta=f"{MIN_PORT}-{MAX_PORT}")
+        body = tile.body
+        body.grid_columnconfigure(0, weight=1)
 
         port_label = ctk.CTkLabel(
-            content,
+            body,
             text="Default port",
-            text_color=get_color_token("text.primary"),
-            font=get_font_token("body_medium"),
+            text_color=get_color_token("text.secondary"),
+            font=get_font_token("body"),
+            anchor="w",
         )
-        port_label.grid(row=1, column=0, columnspan=2, sticky="w", padx=16, pady=(0, 4))
+        port_label.grid(row=0, column=0, columnspan=2, sticky="w")
 
         self.port_entry = ctk.CTkEntry(
-            content,
+            body,
             fg_color=get_color_token("bg.app"),
             text_color=get_color_token("text.primary"),
             border_color=get_color_token("border.default"),
+            corner_radius=get_shape_token("input.radius"),
             font=get_font_token("mono"),
             height=38,
         )
         self.port_entry.insert(0, self._model["port"])
-        self.port_entry.grid(row=2, column=0, sticky="ew", padx=(16, 8), pady=(0, 12))
+        self.port_entry.grid(row=1, column=0, sticky="ew", pady=(6, 0))
         self.port_entry.bind("<Return>", lambda _event: self._handle_apply_port())
 
-        apply_button = Button(
-            content,
-            "Apply",
-            variant="primary",
-            command=self._handle_apply_port,
-        )
-        apply_button.grid(row=2, column=1, sticky="w", padx=(8, 16), pady=(0, 12))
+        apply_button = Button(body, "Apply", variant="primary", command=self._handle_apply_port)
+        apply_button.grid(row=1, column=1, sticky="w", padx=(8, 0), pady=(6, 0))
 
-        hint = BodyText(content, self._model["port_hint"], tone="text.secondary")
-        hint.grid(row=3, column=0, columnspan=2, sticky="ew", padx=16, pady=(0, 16))
+        hint = BodyText(body, self._model["port_hint"], tone="text.secondary")
+        hint.grid(row=2, column=0, columnspan=2, sticky="new", pady=(12, 0))
+        body.grid_rowconfigure(3, weight=1)
+        return tile
 
     def _show(self, result) -> None:
         """Render a PreferenceResult, or clear the line when there is nothing to say."""

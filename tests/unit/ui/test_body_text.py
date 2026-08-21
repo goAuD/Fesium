@@ -16,8 +16,21 @@ def test_resolve_wraplength_accepts_scaled_float_widths():
 
 
 def test_resolve_wraplength_never_collapses_below_the_floor():
+    """The floor stands in for a width, before the widget has been given one."""
     assert resolve_wraplength(0) == MIN_WRAPLENGTH
     assert resolve_wraplength(-200, inner_padding=16) == MIN_WRAPLENGTH
+
+
+def test_resolve_wraplength_never_exceeds_the_space_available():
+    """Wrapping past the cell is what pushes text outside its panel.
+
+    The floor used to win over a genuinely narrow column: a 121px cell wrapped
+    at 160 and clipped three lines of text in the Diagnostics view.
+    """
+    for width in (40, 80, 121, 159):
+        assert resolve_wraplength(width) <= width, width
+
+    assert resolve_wraplength(121) == 121
 
 
 def test_views_do_not_hardcode_paragraph_wrap_widths():

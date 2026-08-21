@@ -13,6 +13,7 @@ from fesium.core.preferences import (
     normalize_default_project,
     normalize_port,
 )
+from fesium.core.project_database import summarize_project_database
 from fesium.core.security import classify_query_risk, validate_single_sql_statement
 from fesium.ui.shell import DEFAULT_WINDOW_GEOMETRY, FesiumShell
 from fesium.ui.views.database_view import DatabaseView
@@ -127,6 +128,9 @@ def _replace_runtime_views(
             server_status=state.server_status,
             local_url=state.local_url,
             log_lines=state.log_lines,
+            on_start=start_action,
+            on_stop=stop_action,
+            on_open_browser=open_browser_action,
         ),
     )
     shell.replace_view(
@@ -173,12 +177,16 @@ def _replace_runtime_views(
     )
     shell.replace_view(
         "environment",
+        # summarize_project_database touches the filesystem and opens a socket,
+        # so it runs inside the factory: only when Diagnostics is actually shown,
+        # not on every view refresh.
         lambda parent: EnvironmentView(
             parent,
             status=environment_status,
             project_root=state.project_root,
             project_kind=state.project_kind,
             document_root=state.document_root,
+            database_readiness=summarize_project_database(state.project_root),
         ),
     )
     shell.replace_view(

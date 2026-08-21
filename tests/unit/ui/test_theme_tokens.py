@@ -30,7 +30,23 @@ def test_font_manifest_points_to_local_files():
 
 
 def test_font_tokens_include_expected_roles():
-    assert set(FONT_TOKENS.keys()) == {"heading", "section_heading", "body", "body_medium", "mono"}
+    assert set(FONT_TOKENS.keys()) == {
+        "heading",
+        "section_heading",
+        "tile_title",
+        "metric",
+        "body",
+        "body_medium",
+        "meta",
+        "mono",
+    }
+
+
+def test_bento_type_scale_keeps_tile_titles_quieter_than_page_titles():
+    """Size is the hierarchy in a bento layout, so the tile heading steps back."""
+    assert FONT_TOKENS["tile_title"][1] < FONT_TOKENS["section_heading"][1]
+    assert FONT_TOKENS["meta"][1] < FONT_TOKENS["body"][1]
+    assert FONT_TOKENS["metric"][1] < FONT_TOKENS["heading"][1]
 
 
 def test_font_tokens_match_shell_density_scale():
@@ -85,7 +101,37 @@ def test_resolve_button_style_danger_uses_danger_accent():
     assert danger_secondary["border_color"] == "accent.danger"
 
 
-def test_resolve_button_style_nav_active_uses_accent_border():
+def test_nav_rows_are_borderless_and_marked_by_fill():
+    """Six bordered boxes in a column read as six separate things. The sidebar
+    is one surface, so the current row is marked by its fill and text weight."""
+    nav = resolve_button_style("nav")
     nav_active = resolve_button_style("nav", active=True)
 
-    assert nav_active["border_color"] == "accent.primary"
+    assert nav["border_width"] == 0
+    assert nav_active["border_width"] == 0
+    assert nav_active["fg_color"] != nav["fg_color"]
+    assert nav_active["text_color"] != nav["text_color"]
+
+
+def test_no_shape_pairs_a_radius_with_a_border():
+    """A rounded corner and a border cannot coexist cleanly in CustomTkinter.
+
+    The corner arc is an anti-aliased circle glyph and the straight edges are
+    hard-edged rectangles, drawn as separate canvas items. Where they meet the
+    edges do not line up and the corner renders as two arcs. Every role either
+    has square corners or no border.
+    """
+    from fesium.ui.theme.tokens import SHAPE_TOKENS
+
+    for role in ("tile", "button", "input"):
+        radius = SHAPE_TOKENS[f"{role}.radius"]
+        border = SHAPE_TOKENS[f"{role}.border"]
+        assert radius == 0 or border == 0, f"{role} pairs radius {radius} with border {border}"
+
+
+def test_badge_keeps_its_capsule():
+    """A badge is a CTkLabel, which has no border, so the pill always renders clean."""
+    from fesium.ui.theme.tokens import SHAPE_TOKENS
+
+    assert SHAPE_TOKENS["badge.radius"] >= 999
+    assert "badge.border" not in SHAPE_TOKENS

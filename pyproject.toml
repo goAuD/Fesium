@@ -13,6 +13,9 @@ requires-python = ">=3.10"
 license = {text = "Apache-2.0"}
 dependencies = [
   "customtkinter>=5.0.0",
+  # customtkinter imports PIL for CTkImage but does not declare it, and Fesium
+  # tints its bundled icons through Pillow at runtime.
+  "pillow>=9.0.0",
 ]
 
 [project.scripts]
@@ -53,5 +56,11 @@ where = ["src"]
 # as the OFL requires. `icons/` has no __init__.py, so it is declared as data
 # of its parent package.
 [tool.setuptools.package-data]
-"fesium.assets" = ["icons/*.png", "icons/*.ico"]
+"fesium.assets" = [
+  "icons/*.png",
+  "icons/*.ico",
+  "icons/lucide/*.png",
+  "icons/lucide/*.svg",
+  "icons/lucide/*.txt",
+]
 "fesium.assets.fonts" = ["*.ttf", "*.md", "licenses/*.txt"]

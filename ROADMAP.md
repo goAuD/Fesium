@@ -29,6 +29,17 @@ Everything here has shipped and is sitting under `Unreleased` in [CHANGELOG.md](
 - [x] Cross-platform GitHub Actions matrix (Ubuntu + Windows + macOS, Python 3.10-3.12)
 - [x] Coverage for subprocess timeouts and comment-stripping in SQL risk classification
 - [x] Actions pinned to commit SHAs, and the declared minimum Python is a tested claim
+- [x] Ruff lint with its own CI job
+
+### Design rework
+
+Not planned when this section was written, but it is what the release turned out to be about.
+
+- [x] Bento grid layout across all six views, replacing stacked equal-weight panels
+- [x] `BentoGrid`, `Tile`, `ViewHeader`, `MetaList` and `Button` as shared primitives
+- [x] Square structural corners, because CustomTkinter cannot render a radius and a border cleanly together
+- [x] Bundled Lucide icons, tinted at runtime from theme colours
+- [x] A contrast floor held by tests: every button and text-on-surface pairing clears WCAG AA
 
 ## v2.2.0 - Soon After
 
@@ -54,6 +65,8 @@ Everything here has shipped and is sitting under `Unreleased` in [CHANGELOG.md](
 - [ ] Quick switch between projects
 
 ### MySQL Support
+
+Fesium detects that a project wants MySQL and reports whether it is reachable. What it does not do is run one - and it is worth being clear that these are different jobs. Bundling a database server is what Laragon did; matching that is a much larger commitment than a connection option.
 
 - [ ] MySQL / MariaDB connection option
 - [ ] phpMyAdmin-style query interface

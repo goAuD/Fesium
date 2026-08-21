@@ -75,18 +75,21 @@ class FesiumShell(ctk.CTk):
             wraplength=180,
             justify="left",
         )
-        tagline_label.pack(anchor="w", padx=24, pady=(0, 24))
+        tagline_label.pack(anchor="w", padx=24, pady=(0, 20))
 
         for item in build_navigation_items():
             button = Button(
                 self.sidebar_frame,
                 item.label,
                 variant="nav",
+                icon=item.icon,
                 anchor="w",
                 width=192,
                 command=lambda view_id=item.id: self.set_active_view(view_id),
             )
-            button.pack(anchor="w", padx=24, pady=6)
+            # Full-width rows with a hairline gap: the sidebar is one surface
+            # with the current row marked, not six separate boxes.
+            button.pack(fill="x", padx=12, pady=2)
             self._navigation_buttons[item.id] = button
 
     def register_view(self, view_id: str, factory: Callable[[ctk.CTkFrame], ctk.CTkBaseClass]) -> None:
