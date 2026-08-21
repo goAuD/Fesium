@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Added
 
+- A `Project Database` check in `Diagnostics`. Fesium serves PHP but runs no database server, so a Laravel project pointed at MySQL used to start fine and then fail on its first query with a connection error from inside the framework. Fesium now reads the project's `.env`, checks whether anything is listening at the address it asks for, and says so plainly. Only `DB_CONNECTION`, `DB_HOST`, `DB_PORT` and `DB_DATABASE` are read - never credentials.
+- Lucide icons in the sidebar, bundled as SVG sources plus rasterised PNGs under `src/fesium/assets/icons/lucide/`. They ship white on transparent and are tinted at runtime, so one file covers every state. `scripts/build_icons.py` regenerates them; nothing fetches or rasterises while the app runs.
 - `CLAUDE.md` at the repo root, alongside `AGENTS.md`, covering the commands, the verification bar for UI work, and the traps specific to this codebase.
 - Ruff lint, configured in `pyproject.toml` and enforced by its own CI job.
 - The `Settings` view now holds real preferences instead of a placeholder: a default project folder, a reopen-last-project toggle, and the default server port. It states in one line which folder the next launch will open.
@@ -25,6 +27,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Changed
 
+- Every view is a bento grid now, not just `Database`. `Overview`, `Server`, `Diagnostics`, `Guide` and `Settings` follow, and the scrolling page bodies are gone with them.
+- `Overview` has real controls. The card titled `Quick Actions` used to contain none; serving state now takes the largest tile with Start, Stop and Open in Browser inline.
+- `Server` presents its runtime facts as a two-column list instead of a label above each value, which hands the space back to the live log.
+- The sidebar is one surface with the current row marked, instead of six bordered boxes. Nav rows carry an icon and lose their borders; the active row takes the accent.
+- Pillow is now a declared dependency. customtkinter has always imported it for `CTkImage` without declaring it.
+- The `Database` view is rebuilt as a bento grid. It used to stack six equally weighted panels, which pushed the SQL editor and results below the fold; the table list now runs the full height on the left, and schema, editor and results share the rest. The `Read-only` switch moved next to `Run SQL`, since it decides what Run does.
+- Tile headings are small, uppercase and secondary-coloured. `accent.primary` is reserved for active state and primary actions instead of sitting on every section heading.
 - `requires-python` is now `>=3.10`, matching what the code actually needs. CI runs that floor so the claim stays tested.
 - Softened the accent palette to a matte tone so the shell reads calm in long sessions.
 - Status badges are sized and centered to sit subordinate to the buttons beside them.
@@ -32,6 +41,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Fixed
 
+- Text is no longer clipped to a single character. `CTkLabel` grids its inner label with a sticky taken from `anchor`, so a correctly sized frame could still contain a 9px label once that label stopped asking for width.
+- Panels no longer shimmer, and side-by-side tiles are the same width. A wrapped label asks Tk for its `wraplength` as its width, so it demanded back whatever width it was last given; that stretched one Diagnostics tile to 561px and squeezed its neighbour to 250px, clipping three lines of text, and the tug of war against the grid was visible as a flicker. Labels leave the width to the cell now.
+- The `Server` controls fit on one row again. They wrapped at a hardcoded 980px, which was a guess about how wide five buttons are; the row now wraps only when the buttons measurably do not fit.
+- Views no longer shift when you switch pages. Four of them wrapped their content in a scrolling frame that inset it by 6px, and each built its own header, so content started up to 6px left and 8px high depending on the page. All six share one `ViewHeader` and start at the same place.
+- Buttons have room around their labels again. CustomTkinter derives horizontal padding from the corner radius, so squaring the corners had cut it from 10px to 2px.
+- Nav labels line up with their icons.
+- Corners no longer render doubled. CustomTkinter draws a rounded corner as an anti-aliased circle glyph and the straight edges as hard-edged rectangles, so wherever a radius met a border the two failed to line up. Structural surfaces are square now; status badges keep their capsule, which has no border and draws one clean arc.
+- Badge text is optically centred. Tk centres a label on the font's line box, which reserves space above the caps for accents the label never uses, leaving the text a pixel low.
 - Disabled buttons are readable again. CustomTkinter only swaps the text colour on a disabled button and leaves the fill alone, so a disabled primary rendered grey text on a full-strength accent at roughly 1.05:1 contrast. Disabled buttons now change surface too, and every button pairing is held to WCAG AA by a test.
 - The `Results` panel showed its heading twice, because the empty-state view model also used "Results" as its title.
 - Installing the package no longer drops the bundled fonts and icons. They were never declared as package data, so a `pip install` produced an app without its offline assets.
@@ -69,6 +86,8 @@ See [docs/release/v2.0.0.md](docs/release/v2.0.0.md) for the narrative release n
 - Switched the repository license from MIT to Apache-2.0
 
 ### Removed
+
+- `PanelCard` and `ScrollableViewBody`, superseded by `Tile` and `BentoGrid`.
 
 - Removed the legacy flat runtime modules in favor of the `src/fesium/` package layout
 - Removed the old root-level `test_nanoserver.py` suite after replacing it with the new `tests/` structure

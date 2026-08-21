@@ -13,8 +13,27 @@ def test_bundled_assets_are_declared_as_package_data():
     icons is a broken install. setuptools ships no non-Python file unless it is
     declared, and nothing else in the suite would notice them going missing.
     """
-    assert '"fesium.assets" = ["icons/*.png", "icons/*.ico"]' in PYPROJECT
+    for pattern in ("icons/*.png", "icons/*.ico", "icons/lucide/*.png", "icons/lucide/*.svg"):
+        assert f'"{pattern}"' in PYPROJECT, pattern
     assert '"fesium.assets.fonts" = ["*.ttf", "*.md", "licenses/*.txt"]' in PYPROJECT
+
+
+def test_pillow_is_declared():
+    """customtkinter imports PIL for CTkImage without declaring it, and Fesium
+    tints its icons through Pillow, so the dependency is ours to state."""
+    assert "pillow" in PYPROJECT.lower()
+    assert "pillow" in Path("requirements.txt").read_text(encoding="utf-8").lower()
+
+
+def test_icon_licence_ships_with_the_icons():
+    """ISC requires the copyright and permission notice to travel with copies."""
+    licence = Path("src/fesium/assets/icons/lucide/LICENSE.txt")
+
+    assert licence.exists()
+    text = licence.read_text(encoding="utf-8")
+    assert "ISC License" in text
+    assert "Permission to use, copy, modify" in text
+    assert '"icons/lucide/*.txt"' in PYPROJECT
 
 
 def test_font_licences_sit_next_to_the_fonts_they_cover():

@@ -1,11 +1,16 @@
 import customtkinter as ctk
 
-from fesium.ui.theme.styles import get_button_style, get_color_token, get_font_token
+from fesium.ui.theme.styles import get_color_token, get_font_token, get_shape_token
+from fesium.ui.widgets.bento import BentoGrid
 from fesium.ui.widgets.body_text import BodyText
 from fesium.ui.widgets.button import Button
-from fesium.ui.widgets.panel_card import PanelCard
-from fesium.ui.widgets.scrollable_view_body import ScrollableViewBody
-from fesium.ui.widgets.status_badge import StatusBadge
+from fesium.ui.widgets.tile import Tile
+from fesium.ui.widgets.view_header import HEADER_GAP, ViewHeader
+
+# CTkTextbox asks for 200px by default. Stacked, that overflows the window and
+# grid stops honouring row weights, so the tiles clip instead of sharing the
+# space. Asking for little lets the weights decide.
+TEXTBOX_MIN_HEIGHT = 60
 
 SOURCE_BADGES = {
     "project": ("Project Database", "accent.primary"),
@@ -139,7 +144,16 @@ def build_database_schema_view_model(
 
 
 class DatabaseView(ctk.CTkFrame):
-    """Database operations view with safety-first messaging."""
+    """SQLite workbench laid out as a bento grid.
+
+    The old version stacked six equally weighted panels, which put the reason
+    you opened the page - write a query, read the rows - below the fold. Here
+    the table list runs the full height on the left, and schema, editor and
+    results share the right at 2:2:3, so results get the most room.
+
+    The read-only switch sits with the Run button rather than in a separate
+    controls panel: it gates what Run does, so that is where it belongs.
+    """
 
     def __init__(
         self,
@@ -164,7 +178,7 @@ class DatabaseView(ctk.CTkFrame):
     ):
         super().__init__(master, fg_color="transparent")
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(2, weight=1)
+        self.grid_rowconfigure(1, weight=1)
 
         summary = build_database_summary(
             db_path,
@@ -179,100 +193,172 @@ class DatabaseView(ctk.CTkFrame):
             selected_table_info=selected_table_info,
         )
 
-        title = ctk.CTkLabel(
+        header = ViewHeader(
             self,
-            text="Database",
-            text_color=get_color_token("text.primary"),
-            font=get_font_token("heading"),
+            "Database",
+            "SQLite queries with explicit safety defaults",
+            badges=(
+                (summary["source_badge"], summary["source_tone"]),
+                (summary["mode_badge"], summary["mode_tone"]),
+            ),
         )
-        title.grid(row=0, column=0, sticky="w")
+        header.grid(row=0, column=0, sticky="ew", pady=(0, HEADER_GAP))
 
-        badge_row = ctk.CTkFrame(self, fg_color="transparent")
-        badge_row.grid(row=0, column=1, sticky="e")
+        grid = BentoGrid(self)
+        grid.grid(row=1, column=0, sticky="nsew")
 
-        source_badge = StatusBadge(
-            badge_row,
-            text=summary["source_badge"],
-            tone=summary["source_tone"],
+        grid.place_tile(
+            self._build_connection_tile(
+                grid, summary, on_select_database, on_reset_project_database
+            ),
+            row=0,
+            column=0,
+            span=12,
         )
-        source_badge.pack(side="left", padx=(0, 8))
-
-        mode_badge = StatusBadge(
-            badge_row,
-            text=summary["mode_badge"],
-            tone=summary["mode_tone"],
+        grid.place_tile(
+            self._build_tables_tile(grid, schema_model, on_select_table),
+            row=1,
+            column=0,
+            span=3,
+            rowspan=2,
         )
-        mode_badge.pack(side="left")
-
-        subtitle = ctk.CTkLabel(
-            self,
-            text="SQLite queries with explicit safety defaults",
-            text_color=get_color_token("text.secondary"),
-            font=get_font_token("body"),
+        grid.place_tile(
+            self._build_schema_tile(grid, schema_model, on_preview_table),
+            row=1,
+            column=3,
+            span=9,
+            # Schema carries a button row that the editor does not, so it needs
+            # a little more weight to show the same number of lines.
+            row_weight=3,
         )
-        subtitle.grid(row=1, column=0, columnspan=2, sticky="w", pady=(4, 20))
+        grid.place_tile(
+            self._build_editor_tile(grid, db_path, read_only, last_query, on_toggle_read_only, on_run_sql),
+            row=2,
+            column=3,
+            span=9,
+            row_weight=2,
+        )
+        # Result tables are the widest thing here, so they get the full width.
+        grid.place_tile(
+            self._build_results_tile(grid, result_model),
+            row=3,
+            column=0,
+            span=12,
+            row_weight=3,
+        )
 
-        body = ScrollableViewBody(self)
-        body.grid(row=2, column=0, columnspan=2, sticky="nsew")
+    def _build_connection_tile(self, parent, summary, on_select_database, on_reset_project_database):
+        tile = Tile(parent, "Connection")
+        body = tile.body
         body.grid_columnconfigure(0, weight=1)
-        body.grid_columnconfigure(1, weight=2)
 
-        summary_panel = PanelCard(body, surface_variant="inset")
-        summary_panel.grid(row=0, column=0, columnspan=2, sticky="ew")
-        summary_content = summary_panel.content_frame
-        summary_content.grid_columnconfigure(0, weight=1)
-        summary_content.grid_columnconfigure(1, weight=0)
+        path_value = BodyText(body, summary["path"], tone="text.secondary")
+        path_value.grid(row=0, column=0, sticky="ew", padx=(0, 16))
 
-        summary_title = ctk.CTkLabel(
-            summary_content,
-            text="Connection",
-            text_color=get_color_token("accent.primary"),
-            font=get_font_token("section_heading"),
-        )
-        summary_title.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 8))
+        select_button = Button(body, "Select Database File", command=on_select_database)
+        select_button.grid(row=0, column=1, sticky="e", padx=(0, 8))
 
-        label = ctk.CTkLabel(
-            summary_content,
-            text="Selected Database",
-            text_color=get_color_token("text.primary"),
-            font=get_font_token("body_medium"),
-        )
-        label.grid(row=1, column=0, sticky="w", padx=16, pady=(0, 8))
-
-        path_value = BodyText(summary_content, summary["path"], tone="text.secondary")
-        path_value.grid(row=2, column=0, columnspan=2, sticky="ew", padx=16, pady=(0, 16))
-
-        actions_panel = PanelCard(body, surface_variant="inset")
-        actions_panel.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(16, 0))
-        actions_content = actions_panel.content_frame
-        actions_content.grid_columnconfigure((0, 1), weight=1)
-
-        actions_title = ctk.CTkLabel(
-            actions_content,
-            text="Controls",
-            text_color=get_color_token("accent.primary"),
-            font=get_font_token("section_heading"),
-        )
-        actions_title.grid(row=0, column=0, columnspan=2, sticky="w", padx=16, pady=(16, 12))
-
-        select_database_button = Button(
-            actions_content,
-            "Select Database File",
-            command=on_select_database,
-        )
-        select_database_button.grid(row=1, column=0, sticky="w", padx=(16, 8), pady=(0, 12))
-
-        reset_database_button = Button(
-            actions_content,
+        reset_button = Button(
+            body,
             "Reset to Project Database",
             enabled=summary["can_reset"],
             width=210,
             command=on_reset_project_database,
         )
-        reset_database_button.grid(row=1, column=1, sticky="w", padx=8, pady=(0, 12))
+        reset_button.grid(row=0, column=2, sticky="e")
+        return tile
 
+    def _build_tables_tile(self, parent, schema_model, on_select_table):
+        count = schema_model["table_count"]
+        tile = Tile(parent, "Tables", meta=f"{count} detected" if count else "none")
+        body = tile.body
+        body.grid_rowconfigure(0, weight=1)
+
+        if not schema_model["tables"]:
+            empty = BodyText(
+                body,
+                "The active database does not expose any browseable tables yet.",
+                tone="text.secondary",
+            )
+            empty.grid(row=0, column=0, sticky="new")
+            return tile
+
+        table_list = ctk.CTkScrollableFrame(body, fg_color="transparent", corner_radius=0)
+        table_list.grid(row=0, column=0, sticky="nsew")
+        table_list.grid_columnconfigure(0, weight=1)
+
+        for row_index, table_entry in enumerate(schema_model["tables"]):
+            button = Button(
+                table_list,
+                table_entry["name"],
+                variant="nav",
+                active=table_entry["active"],
+                anchor="w",
+                command=lambda table_name=table_entry["name"]: on_select_table(table_name)
+                if on_select_table
+                else None,
+            )
+            button.grid(row=row_index, column=0, sticky="ew", pady=(0 if row_index == 0 else 6, 0))
+        return tile
+
+    def _build_schema_tile(self, parent, schema_model, on_preview_table):
+        columns = schema_model["column_count"]
+        tile = Tile(
+            parent,
+            "Schema",
+            meta=(
+                f"{schema_model['title']} - {columns} columns"
+                if schema_model["preview_enabled"]
+                else "select a table"
+            ),
+        )
+        body = tile.body
+        body.grid_rowconfigure(0, weight=1)
+
+        self.schema_textbox = ctk.CTkTextbox(
+            body,
+            fg_color=get_color_token("bg.app"),
+            text_color=get_color_token("text.primary"),
+            font=get_font_token("mono"),
+            border_width=0,
+            corner_radius=get_shape_token("input.radius"),
+            height=TEXTBOX_MIN_HEIGHT,
+        )
+        self.schema_textbox.grid(row=0, column=0, sticky="nsew")
+        self.schema_textbox.insert("1.0", schema_model["body"])
+        self.schema_textbox.configure(state="disabled")
+
+        preview_button = Button(
+            body,
+            "Preview 100 Rows",
+            enabled=schema_model["preview_enabled"],
+            command=on_preview_table,
+        )
+        preview_button.grid(row=1, column=0, sticky="e", pady=(12, 0))
+        return tile
+
+    def _build_editor_tile(self, parent, db_path, read_only, last_query, on_toggle_read_only, on_run_sql):
+        tile = Tile(parent, "SQL", meta="one statement at a time")
+        body = tile.body
+        body.grid_rowconfigure(0, weight=1)
+
+        self.query_textbox = ctk.CTkTextbox(
+            body,
+            fg_color=get_color_token("bg.app"),
+            text_color=get_color_token("text.primary"),
+            font=get_font_token("mono"),
+            border_width=0,
+            corner_radius=get_shape_token("input.radius"),
+            height=TEXTBOX_MIN_HEIGHT,
+        )
+        self.query_textbox.grid(row=0, column=0, columnspan=2, sticky="nsew")
+        if last_query:
+            self.query_textbox.insert("1.0", last_query)
+
+        # The switch gates what Run does, so it sits with Run rather than in a
+        # separate controls panel three tiles away.
         self.read_only_switch = ctk.CTkSwitch(
-            actions_content,
+            body,
             text="Read-only",
             text_color=get_color_token("text.primary"),
             font=get_font_token("body_medium"),
@@ -287,189 +373,39 @@ class DatabaseView(ctk.CTkFrame):
             self.read_only_switch.select()
         else:
             self.read_only_switch.deselect()
-        self.read_only_switch.grid(row=2, column=0, columnspan=2, sticky="w", padx=16, pady=(0, 4))
+        self.read_only_switch.grid(row=1, column=0, sticky="w", pady=(12, 0))
 
-        read_only_hint = BodyText(
-            actions_content,
-            "Session-scoped. Re-enabled on every launch; write mode lasts only for the current session.",
-            tone="text.secondary",
+        run_button = Button(
+            body,
+            "Run SQL",
+            variant="primary",
+            enabled=bool(db_path),
+            command=lambda: on_run_sql(self.query_textbox.get("1.0", "end-1c")) if on_run_sql else None,
         )
-        read_only_hint.grid(row=3, column=0, columnspan=2, sticky="ew", padx=16, pady=(0, 16))
+        run_button.grid(row=1, column=1, sticky="e", pady=(12, 0))
+        return tile
 
-        tables_panel = PanelCard(body, surface_variant="inset")
-        tables_panel.grid(row=2, column=0, sticky="nsew", pady=(16, 0), padx=(0, 8))
-        tables_content = tables_panel.content_frame
-        tables_content.grid_columnconfigure(0, weight=1)
-        tables_content.grid_rowconfigure(2, weight=1)
-
-        tables_label = ctk.CTkLabel(
-            tables_content,
-            text="Tables",
-            text_color=get_color_token("accent.primary"),
-            font=get_font_token("section_heading"),
+    def _build_results_tile(self, parent, result_model):
+        tile = Tile(
+            parent,
+            "Results",
+            meta=result_model["title"],
+            meta_tone=result_model["tone"],
+            surface="bg.panel_alt",
         )
-        tables_label.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 4))
-
-        tables_count = ctk.CTkLabel(
-            tables_content,
-            text=f"{schema_model['table_count']} detected" if schema_model["table_count"] else "No tables detected",
-            text_color=get_color_token("text.secondary"),
-            font=get_font_token("body"),
-        )
-        tables_count.grid(row=1, column=0, sticky="w", padx=16, pady=(0, 12))
-
-        if schema_model["tables"]:
-            table_list = ctk.CTkScrollableFrame(
-                tables_content,
-                fg_color="transparent",
-                corner_radius=0,
-                height=220,
-            )
-            table_list.grid(row=2, column=0, sticky="nsew", padx=12, pady=(0, 12))
-            table_list.grid_columnconfigure(0, weight=1)
-
-            for row_index, table_entry in enumerate(schema_model["tables"]):
-                button = Button(
-                    table_list,
-                    table_entry["name"],
-                    variant="nav",
-                    active=table_entry["active"],
-                    anchor="w",
-                    command=lambda table_name=table_entry["name"]: on_select_table(table_name)
-                    if on_select_table
-                    else None,
-                )
-                button.grid(row=row_index, column=0, sticky="ew", padx=4, pady=4)
-        else:
-            empty_tables = BodyText(
-                tables_content,
-                "The active database does not expose any browseable tables yet.",
-                tone="text.secondary",
-            )
-            empty_tables.grid(row=2, column=0, sticky="ew", padx=16, pady=(0, 16))
-
-        schema_panel = PanelCard(body, surface_variant="inset")
-        schema_panel.grid(row=2, column=1, sticky="nsew", pady=(16, 0), padx=(8, 0))
-        schema_content = schema_panel.content_frame
-        schema_content.grid_columnconfigure(0, weight=1)
-
-        schema_title = ctk.CTkLabel(
-            schema_content,
-            text="Schema Inspect",
-            text_color=get_color_token("accent.primary"),
-            font=get_font_token("section_heading"),
-        )
-        schema_title.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 4))
-
-        schema_subtitle = ctk.CTkLabel(
-            schema_content,
-            text=schema_model["title"],
-            text_color=get_color_token("accent.primary" if schema_model["selected_table"] else "text.secondary"),
-            font=get_font_token("body"),
-        )
-        schema_subtitle.grid(row=1, column=0, sticky="w", padx=16, pady=(0, 8))
-
-        schema_meta = ctk.CTkLabel(
-            schema_content,
-            text=(
-                f"{schema_model['column_count']} columns"
-                if schema_model["preview_enabled"]
-                else "Select a table from the list"
-            ),
-            text_color=get_color_token("text.secondary"),
-            font=get_font_token("body"),
-        )
-        schema_meta.grid(row=2, column=0, sticky="w", padx=16, pady=(0, 12))
-
-        self.schema_textbox = ctk.CTkTextbox(
-            schema_content,
-            fg_color=get_color_token("bg.app"),
-            text_color=get_color_token("text.primary"),
-            font=get_font_token("mono"),
-            height=220,
-        )
-        self.schema_textbox.grid(row=3, column=0, sticky="ew", padx=16, pady=(0, 12))
-        self.schema_textbox.insert("1.0", schema_model["body"])
-        self.schema_textbox.configure(state="disabled")
-
-        preview_button = Button(
-            schema_content,
-            "Preview 100 Rows",
-            enabled=schema_model["preview_enabled"],
-            command=on_preview_table,
-        )
-        preview_button.grid(row=4, column=0, sticky="e", padx=16, pady=(0, 16))
-
-        editor_panel = PanelCard(body, surface_variant="inset")
-        editor_panel.grid(row=3, column=0, columnspan=2, sticky="ew", pady=(16, 0))
-        editor_content = editor_panel.content_frame
-        editor_content.grid_columnconfigure(0, weight=1)
-
-        editor_label = ctk.CTkLabel(
-            editor_content,
-            text="SQL Editor",
-            text_color=get_color_token("accent.primary"),
-            font=get_font_token("section_heading"),
-        )
-        editor_label.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 12))
-
-        editor_hint = BodyText(
-            editor_content,
-            "Start with SELECT * FROM users; or use Preview 100 Rows above for a quick table sample.",
-            tone="text.secondary",
-        )
-        editor_hint.grid(row=1, column=0, sticky="ew", padx=16, pady=(0, 12))
-
-        self.query_textbox = ctk.CTkTextbox(
-            editor_content,
-            fg_color=get_color_token("bg.app"),
-            text_color=get_color_token("text.primary"),
-            font=get_font_token("mono"),
-            height=180,
-        )
-        self.query_textbox.grid(row=2, column=0, sticky="ew", padx=16, pady=(0, 12))
-        if last_query:
-            self.query_textbox.insert("1.0", last_query)
-
-        run_button = ctk.CTkButton(
-            editor_content,
-            text="Run SQL",
-            state="normal" if db_path else "disabled",
-            **get_button_style("primary"),
-            command=lambda: on_run_sql(self.query_textbox.get("1.0", "end-1c"))
-            if on_run_sql
-            else None,
-        )
-        run_button.grid(row=3, column=0, sticky="e", padx=16, pady=(0, 16))
-
-        result_panel = PanelCard(body, surface_variant="inset_strong")
-        result_panel.grid(row=4, column=0, columnspan=2, sticky="ew", pady=(16, 0))
-        result_content = result_panel.content_frame
-        result_content.grid_columnconfigure(0, weight=1)
-
-        result_label = ctk.CTkLabel(
-            result_content,
-            text="Results",
-            text_color=get_color_token("accent.primary"),
-            font=get_font_token("section_heading"),
-        )
-        result_label.grid(row=0, column=0, sticky="w", padx=16, pady=(16, 6))
-
-        result_status = ctk.CTkLabel(
-            result_content,
-            text=result_model["title"],
-            text_color=get_color_token(result_model["tone"]),
-            font=get_font_token("body_medium"),
-        )
-        result_status.grid(row=1, column=0, sticky="w", padx=16, pady=(0, 12))
+        body = tile.body
+        body.grid_rowconfigure(0, weight=1)
 
         self.result_textbox = ctk.CTkTextbox(
-            result_content,
+            body,
             fg_color=get_color_token("bg.app"),
             text_color=get_color_token("text.primary"),
             font=get_font_token("mono"),
-            height=240,
+            border_width=0,
+            corner_radius=get_shape_token("input.radius"),
+            height=TEXTBOX_MIN_HEIGHT,
         )
-        self.result_textbox.grid(row=2, column=0, sticky="ew", padx=16, pady=(0, 16))
+        self.result_textbox.grid(row=0, column=0, sticky="nsew")
         self.result_textbox.insert("1.0", result_model["body"])
         self.result_textbox.configure(state="disabled")
+        return tile

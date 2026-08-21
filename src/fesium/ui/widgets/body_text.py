@@ -3,16 +3,29 @@ import tkinter
 import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_font_token
+from fesium.ui.widgets.label_sizing import WidthAgnosticLabel
 
+# Provisional wrap used before the widget has been given a real size.
 MIN_WRAPLENGTH = 160
+# Below this a wrap is meaningless, so stop shrinking rather than produce a
+# column one character wide.
+MIN_USABLE_WRAPLENGTH = 32
 
 
 def resolve_wraplength(available_width: int, *, inner_padding: int = 0) -> int:
-    """Return the wrap width a paragraph may use inside ``available_width``."""
-    return max(MIN_WRAPLENGTH, int(available_width) - 2 * int(inner_padding))
+    """Return the wrap width a paragraph may use inside ``available_width``.
+
+    Never wider than the space actually available: wrapping past the cell is
+    exactly what pushes text outside its panel. The floor applies only before
+    the first layout pass, when the widget has no width yet.
+    """
+    usable = int(available_width) - 2 * int(inner_padding)
+    if usable <= 0:
+        return MIN_WRAPLENGTH
+    return max(MIN_USABLE_WRAPLENGTH, usable)
 
 
-class BodyText(ctk.CTkLabel):
+class BodyText(WidthAgnosticLabel):
     """Left-aligned paragraph label that wraps to the width it is actually given.
 
     ``CTkLabel`` takes ``wraplength`` in pixels, so a hardcoded value is only

@@ -21,6 +21,7 @@ The repository is currently in a structured migration. The new `src/fesium/` pac
 - static local serving fallback when PHP is unavailable
 - opening the running local site in the default browser
 - SQLite inspection and raw SQL execution with read-only defaults
+- a readiness check for the database a project's own `.env` asks for
 - lightweight SQLite schema browsing and table preview
 - an in-app guide for students and first-time users
 - stored preferences for the startup project and the default server port
@@ -110,7 +111,9 @@ python -m pip install -r requirements.txt
 python fesium.py
 ```
 
-Requires Python 3.10 or newer. PHP on your `PATH` is optional - Fesium falls back to a built-in static server when PHP is unavailable.
+Requires Python 3.10 or newer. Fesium serves your site. It does **not** run a database server: a project pointed at MySQL or PostgreSQL needs that service running separately, and the `Diagnostics` view says so before you open the site. SQLite needs nothing, because it is a file.
+
+PHP on your `PATH` is optional - Fesium falls back to a built-in static server when PHP is unavailable.
 
 Installing the package instead of running from the clone gives you a `fesium` command and `python -m fesium`:
 
