@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fesium"
-version = "2.0.0"
+dynamic = ["version"]
 description = "Local dev tools for students and developers"
 readme = "README.md"
 requires-python = ">=3.8"
@@ -13,11 +13,27 @@ dependencies = [
   "customtkinter>=5.0.0",
 ]
 
+[project.scripts]
+fesium = "fesium.app:main"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
 [tool.setuptools]
 package-dir = {"" = "src"}
 
+# The version lives in src/fesium/_version.py so the package and the package
+# metadata can never drift apart.
+[tool.setuptools.dynamic]
+version = {attr = "fesium._version.__version__"}
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+# Fesium is offline-first: the fonts and icons it renders with are bundled, so
+# they have to travel with the package. Font licences ship alongside the fonts,
+# as the OFL requires. `icons/` has no __init__.py, so it is declared as data
+# of its parent package.
+[tool.setuptools.package-data]
+"fesium.assets" = ["icons/*.png", "icons/*.ico"]
+"fesium.assets.fonts" = ["*.ttf", "*.md", "licenses/*.txt"]

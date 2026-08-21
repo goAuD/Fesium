@@ -37,6 +37,18 @@ python nanoserver.py
 
 The two launchers are functionally equivalent today. Prefer `fesium.py` in new documentation and scripts.
 
+### Installed launchers
+
+Neither root launcher is needed once the package is installed:
+
+```bash
+python -m pip install -e .
+fesium            # console script
+python -m fesium  # module entry point
+```
+
+`fesium.py` exists because it shares a name with the `src/fesium/` package: anything that does `import fesium` from the repo root hits the file, not the package. The launcher declares `__path__` so both resolve to the real package. An installed copy has no such ambiguity, which is why `python -m fesium` is the cleaner path and why the shim is on the v3.0 removal list.
+
 ## Next Steps
 
 - [testing.md](testing.md) — how to run the test suite

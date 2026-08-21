@@ -6,12 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+### Added
+
+- `python -m fesium` and a `fesium` console script, so an installed copy does not need the root launcher.
+
 ### Security
 
+- The root launcher no longer `exec()`s the package `__init__` to read the version. `fesium._version` is now the single source, read by a plain import and by setuptools.
 - Schema inspection binds the table name as a SQL parameter instead of formatting it into `PRAGMA table_info(...)`, using SQLite's `pragma_table_info()` table-valued function.
 
 ### Fixed
 
+- Installing the package no longer drops the bundled fonts and icons. They were never declared as package data, so a `pip install` produced an app without its offline assets.
 - Paragraph text no longer gets clipped at the start and end of every line. Views used fixed pixel wrap widths that were wider than the panel at any window below roughly 1400px, including the app's own 1100px minimum size. Paragraphs now wrap to the width they are actually given.
 
 ## [2.0.0] - 2026-04-19

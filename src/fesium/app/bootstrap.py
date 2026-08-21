@@ -4,7 +4,7 @@ from pathlib import Path
 from tkinter import filedialog, messagebox
 from typing import Dict
 
-from fesium import __version__
+from fesium._version import __version__
 from fesium.app.controller import FesiumController
 from fesium.core.config import Config
 from fesium.core.environment import summarize_php_environment

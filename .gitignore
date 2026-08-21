@@ -33,6 +33,7 @@ venv/
 # Build outputs
 build/
 dist/
+*.egg-info/
 
 # Agents / local assistant workspaces
 /AGENTS.md

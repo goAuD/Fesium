@@ -99,7 +99,14 @@ python -m pip install -r requirements.txt
 python fesium.py
 ```
 
-Requires Python 3.8+. PHP on your `PATH` is optional — Fesium falls back to a built-in static server when PHP is unavailable.
+PHP on your `PATH` is optional — Fesium falls back to a built-in static server when PHP is unavailable.
+
+Installing the package instead of running from the clone gives you a `fesium` command and `python -m fesium`:
+
+```bash
+python -m pip install -e .
+fesium
+```
 
 Full install, launcher, and test instructions live in [docs/dev/setup.md](docs/dev/setup.md) and [docs/dev/testing.md](docs/dev/testing.md).
 
