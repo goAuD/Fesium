@@ -368,7 +368,11 @@ class DatabaseView(ctk.CTkFrame):
 
         schema_meta = ctk.CTkLabel(
             schema_content,
-            text=f"{schema_model['column_count']} columns" if schema_model["preview_enabled"] else "Select a table from the list",
+            text=(
+                f"{schema_model['column_count']} columns"
+                if schema_model["preview_enabled"]
+                else "Select a table from the list"
+            ),
             text_color=get_color_token("text.secondary"),
             font=get_font_token("body"),
         )

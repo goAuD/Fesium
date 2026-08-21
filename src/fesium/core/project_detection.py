@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass(frozen=True)
@@ -8,7 +7,7 @@ class ProjectProfile:
     root: Path
     kind: str
     document_root: Path
-    database_path: Optional[Path]
+    database_path: Path | None
 
 
 def detect_project_profile(root: Path) -> ProjectProfile:

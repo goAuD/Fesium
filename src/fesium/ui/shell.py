@@ -1,4 +1,4 @@
-from typing import Callable, Dict
+from collections.abc import Callable
 
 import customtkinter as ctk
 
@@ -28,9 +28,9 @@ class FesiumShell(ctk.CTk):
         self.configure(fg_color=get_color_token("bg.app"))
         apply_window_icon(self)
 
-        self._view_factories: Dict[str, Callable[[ctk.CTkFrame], ctk.CTkBaseClass]] = {}
-        self._view_instances: Dict[str, ctk.CTkBaseClass] = {}
-        self._navigation_buttons: Dict[str, ctk.CTkButton] = {}
+        self._view_factories: dict[str, Callable[[ctk.CTkFrame], ctk.CTkBaseClass]] = {}
+        self._view_instances: dict[str, ctk.CTkBaseClass] = {}
+        self._navigation_buttons: dict[str, ctk.CTkButton] = {}
         self.active_view_id = None
 
         self.grid_columnconfigure(1, weight=1)

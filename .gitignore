@@ -32,7 +32,6 @@ build/
 dist/
 *.egg-info/
 
-# Agents / local assistant workspaces
-/AGENTS.md
+# Local assistant workspaces (AGENTS.md and CLAUDE.md are tracked on purpose)
 .sam/
 .claude/

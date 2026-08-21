@@ -1,8 +1,8 @@
+import threading
+from collections.abc import Callable
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-import threading
-from typing import Callable
 
 from fesium.core.server import find_available_port, is_port_in_use
 

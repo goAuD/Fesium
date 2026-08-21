@@ -2,7 +2,6 @@ import logging
 from dataclasses import dataclass
 from pathlib import Path
 from tkinter import filedialog, messagebox
-from typing import Dict
 
 from fesium._version import __version__
 from fesium.app.controller import FesiumController
@@ -22,7 +21,6 @@ from fesium.ui.views.guide_view import GuideView
 from fesium.ui.views.overview_view import OverviewView
 from fesium.ui.views.server_view import ServerView
 from fesium.ui.views.settings_view import SettingsView
-
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +58,7 @@ def build_default_paths(home_dir: Path = None) -> AppPaths:
     return AppPaths(home_dir=home_dir or Path.home())
 
 
-def build_app_context(cwd: Path, config_data: Dict[str, str]) -> AppContext:
+def build_app_context(cwd: Path, config_data: dict[str, str]) -> AppContext:
     """Resolve the folder Fesium opens with, honouring the startup preferences.
 
     Order: the last project (only when the user asked for it to be restored),

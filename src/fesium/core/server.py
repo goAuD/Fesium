@@ -10,17 +10,16 @@ import socket
 import subprocess
 import sys
 import threading
-from typing import Callable, Dict, Optional
+from collections.abc import Callable
 
 from fesium.core.config import trace_execution
-
 
 logger = logging.getLogger(__name__)
 
 IS_WINDOWS = sys.platform == "win32"
 
 
-def get_subprocess_flags() -> Dict[str, object]:
+def get_subprocess_flags() -> dict[str, object]:
     """Get platform-specific subprocess flags."""
     if IS_WINDOWS:
         startupinfo = subprocess.STARTUPINFO()
@@ -51,7 +50,7 @@ def is_port_in_use(port: int) -> bool:
         return sock.connect_ex(("localhost", port)) == 0
 
 
-def find_available_port(start_port: int = 8000, max_attempts: int = 10) -> Optional[int]:
+def find_available_port(start_port: int = 8000, max_attempts: int = 10) -> int | None:
     """Find an available port starting from start_port."""
     for offset in range(max_attempts):
         port = start_port + offset
@@ -70,7 +69,7 @@ class PHPServer:
         self.document_root = os.getcwd()
         self.last_error = ""
         self.on_log = on_log or (lambda message: None)
-        self._log_thread: Optional[threading.Thread] = None
+        self._log_thread: threading.Thread | None = None
         self._stop_logging = threading.Event()
 
     @trace_execution

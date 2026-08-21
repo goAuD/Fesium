@@ -3,8 +3,7 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional
-
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +30,7 @@ def trace_execution(func):
 class Config:
     """Persist app settings in a JSON file, with legacy NanoServer fallback."""
 
-    DEFAULT_CONFIG: Dict[str, Any] = {
+    DEFAULT_CONFIG: dict[str, Any] = {
         "last_project": "",
         "default_project": "",
         "restore_last_project": True,
@@ -43,7 +42,7 @@ class Config:
     def __init__(
         self,
         config_dir: Path,
-        legacy_config_dir: Optional[Path] = None,
+        legacy_config_dir: Path | None = None,
     ):
         self.config_dir = Path(config_dir)
         self.legacy_config_dir = Path(legacy_config_dir) if legacy_config_dir else None
@@ -53,7 +52,7 @@ class Config:
         self.config_dir.mkdir(parents=True, exist_ok=True)
         self.load()
 
-    def _resolve_load_source(self) -> Optional[Path]:
+    def _resolve_load_source(self) -> Path | None:
         if self.config_file.exists():
             return self.config_file
 
@@ -65,7 +64,7 @@ class Config:
         return None
 
     @trace_execution
-    def load(self) -> Dict[str, Any]:
+    def load(self) -> dict[str, Any]:
         source = self._resolve_load_source()
         if source is None:
             return self._data
@@ -99,7 +98,7 @@ class Config:
         self._data[key] = value
         self.save()
 
-    def snapshot(self) -> Dict[str, Any]:
+    def snapshot(self) -> dict[str, Any]:
         """Return a shallow copy of the current config - read-only view for callers."""
         return dict(self._data)
 

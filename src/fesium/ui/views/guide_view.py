@@ -12,20 +12,23 @@ def build_guide_sections() -> tuple[dict[str, str], ...]:
             "title": "What Fesium Is For",
             "body": (
                 "Fesium is an offline-first local dev toolbox for students and developers. "
-                "It helps you run local projects, inspect SQLite files, and keep common classroom or laptop workflows simple."
+                "It helps you run local projects, inspect SQLite files, and keep common "
+                "classroom or laptop workflows simple."
             ),
         },
         {
             "title": "Best-Fit Projects",
             "body": (
                 "Use it for plain HTML, CSS, and JavaScript sites, PHP projects that need localhost serving, "
-                "and SQLite-backed apps where you want quick inspection without opening a heavier database tool."
+                "and SQLite-backed apps where you want quick inspection without opening "
+                "a heavier database tool."
             ),
         },
         {
             "title": "Recommended Workflow",
             "body": (
-                "Start in Server, select your project, let Fesium detect the document root, then launch the site locally. "
+                "Start in Server, select your project, let Fesium detect the document "
+                "root, then launch the site locally. "
                 "Use Database when the project has SQLite data or when you want to inspect a standalone .sqlite file."
             ),
         },
@@ -33,13 +36,15 @@ def build_guide_sections() -> tuple[dict[str, str], ...]:
             "title": "Static Hosting Matters",
             "body": (
                 "Static site hosting is a valid first-class workflow here, not just a fallback. "
-                "If your project is just frontend files, Fesium should still feel like the right tool to open, serve, and test it."
+                "If your project is just frontend files, Fesium should still feel like "
+                "the right tool to open, serve, and test it."
             ),
         },
         {
             "title": "Safety Defaults",
             "body": (
-                "SQLite starts in read-only mode, destructive queries ask for confirmation, and local serving stays localhost-first. "
+                "SQLite starts in read-only mode, destructive queries ask for "
+                "confirmation, and local serving stays localhost-first. "
                 "Those defaults are meant to keep experimentation fast without making the app careless."
             ),
         },

@@ -4,7 +4,6 @@ import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_font_token
 
-
 MIN_WRAPLENGTH = 160
 
 

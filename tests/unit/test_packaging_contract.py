@@ -1,6 +1,5 @@
 from pathlib import Path
 
-
 PYPROJECT = Path("pyproject.toml").read_text(encoding="utf-8")
 
 

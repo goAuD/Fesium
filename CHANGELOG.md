@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Added
 
+- `CLAUDE.md` at the repo root, alongside `AGENTS.md`, covering the commands, the verification bar for UI work, and the traps specific to this codebase.
+- Ruff lint, configured in `pyproject.toml` and enforced by its own CI job.
 - The `Settings` view now holds real preferences instead of a placeholder: a default project folder, a reopen-last-project toggle, and the default server port. It states in one line which folder the next launch will open.
 - `python -m fesium` and a `fesium` console script, so an installed copy does not need the root launcher.
 - `secondary`, `danger`, and `danger_secondary` button variants, so destructive controls no longer look like primary actions.

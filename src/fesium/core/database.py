@@ -12,11 +12,10 @@ import os
 import re
 import sqlite3
 from contextlib import contextmanager
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 from fesium.core.config import trace_execution
 from fesium.core.security import classify_query_risk, strip_sql_leading_noise
-
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +65,7 @@ class DatabaseManager:
 
     def __init__(self, db_path: str = None, read_only: bool = True):
         self.db_path = db_path
-        self._connection: Optional[sqlite3.Connection] = None
+        self._connection: sqlite3.Connection | None = None
         self.read_only = read_only
 
     def set_database(self, db_path: str) -> None:
@@ -104,7 +103,7 @@ class DatabaseManager:
                 raise
 
     @trace_execution
-    def execute(self, query: str, params: tuple = ()) -> Tuple[bool, Any]:
+    def execute(self, query: str, params: tuple = ()) -> tuple[bool, Any]:
         """Execute a SQL query with proper transaction handling."""
         if not self.db_path:
             return False, "No database selected"
@@ -146,7 +145,7 @@ class DatabaseManager:
             return False, str(exc)
 
     @trace_execution
-    def list_tables(self) -> List[str]:
+    def list_tables(self) -> list[str]:
         """List the browseable tables, skipping SQLite's own bookkeeping.
 
         SQLite reserves the ``sqlite_`` prefix for internal tables such as
@@ -163,7 +162,7 @@ class DatabaseManager:
             return [row[0] for row in result["rows"]]
         return []
 
-    def get_table_info(self, table_name: str) -> List[dict]:
+    def get_table_info(self, table_name: str) -> list[dict]:
         """Get column info for a table."""
         if not validate_table_name(table_name):
             logger.warning("Invalid table name rejected: %s", table_name)

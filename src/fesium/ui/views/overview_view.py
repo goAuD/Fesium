@@ -1,5 +1,4 @@
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import customtkinter as ctk
 
@@ -30,9 +29,11 @@ def build_overview_cards(
     server_status: str,
     local_url: str,
     log_lines: tuple[str, ...] = (),
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     quick_action_value = (
-        f"Running at {local_url}" if server_status == "running" and local_url else "Open the Server view to manage the active site"
+        f"Running at {local_url}"
+        if server_status == "running" and local_url
+        else "Open the Server view to manage the active site"
     )
     recent_lines = log_lines[-3:]
     has_error = any("ERROR" in line for line in recent_lines)
@@ -80,9 +81,9 @@ class OverviewView(ctk.CTkFrame):
         php_summary: str = "",
         server_running: bool = False,
         *,
-        project_root: Optional[Path] = None,
+        project_root: Path | None = None,
         project_kind: str = "",
-        server_status: Optional[str] = None,
+        server_status: str | None = None,
         local_url: str = "",
         log_lines: tuple[str, ...] = (),
     ):

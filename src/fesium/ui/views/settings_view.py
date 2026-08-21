@@ -6,7 +6,6 @@ from fesium.ui.widgets.body_text import BodyText
 from fesium.ui.widgets.panel_card import PanelCard
 from fesium.ui.widgets.scrollable_view_body import ScrollableViewBody
 
-
 NO_DEFAULT_PROJECT = "Not set - Fesium opens the folder it was started from"
 
 

@@ -1,9 +1,8 @@
-from dataclasses import dataclass
 import logging
 import subprocess
+from dataclasses import dataclass
 
 from fesium.core.server import get_subprocess_flags
-
 
 logger = logging.getLogger(__name__)
 

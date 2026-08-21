@@ -22,7 +22,10 @@ def build_environment_rows(
         validation_message = "Select a project folder to evaluate runtime readiness."
         project_summary = "No project selected"
     elif not status.php_available and project_kind == "laravel":
-        validation_message = "PHP is missing. Laravel can only use the reduced static fallback for the public directory."
+        validation_message = (
+            "PHP is missing. Laravel can only use the reduced static fallback "
+            "for the public directory."
+        )
         project_summary = f"{project_kind.title()} project at {project_root}"
     elif not status.php_available:
         validation_message = "PHP is missing. Fesium will use the static fallback for standard sites."

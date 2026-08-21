@@ -2,8 +2,8 @@ from fesium.ui.views.database_view import (
     build_database_result_view_model,
     build_database_schema_view_model,
     build_database_summary,
-    format_schema_table,
     format_query_result_table,
+    format_schema_table,
 )
 
 

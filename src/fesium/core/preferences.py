@@ -10,7 +10,6 @@ from typing import Any
 
 from fesium.core.security import normalize_existing_directory
 
-
 # Ports below 1024 are privileged on Linux and macOS. Fesium is aimed at
 # students on machines they do not administer, so rejecting them here beats a
 # permission error at server start.

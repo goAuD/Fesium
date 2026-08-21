@@ -1,3 +1,4 @@
 # Runtime and contributor dependencies for Fesium
 customtkinter>=5.0.0
 pytest>=7.0.0
+ruff>=0.6.0
