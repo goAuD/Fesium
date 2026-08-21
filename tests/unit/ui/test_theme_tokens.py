@@ -30,7 +30,23 @@ def test_font_manifest_points_to_local_files():
 
 
 def test_font_tokens_include_expected_roles():
-    assert set(FONT_TOKENS.keys()) == {"heading", "section_heading", "body", "body_medium", "mono"}
+    assert set(FONT_TOKENS.keys()) == {
+        "heading",
+        "section_heading",
+        "tile_title",
+        "metric",
+        "body",
+        "body_medium",
+        "meta",
+        "mono",
+    }
+
+
+def test_bento_type_scale_keeps_tile_titles_quieter_than_page_titles():
+    """Size is the hierarchy in a bento layout, so the tile heading steps back."""
+    assert FONT_TOKENS["tile_title"][1] < FONT_TOKENS["section_heading"][1]
+    assert FONT_TOKENS["meta"][1] < FONT_TOKENS["body"][1]
+    assert FONT_TOKENS["metric"][1] < FONT_TOKENS["heading"][1]
 
 
 def test_font_tokens_match_shell_density_scale():

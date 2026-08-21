@@ -25,6 +25,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Changed
 
+- The `Database` view is rebuilt as a bento grid. It used to stack six equally weighted panels, which pushed the SQL editor and results below the fold; the table list now runs the full height on the left, and schema, editor and results share the rest. The `Read-only` switch moved next to `Run SQL`, since it decides what Run does.
+- Tile headings are small, uppercase and secondary-coloured. `accent.primary` is reserved for active state and primary actions instead of sitting on every section heading.
 - `requires-python` is now `>=3.10`, matching what the code actually needs. CI runs that floor so the claim stays tested.
 - Softened the accent palette to a matte tone so the shell reads calm in long sessions.
 - Status badges are sized and centered to sit subordinate to the buttons beside them.

@@ -21,7 +21,15 @@ COLOR_TOKENS = {
 FONT_TOKENS = {
     "heading": ("Sora", 28, "bold"),
     "section_heading": ("Sora", 18, "bold"),
+    # Tile titles are deliberately small and quiet. In a bento layout the size
+    # of a tile says how important it is, so the heading does not have to
+    # shout - and when every heading shouts, none of them carry meaning.
+    "tile_title": ("Sora", 12, "bold"),
+    # The one figure a tile is about: a row count, a port, a status word.
+    "metric": ("Sora", 22, "bold"),
     "body": ("IBM Plex Sans", 16),
     "body_medium": ("IBM Plex Sans", 16, "bold"),
+    # Right-hand side of a tile header: counts, units, short qualifiers.
+    "meta": ("IBM Plex Sans", 13),
     "mono": ("JetBrains Mono", 14),
 }

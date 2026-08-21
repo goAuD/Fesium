@@ -20,6 +20,10 @@
 - Follow the approved **Graphite Grid** direction: dark graphite shell, restrained matte accent, and clear panel hierarchy.
 - Prefer muted/matte accents over bright neon for dev-tool UIs.
 - Buttons must use the right variant: `primary` for the main call-to-action, `secondary` for supporting actions, `danger` for destructive ones. Never use the same variant for every control in a view.
+- Views are laid out as a bento grid: `BentoGrid` from `ui/widgets/` plus `Tile` for each cell. Size carries the hierarchy - a tile that matters spans more columns or takes more row weight - so headings can stay quiet.
+- Never give a widget inside a tile a fixed pixel height. `CTkTextbox` asks for 200px by default; stack three and grid stops honouring row weights, and the tiles clip instead of sharing the space.
+- Every button is `Button` from `ui/widgets/`. A raw `CTkButton` misses the disabled styling, and CustomTkinter only swaps the text colour on a disabled button, which leaves it unreadable.
+- Reserve `accent.primary` for state that matters: the active nav item, the primary action, live status. It used to sit on every section heading, which meant it signalled nothing.
 - Paragraph text uses `BodyText` from `ui/widgets/`. Never hardcode `wraplength` in a view: a constant pixel wrap is only correct at one window size and clips the text at every smaller one. Grid paragraphs with `sticky="ew"` so the cell drives the width.
 - Badges must be visually subordinate to the buttons they sit next to - equal or smaller in height, with balanced horizontal padding.
 - Bundle fonts in-repo only. Do not load fonts or other runtime assets from the network.
