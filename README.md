@@ -23,6 +23,7 @@ The repository is currently in a structured migration. The new `src/fesium/` pac
 - SQLite inspection and raw SQL execution with read-only defaults
 - lightweight SQLite schema browsing and table preview
 - an in-app guide for students and first-time users
+- stored preferences for the startup project and the default server port
 - offline-first desktop usage
 - a cleaner public-repo structure for ongoing iteration
 
@@ -47,7 +48,7 @@ The `Fesium` migration is in progress. Right now the repository includes:
 - responsive `Server` controls with a visible log panel at the default window size
 - scroll-safe `Server`, `Database`, `Diagnostics`, `Guide`, and `Settings` views
 - consistent bordered panel surfaces for operational panels and logs
-- a recent-activity overview, clearer diagnostics, and an honest settings placeholder
+- a recent-activity overview, clearer diagnostics, and a Settings view wired to real preferences
 - a student-facing `Guide` page that frames static and PHP hosting as valid Fesium workflows
 - a focused SQLite schema browser with table list, column inspect, and quick preview queries
 - root launchers for both the new `fesium.py` path and the temporary `nanoserver.py` compatibility shim
@@ -83,6 +84,16 @@ From the `Database` view, `Fesium` can:
 - require confirmation before destructive queries run in write mode
 
 The database tooling is still intentionally SQLite-only and lightweight. It now includes a focused schema browser, but it does not try to be a full database IDE.
+
+## Settings
+
+From the `Settings` view, `Fesium` can:
+
+- choose whether launching reopens your last project
+- set a default project folder to fall back on
+- set the default port for the local server, validated to the 1024-65535 range
+
+Preferences live in `~/.fesium/config.json`. A folder that has been moved or deleted since the last launch is skipped rather than treated as an error, and the view states in one line which folder the next launch will open.
 
 ## Current UI Preview
 

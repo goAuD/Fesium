@@ -2,7 +2,7 @@
 
 ## Code Organization
 
-- `src/fesium/core/` - server, database, config, environment, path, detection, and security logic (framework-free)
+- `src/fesium/core/` - server, database, config, environment, path, detection, preference, and security logic (framework-free)
 - `src/fesium/app/` - application bootstrap and controller
 - `src/fesium/ui/` - navigation, shell, views, widgets, and theme
 - `src/fesium/assets/` - bundled offline assets (fonts, icons)

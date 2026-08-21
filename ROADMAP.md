@@ -8,7 +8,7 @@ Current released line: **v2.0.x** (see [docs/release/v2.0.0.md](docs/release/v2.
 
 Focus: UI polish and quality-of-life on top of the new shell.
 
-Most of this has shipped and is sitting under `Unreleased` in [CHANGELOG.md](CHANGELOG.md), waiting on a tag. One item is still open.
+Everything here has shipped and is sitting under `Unreleased` in [CHANGELOG.md](CHANGELOG.md), waiting on a tag.
 
 ### UI / UX
 
@@ -16,7 +16,7 @@ Most of this has shipped and is sitting under `Unreleased` in [CHANGELOG.md](CHA
 - [x] Matte accent palette pass - soften the default accent so the UI reads calm in long sessions
 - [x] Badge sizing and text centering pass - badges subordinate to buttons
 - [x] `Read-only` switch sub-label clarifying session-scoped behavior
-- [ ] Settings view wired to real preferences (port, default project folder, restore-last-project toggle) - the view is an honest placeholder until then
+- [x] Settings view wired to real preferences (port, default project folder, restore-last-project toggle)
 
 ### Reliability
 

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Added
 
+- The `Settings` view now holds real preferences instead of a placeholder: a default project folder, a reopen-last-project toggle, and the default server port. It states in one line which folder the next launch will open.
 - `python -m fesium` and a `fesium` console script, so an installed copy does not need the root launcher.
 - `secondary`, `danger`, and `danger_secondary` button variants, so destructive controls no longer look like primary actions.
 - A sub-label under the `Read-only` switch explaining that write mode is session-scoped and resets on every launch.

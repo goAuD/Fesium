@@ -33,6 +33,8 @@ class Config:
 
     DEFAULT_CONFIG: Dict[str, Any] = {
         "last_project": "",
+        "default_project": "",
+        "restore_last_project": True,
         "port": 8000,
         "window_geometry": "1400x960",
         "active_view": "overview",
@@ -116,6 +118,22 @@ class Config:
     @port.setter
     def port(self, value: int) -> None:
         self.set("port", value)
+
+    @property
+    def default_project(self) -> str:
+        return self._data.get("default_project", "")
+
+    @default_project.setter
+    def default_project(self, value: str) -> None:
+        self.set("default_project", value)
+
+    @property
+    def restore_last_project(self) -> bool:
+        return bool(self._data.get("restore_last_project", True))
+
+    @restore_last_project.setter
+    def restore_last_project(self, value: bool) -> None:
+        self.set("restore_last_project", bool(value))
 
     @property
     def active_view(self) -> str:
