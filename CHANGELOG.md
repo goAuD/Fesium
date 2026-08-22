@@ -32,6 +32,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Changed
 
+- The docs describe the app as it behaves now. `README.md` still announced a migration that has finished, and three of its claims had gone stale behind the bento rework: it advertised `scroll-safe` views after the scrolling page bodies were removed, bordered panel surfaces after the sidebar became one, and PHP serving whenever PHP is installed rather than when the project uses it. Its `Status` section was a migration progress log rather than a description of the app. `AGENTS.md`, `CONTRIBUTING.md` and `docs/dev/setup.md` carried the same framing.
+
 - The environment report follows the project. `Overview` showed a PHP version and `Diagnostics` a PHP runtime section for a plain HTML and JavaScript site that never touches PHP. A project that needs no runtime now says so, and a missing PHP is only flagged for a project that wants PHP.
 - `Diagnostics` names the PHP binary it probed. A machine can carry several - a standalone install and a leftover from Laragon or XAMPP are common - and `PATH` decides which one Fesium gets, so a version number alone did not say which.
 
