@@ -2,7 +2,7 @@
 
 ## Scope
 
-`Fesium` is being rebuilt from the original `NanoServer` codebase into a modular offline-first desktop app. Contributions should preserve that direction: small focused modules, local-first behavior, and security-conscious defaults.
+`Fesium` was rebuilt from the original `NanoServer` codebase into a modular offline-first desktop app. Contributions should preserve that direction: small focused modules, local-first behavior, and security-conscious defaults.
 
 ## Getting Started
 
@@ -19,7 +19,7 @@ The contributor docs live under [docs/dev/](docs/dev/):
 - `src/fesium/assets/` for bundled offline assets such as fonts
 - `tests/unit/` for unit coverage that mirrors the source layout
 
-Avoid adding new flat root-level runtime modules. The repo is moving toward the `src/` package layout and away from the old monolithic entrypoint pattern.
+Avoid adding new flat root-level runtime modules. The repo is on the `src/` package layout, and the old monolithic entrypoint pattern is gone for good.
 
 ## Documentation
 
