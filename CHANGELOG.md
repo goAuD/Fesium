@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+### Fixed
+
+- The Pages site's header no longer breaks apart on a phone. The five section links are flex children with no `white-space` rule, so when the row was squeezed each one wrapped *inside itself* - three lines for `How it is built`, one for `GitHub` - which is what made it look ragged rather than merely tight. Measured against the bundled face: the links want 421px and a 390px phone leaves about 240px for them, so it cannot fit below roughly 570px however it is styled. Links no longer break mid-phrase at any width, and below 680px the section anchors are hidden, leaving the one link that does something rather than scrolling to a section a reader reaches anyway. With them gone there is 126px of headroom on a 320px screen, so the wordmark stays.
+
+- The landing page no longer repeats the mark at 168px directly under the 28px one in its own header. It said nothing the header had not already said and pushed the first real content down, which cost most on the screen with least room.
+
 ### Added
 
 - A `Setup Report` in `Diagnostics`: one button that copies everything on that screen as plain text, to paste into a message when asking for help. A student who is stuck asks a teacher, and what follows is five rounds of "which PHP", "where is the project", "is MySQL actually running" - answers already on the screen. This turns that exchange into one paste. The home folder is shortened to `~`, because the whole point is that the text gets sent somewhere and a Windows path carries the account name. No credential can appear in it: the report prints a `DatabaseRequirement`, and a test asserts that type has no field for a user or a password.
