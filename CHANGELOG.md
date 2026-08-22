@@ -32,6 +32,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Changed
 
+- The environment report follows the project. `Overview` showed a PHP version and `Diagnostics` a PHP runtime section for a plain HTML and JavaScript site that never touches PHP. A project that needs no runtime now says so, and a missing PHP is only flagged for a project that wants PHP.
+- `Diagnostics` names the PHP binary it probed. A machine can carry several - a standalone install and a leftover from Laragon or XAMPP are common - and `PATH` decides which one Fesium gets, so a version number alone did not say which.
+
 - The backend follows the project rather than the machine. Fesium picked the PHP built-in server whenever PHP was on `PATH`, using the project only to build a log message, so a plain HTML and JavaScript site was served by a PHP process it had no use for - and the static server was only ever a fallback, which contradicted the Guide describing it as a first-class workflow. A project is served statically unless it actually uses PHP.
 - `Static Fallback` is now `Static Server` in the `Server` view. For a project that does not need PHP it is not a fallback; when PHP is genuinely missing, `Diagnostics` says so.
 

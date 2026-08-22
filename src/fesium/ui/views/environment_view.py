@@ -15,31 +15,53 @@ def build_environment_rows(
     project_root=None,
     project_kind: str = "",
     document_root=None,
+    needs_php: bool = True,
 ):
-    if status.php_available:
+    """Runtime and workspace facts, framed by what this project actually needs.
+
+    PHP used to be reported the same way whatever was open, so a plain HTML
+    and JavaScript project was told about a PHP install it has no use for -
+    and a machine can carry more than one, which is why the binary's path is
+    reported rather than the version alone.
+    """
+    if not status.php_available:
+        path_hint = "Install PHP and add it to PATH to enable PHP-backed local serving"
+    elif needs_php:
         path_hint = "PHP is available on PATH for PHP-backed local serving"
     else:
-        path_hint = "Install PHP and add it to PATH to enable PHP-backed local serving"
+        path_hint = "PHP is installed, but this project does not use it"
 
     if not project_root:
         validation_message = "Select a project folder to evaluate runtime readiness."
         project_summary = "No project selected"
-    elif not status.php_available and project_kind == "laravel":
-        validation_message = (
-            "PHP is missing. Laravel can only use the reduced static fallback "
-            "for the public directory."
-        )
-        project_summary = f"{project_kind.title()} project at {project_root}"
-    elif not status.php_available:
-        validation_message = "PHP is missing. Fesium will use the static fallback for standard sites."
-        project_summary = f"{project_kind.title()} project at {project_root}"
     else:
-        validation_message = "Workspace and PHP runtime look ready for local serving."
         project_summary = f"{project_kind.title()} project at {project_root}"
+        if not needs_php:
+            validation_message = (
+                "This project is served by the static server. Nothing needs to be installed for it to run."
+            )
+        elif not status.php_available and project_kind == "laravel":
+            validation_message = (
+                "PHP is missing. Laravel can only use the reduced static fallback "
+                "for the public directory."
+            )
+        elif not status.php_available:
+            validation_message = "PHP is missing. Fesium will serve this project statically instead."
+        else:
+            validation_message = "Workspace and PHP runtime look ready for local serving."
+
+    if status.php_available:
+        php_value = "Available" if needs_php else "Available, not used by this project"
+    else:
+        php_value = "Missing from PATH"
 
     return [
-        {"label": "PHP", "value": "Available" if status.php_available else "Missing from PATH"},
+        {"label": "PHP", "value": php_value},
         {"label": "Version", "value": status.php_version or "Unavailable"},
+        # A machine can carry several PHP installs - a standalone one and a
+        # leftover from Laragon or XAMPP are common - and PATH decides which
+        # Fesium gets. The version alone does not say which.
+        {"label": "Binary", "value": getattr(status, "path", "") or "Not resolved"},
         {"label": "PATH", "value": path_hint},
         {"label": "Project Detection", "value": project_summary},
         {"label": "Document Root", "value": str(document_root) if document_root else "Not selected"},
@@ -49,10 +71,19 @@ def build_environment_rows(
 
 def split_environment_rows(rows) -> tuple[list, list]:
     """Runtime facts on the left, workspace facts on the right."""
-    runtime_labels = {"PHP", "Version", "PATH"}
+    runtime_labels = {"PHP", "Version", "Binary", "PATH"}
     runtime = [row for row in rows if row["label"] in runtime_labels]
     workspace = [row for row in rows if row["label"] not in runtime_labels]
     return runtime, workspace
+
+
+def _runtime_badge(status, needs_php: bool) -> tuple[str, str]:
+    """A missing PHP is only a problem for a project that wants PHP."""
+    if not needs_php:
+        return ("No Runtime Needed", "accent.success")
+    if status.php_available:
+        return ("PHP Ready", "accent.success")
+    return ("PHP Missing", "accent.danger")
 
 
 class EnvironmentView(ctk.CTkFrame):
@@ -67,6 +98,7 @@ class EnvironmentView(ctk.CTkFrame):
         project_kind: str = "",
         document_root=None,
         database_readiness: DatabaseReadiness | None = None,
+        needs_php: bool = True,
     ):
         super().__init__(master, fg_color="transparent")
         self.grid_columnconfigure(0, weight=1)
@@ -74,6 +106,7 @@ class EnvironmentView(ctk.CTkFrame):
 
         rows = build_environment_rows(
             status,
+            needs_php=needs_php,
             project_root=project_root,
             project_kind=project_kind,
             document_root=document_root,
@@ -84,16 +117,20 @@ class EnvironmentView(ctk.CTkFrame):
             self,
             "Diagnostics",
             "Runtime checks and project readiness",
-            badges=(
-                ("PHP Ready", "accent.success") if status.php_available else ("PHP Missing", "accent.danger"),
-            ),
+            badges=(_runtime_badge(status, needs_php),),
         )
         header.grid(row=0, column=0, sticky="ew", pady=(0, HEADER_GAP))
 
         grid = BentoGrid(self)
         grid.grid(row=1, column=0, sticky="nsew")
 
-        runtime = Tile(grid, "PHP Runtime", meta="detected" if status.php_available else "not detected")
+        if not needs_php:
+            runtime_meta = "not needed here"
+        elif status.php_available:
+            runtime_meta = "detected"
+        else:
+            runtime_meta = "not detected"
+        runtime = Tile(grid, "PHP Runtime", meta=runtime_meta)
         MetaList(runtime.body, tuple((row["label"], row["value"]) for row in runtime_rows)).grid(
             row=0, column=0, sticky="new"
         )

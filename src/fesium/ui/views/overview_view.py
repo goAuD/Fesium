@@ -31,6 +31,7 @@ def build_overview_model(
     server_status: str,
     local_url: str,
     log_lines: tuple[str, ...] = (),
+    needs_php: bool = True,
 ) -> dict:
     """Everything the Overview renders, as plain data.
 
@@ -52,6 +53,18 @@ def build_overview_model(
         "project_kind": _format_project_kind(project_kind),
         "php_summary": php_summary or "PHP not found in PATH",
         "php_healthy": bool(php_summary),
+        # What will actually serve this project. Showing a PHP version for a
+        # site that never touches PHP is noise at best, and reads as though
+        # PHP were part of the project at worst.
+        "runtime_summary": (
+            php_summary or "PHP not found in PATH"
+            if needs_php
+            else "Static server. This project needs no runtime installed."
+        ),
+        "runtime_meta": ("healthy" if php_summary else "missing") if needs_php else "no runtime needed",
+        "runtime_tone": (
+            ("accent.success" if php_summary else "accent.danger") if needs_php else "accent.success"
+        ),
         "activity": "\n".join(recent_lines) if recent_lines else "Nothing yet. Select a project to get started.",
         "activity_meta": "attention" if has_error else f"{len(recent_lines)} lines" if recent_lines else "idle",
         "activity_tone": "accent.danger" if has_error else "text.secondary",
@@ -129,6 +142,7 @@ class OverviewView(ctk.CTkFrame):
         server_status: str | None = None,
         local_url: str = "",
         log_lines: tuple[str, ...] = (),
+        needs_php: bool = True,
         on_start=None,
         on_stop=None,
         on_open_browser=None,
@@ -148,6 +162,7 @@ class OverviewView(ctk.CTkFrame):
             server_status=resolved_status,
             local_url=local_url,
             log_lines=log_lines,
+            needs_php=needs_php,
         )
 
         header = ViewHeader(
@@ -215,9 +230,9 @@ class OverviewView(ctk.CTkFrame):
         return text_tile(
             parent,
             "Environment",
-            model["php_summary"],
-            meta="healthy" if model["php_healthy"] else "missing",
-            meta_tone="accent.success" if model["php_healthy"] else "accent.danger",
+            model["runtime_summary"],
+            meta=model["runtime_meta"],
+            meta_tone=model["runtime_tone"],
         )
 
     def _build_workspace_tile(self, parent, model):

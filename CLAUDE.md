@@ -31,6 +31,8 @@ Two habits that have already caught real bugs here:
 
 ## Traps specific to this codebase
 
+- **The macOS runner has no PHP; the Windows and Ubuntu ones do.** A test that stubs only `subprocess.run` still asks the machine to resolve `php`, so it passes on two thirds of the matrix and fails on macOS. `detect_php` resolves with `shutil.which` before running anything - stub the resolution too. `tests/unit/core/test_environment.py` does it once, autouse.
+- **So does the environment report.** A project that needs no PHP is not told about the PHP on the machine, and a missing PHP is only a problem for a project that wants it. `EnvironmentStatus.path` carries which binary answered, because more than one install is common and `PATH` decides.
 - **The backend follows the project, not the machine.** `decide_runtime_backend` serves statically unless the project actually uses PHP, decided by `project_needs_php` - markers first (`artisan`, `composer.json`, `index.php`), then a scan bounded to depth 2 and 400 entries, because a full walk of a large folder took 6.4 seconds and this runs on project selection. An unreadable or oversized folder answers "needs PHP", since PHP serves static files too.
 
 - **`php -v` costs ~78ms, and the UI rebuilds every view after every action.** `summarize_php_environment()` is cached for that reason; `detect_php()` is not, so anything needing a guaranteed-fresh answer still has one. Do not add an eager probe to `_replace_runtime_views` - Diagnostics re-probes in its own factory, which only runs when that view is opened.
