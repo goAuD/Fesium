@@ -1,14 +1,12 @@
 import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_shape_token
+from fesium.ui.theme.tokens import TEXT_CENTRING_OFFSET
 
 BADGE_FONT = ("Atkinson Hyperlegible", 12, "bold")
 
-# Tk centres a label on the font's line box, which reserves room above the caps
-# for accents this text never uses, so the cap block lands a pixel low. Measured
-# on a descender-free string, 2px of bottom padding brings it to 8px above and
-# 8px below in a 24px capsule.
-TEXT_CENTRING_OFFSET = 2
+# Vertical centring of the text depends on the bundled face, not on this
+# widget, so it is decided once in the theme.
 
 
 class StatusBadge(ctk.CTkLabel):

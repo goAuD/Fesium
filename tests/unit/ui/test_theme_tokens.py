@@ -3,7 +3,7 @@ from pathlib import Path
 
 from fesium.assets.fonts.font_manifest import FONT_FILES
 from fesium.ui.theme.styles import resolve_button_style
-from fesium.ui.theme.tokens import COLOR_TOKENS, FONT_TOKENS
+from fesium.ui.theme.tokens import COLOR_TOKENS, FONT_TOKENS, TEXT_CENTRING_OFFSET
 
 WINDOWS_PLATFORM_ID = 3
 FAMILY_NAME_ID = 1
@@ -72,6 +72,49 @@ def test_every_token_family_is_actually_bundled():
     bundled = {read_family_name(path) for path in set(FONT_FILES.values())}
 
     assert asked == bundled, f"tokens ask for {asked - bundled}, bundle has {bundled}"
+
+
+def read_vertical_metrics(path: Path) -> tuple[int, int, int, int]:
+    """units-per-em, hhea ascent, hhea descent and OS/2 cap height."""
+    data = path.read_bytes()
+    tables = {}
+    for index in range(struct.unpack(">H", data[4:6])[0]):
+        entry = 12 + index * 16
+        tables[data[entry:entry + 4]] = struct.unpack(">II", data[entry + 8:entry + 16])[0]
+    upem = struct.unpack(">H", data[tables[b"head"] + 18:tables[b"head"] + 20])[0]
+    ascent, descent = struct.unpack(">hh", data[tables[b"hhea"] + 4:tables[b"hhea"] + 8])
+    cap = struct.unpack(">h", data[tables[b"OS/2"] + 88:tables[b"OS/2"] + 90])[0]
+    return upem, ascent, descent, cap
+
+
+def ideal_centring_offset(path: Path, size: int) -> int:
+    """The bottom padding this face needs at this size to centre its caps.
+
+    Tk centres a label on the font's line box. Inside that box the block a
+    reader sees runs from the cap top to the baseline, with ``ascent - cap``
+    above it and ``descent`` below. When those differ the text renders off
+    centre by half the difference, and ``pady=(0, n)`` moves it up by ``n/2``.
+    """
+    upem, ascent, descent, cap = read_vertical_metrics(path)
+    above = (ascent - cap) * size / upem
+    below = -descent * size / upem
+    return max(0, round(above - below))
+
+
+def test_centring_offset_matches_what_the_bundled_face_needs():
+    """The offset is a property of the face, so derive it from the face.
+
+    It was hardcoded to 2 in Button and again in StatusBadge, measured against
+    IBM Plex Sans, and swapping the body font left both shoving their text
+    upwards. Deriving it here means the next swap fails this test instead of
+    shipping.
+    """
+    for role, size in (("body_medium", 16), ("tile_title", 12)):
+        face = FONT_FILES["body_medium" if role == "body_medium" else "heading"]
+        ideal = ideal_centring_offset(face, size)
+        assert TEXT_CENTRING_OFFSET == ideal, (
+            f"{FONT_TOKENS[role][0]} at {size}px wants a {ideal}px offset, "
+            f"but TEXT_CENTRING_OFFSET is {TEXT_CENTRING_OFFSET}")
 
 
 def test_font_tokens_include_expected_roles():

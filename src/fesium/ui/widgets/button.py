@@ -3,6 +3,7 @@ from tkinter import font as tkfont
 import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_button_style, resolve_button_style
+from fesium.ui.theme.tokens import TEXT_CENTRING_OFFSET
 from fesium.ui.widgets.icon import DEFAULT_ICON_SIZE, get_icon
 
 # Floor for the width, so a one-word button still reads as a button and stays a
@@ -20,10 +21,8 @@ MIN_BUTTON_WIDTH = 110
 # taller, so the width is computed from the measured text instead.
 BUTTON_TEXT_PADDING = 16
 
-# Tk centres a label on the font line box, which reserves room above the caps
-# for accents these labels never use. Measured against a nav icon, the text
-# lands 1.5px low; 2px of bottom padding brings the two centres together.
-TEXT_CENTRING_OFFSET = 2
+# Vertical centring of the text depends on the bundled face, not on this
+# widget, so it is decided once in the theme. See TEXT_CENTRING_OFFSET there.
 
 
 def measure_button_width(master, text: str, font, *, with_icon: bool = False) -> int:

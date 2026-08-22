@@ -67,6 +67,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Fixed
 
+- Button and badge text sits centred again. Both widgets carried their own copy of a 2px bottom padding, measured against IBM Plex Sans, that pulled the text up to compensate for that face reserving more room above its caps than below its baseline. Atkinson's line box is already balanced, so the correction survived the swap as a visible shove upwards - measured at 12px above the caps against 16px below the baseline in a 38px button, where the two had been within a pixel of each other before. The offset now lives once in `tokens.py` beside the font decision it depends on, and a test derives the right value from the bundled font file so the next swap fails rather than ships.
+
 - The sidebar tagline no longer wraps to a width the sidebar did not give it. It carried `wraplength=180`, a pixel constant tuned to the old body font, and changing the typeface was enough to break it - which is the failure the repo's own convention against hardcoded wraps exists to prevent. It uses `BodyText` now and takes the wrap from the width it is actually given. `scripts/check_layout.py` caught this; the pytest suite is display-free and could not.
 
 - Starting a local server no longer freezes the window for two seconds. The port check connected to the port instead of trying to bind it, with no timeout, which measured 2047ms per call on Windows - and up to twenty times that when scanning for a free port. Binding answers the question the callers actually have, in 0.2ms.
