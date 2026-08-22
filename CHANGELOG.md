@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 ### Added
 
 - A GitHub Pages site, built by `scripts/build_site.py` and deployed by `.github/workflows/pages.yml`. It imports `COLOR_TOKENS` from the app rather than restating the palette, because the brand assets had already drifted from the product once. The page is one self-contained file with the screenshots inlined; a test regenerates it and fails if the committed copy and the generator disagree.
+- [ADR 0002](docs/decisions/0002-mysql-through-our-own-view.md), settling how MySQL will be reached: through the `Database` view Fesium already has, over `PyMySQL`, rather than by bundling an admin panel or rebuilding one. Serving Adminer in a browser would have put a `DROP TABLE` one click away with none of Fesium's read-only default in between, and rebuilding it would inherit a web application's attack surface with none of its scrutiny.
 - A test that every GitHub Actions reference in every workflow is pinned to a full commit SHA. The repo already pinned them by hand - a tag is mutable and its owner can silently repoint it - but nothing stopped the next workflow from forgetting.
 
 ## [2.1.0] - 2026-08-22
