@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [2.1.0] - 2026-08-22
+
 ### Added
 
 - `scripts/build_brand.py`, which draws the mark, the README banner, the social preview and the app icons from one geometry definition. The old assets had drifted apart: the mark was still the pre-matte neon `#73F0FF`, the preview set its wordmark in Arial, and the committed `.svg` and `.png` of the same poster disagreed.

@@ -6,6 +6,7 @@ User-facing summary per tagged version. The authoritative dated record is [CHANG
 
 | Version | Date | Notes |
 | --- | --- | --- |
+| [v2.1.0](v2.1.0.md) | 2026-08-22 | Bento layout across every view, a typeface and brand chosen on evidence, and the runtime following the project |
 | [v2.0.0](v2.0.0.md) | 2026-04-19 | Rebrand from NanoServer to Fesium; new package layout, shell, and bundled fonts |
 
 Earlier versions (v1.x NanoServer) are not re-published here; their history is preserved in the changelog.
