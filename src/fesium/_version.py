@@ -5,4 +5,4 @@ read it without executing the package ``__init__``, and setuptools can parse
 the literal statically for ``project.version``.
 """
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
