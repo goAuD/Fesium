@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Added
 
+- `scripts/build_brand.py`, which draws the mark, the README banner, the social preview and the app icons from one geometry definition. The old assets had drifted apart: the mark was still the pre-matte neon `#73F0FF`, the preview set its wordmark in Arial, and the committed `.svg` and `.png` of the same poster disagreed.
+
 - Dependabot, keeping both the pinned requirements and the SHA-pinned GitHub Actions current.
 - A Semgrep full scan of `main` on every push and weekly. Only pull requests were being scanned, and a diff scan cannot close a finding on the default branch, so five findings stayed open for ten days after the code causing them was fixed.
 - `scripts/capture_screenshots.py`, which produces the README screenshots at exact colours and identical sizes. It replaces `scripts/capture_overview_mock.py`, which only opened a window to be photographed by hand.
@@ -31,6 +33,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - Destructive-query detection now sees through leading comments and `WITH ... UPDATE` CTEs, so read-only mode cannot be talked past with a comment prefix.
 
 ### Changed
+
+- The app is set in `Atkinson Hyperlegible`, replacing `Sora` and `IBM Plex Sans`. The three faces were never chosen, they were picked at the start and kept, so five candidates were measured at 16px on how far apart their confusable characters sit. `Sora` had the worst pair of any of them - its `l` and `1` measured 0.10 apart on a 0-to-1 scale - and it was setting 12px tile titles, which is display-face work. Atkinson was drawn by the Braille Institute for exactly this and is the only candidate with a dotted zero, which is what a screen made of ports, ids and paths needs. One family plus `JetBrains Mono` now, because size and weight already carry the hierarchy in a bento layout.
+
+- The brand mark is a solid tile rather than three transparent rings. Every stroke of the old mark was `stroke-opacity="0.28"` neon cyan, measuring 2.12:1 against GitHub's dark canvas - under the 3:1 floor for a graphical object - and, because the SVG was transparent and a README borrows the reader's theme, **1.10:1 in light mode**, which is invisible. Nothing in it had mass, so it also had no silhouette left below 32px.
+
+- The README leads with a banner that bakes its own dark ground, so the header renders identically in either GitHub theme instead of borrowing whichever one the visitor is on. The social preview was redrawn in the matte palette; its predecessor tiled a 160px facet pattern that resolved into visible horizontal banding.
+
+- The app icon carries per-size artwork. A `.ico` entry is redrawn heavier at 16px rather than downscaling artwork built for 512, where the orbit turned to mush.
 
 - The docs describe the app as it behaves now. `README.md` still announced a migration that has finished, and three of its claims had gone stale behind the bento rework: it advertised `scroll-safe` views after the scrolling page bodies were removed, bordered panel surfaces after the sidebar became one, and PHP serving whenever PHP is installed rather than when the project uses it. Its `Status` section was a migration progress log rather than a description of the app. `AGENTS.md`, `CONTRIBUTING.md` and `docs/dev/setup.md` carried the same framing.
 
@@ -56,6 +66,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - The schema browser hides SQLite's internal `sqlite_*` bookkeeping tables.
 
 ### Fixed
+
+- The sidebar tagline no longer wraps to a width the sidebar did not give it. It carried `wraplength=180`, a pixel constant tuned to the old body font, and changing the typeface was enough to break it - which is the failure the repo's own convention against hardcoded wraps exists to prevent. It uses `BodyText` now and takes the wrap from the width it is actually given. `scripts/check_layout.py` caught this; the pytest suite is display-free and could not.
 
 - Starting a local server no longer freezes the window for two seconds. The port check connected to the port instead of trying to bind it, with no timeout, which measured 2047ms per call on Windows - and up to twenty times that when scanning for a free port. Binding answers the question the callers actually have, in 0.2ms.
 - `test_find_available_port_returns_value_in_range` no longer fails at random. It scanned ports 50000-50004 and asserted one was free, which depends on what else the machine is doing; a Windows CI runner reported all five in use. The test holds a port itself now, so the answer is knowable.

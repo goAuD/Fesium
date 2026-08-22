@@ -17,6 +17,7 @@
 
 - Follow the approved `Graphite Grid` direction: dark graphite shell, restrained matte accent, and refined panel hierarchy. Prefer muted accents over bright neon.
 - Bundle fonts in-repo only. Do not load fonts or other runtime assets from the network.
+- Brand assets are generated, not hand-drawn. `scripts/build_brand.py` owns one geometry definition and emits the mark, the README banner, the social preview and the app icons, so they cannot drift apart. Change the script, re-run it, commit what it produces.
 - Preserve the offline-first posture. The app must remain useful without internet access.
 
 ## Security Guardrails

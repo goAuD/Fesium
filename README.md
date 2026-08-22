@@ -1,10 +1,7 @@
-# Fesium
-
-<p align="center">
-  <img src="docs/assets/brand/fesium-orbit.svg" width="120" alt="Fesium Pure Orbit logo">
-</p>
-
-**Local dev tools for students and developers.**
+<h1 align="center">
+  <img src="docs/assets/brand/fesium-banner.png" width="720"
+       alt="Fesium - local dev tools for students and developers">
+</h1>
 
 `Fesium` is the new direction of the original `NanoServer` project: a lightweight desktop app for serving local sites, inspecting SQLite databases, and keeping a student-friendly workflow fast, safe, and offline-first.
 
@@ -41,7 +38,8 @@ This is the first app in a future local-toolbox direction, but the repo does not
 - `core/` holds the framework-free logic - config, server, database, environment, paths, project detection and security - and never imports from the UI
 - `app/` is bootstrap and controller; `ui/` is the shell, views, widgets and theme; `assets/` is everything bundled
 - all six views are laid out as a bento grid, so size carries the hierarchy instead of a stack of equally weighted panels
-- the `Graphite Grid` fonts and the Lucide icons ship in-repo and are tinted at runtime from the theme, so nothing is fetched or rasterised while the app runs
+- the app is set in `Atkinson Hyperlegible`, chosen because it keeps confusable characters apart and is the only candidate measured with a dotted zero - which matters on screens made of ports, ids and paths. `JetBrains Mono` sets the log and the SQL editor
+- fonts and Lucide icons ship in-repo and are tinted at runtime from the theme, so nothing is fetched or rasterised while the app runs
 - a contrast floor is held by tests: every button and text-on-surface pairing clears WCAG AA
 - the unit suite runs headless, without PHP and without network access, and `scripts/check_layout.py` covers what a display-free suite cannot see
 
