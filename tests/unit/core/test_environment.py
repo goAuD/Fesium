@@ -13,16 +13,28 @@ from fesium.core.environment import (
 PHP_BINARY = "C:/php/php.EXE"
 
 
+@pytest.fixture(autouse=True)
+def php_on_path(monkeypatch):
+    """Put a known PHP on PATH for every test in this module.
+
+    detect_php resolves the binary before running it, so a test that stubs
+    only subprocess.run silently depends on the machine actually having PHP.
+    That passed on Windows and Ubuntu runners, which ship one, and failed on
+    macOS, which does not. Resolution is stubbed here so no test in this file
+    can ask the machine anything.
+    """
+    monkeypatch.setattr(environment.shutil, "which", lambda _name: PHP_BINARY)
+
+
 def test_detect_php_returns_available_with_version(monkeypatch):
     def fake_run(cmd, **kwargs):
-        # The probe resolves php on PATH and runs what it resolved, so the path
-        # it reports is definitely the binary that answered.
+        # The probe runs what it resolved, so the path it reports is
+        # definitely the binary that answered.
         assert cmd == [PHP_BINARY, "-v"]
         assert kwargs.get("timeout") == pytest.approx(3.0)
         return SimpleNamespace(returncode=0, stdout="PHP 8.4.0 (cli)\nrest\n", stderr="")
 
-    monkeypatch.setattr("fesium.core.environment.shutil.which", lambda _name: PHP_BINARY)
-    monkeypatch.setattr("fesium.core.environment.subprocess.run", fake_run)
+    monkeypatch.setattr(environment.subprocess, "run", fake_run)
 
     status = detect_php()
 
@@ -32,11 +44,28 @@ def test_detect_php_returns_available_with_version(monkeypatch):
     assert status.summary == "PHP 8.4.0 (cli)"
 
 
+def test_detect_php_reports_missing_when_not_on_path(monkeypatch):
+    """No PHP anywhere on PATH: the probe must not be spawned at all."""
+    monkeypatch.setattr(environment.shutil, "which", lambda _name: None)
+    monkeypatch.setattr(
+        environment.subprocess,
+        "run",
+        lambda *_a, **_k: pytest.fail("php was run despite not being on PATH"),
+    )
+
+    status = detect_php()
+
+    assert status.php_available is False
+    assert status.summary == "PHP not found in PATH"
+    assert status.path == ""
+
+
 def test_detect_php_handles_missing_binary(monkeypatch):
+    """Resolved, then gone before it could run - a rare but real race."""
     def fake_run(*_, **__):
         raise FileNotFoundError("no php")
 
-    monkeypatch.setattr("fesium.core.environment.subprocess.run", fake_run)
+    monkeypatch.setattr(environment.subprocess, "run", fake_run)
 
     status = detect_php()
 
@@ -48,29 +77,33 @@ def test_detect_php_handles_subprocess_timeout(monkeypatch):
     def fake_run(*_, **kwargs):
         raise subprocess.TimeoutExpired(cmd="php", timeout=kwargs.get("timeout", 3.0))
 
-    monkeypatch.setattr("fesium.core.environment.subprocess.run", fake_run)
+    monkeypatch.setattr(environment.subprocess, "run", fake_run)
 
     status = detect_php(timeout=0.5)
 
     assert status.php_available is False
     assert "timed out" in status.summary
     assert "0.5" in status.summary
+    # The binary that hung is worth naming - that is the one to look at.
+    assert status.path == PHP_BINARY
 
 
 def test_detect_php_handles_nonzero_exit(monkeypatch):
     def fake_run(*_, **__):
         return SimpleNamespace(returncode=1, stdout="", stderr="broken")
 
-    monkeypatch.setattr("fesium.core.environment.subprocess.run", fake_run)
+    monkeypatch.setattr(environment.subprocess, "run", fake_run)
 
     status = detect_php()
 
     assert status.php_available is False
     assert status.summary == "PHP returned a non-zero exit status"
+    assert status.path == PHP_BINARY
 
 
 def test_summarize_php_environment_delegates_to_detect_php(monkeypatch):
     sentinel = EnvironmentStatus(True, "PHP 9.0.0", "PHP 9.0.0")
+    environment.reset_php_cache()
     monkeypatch.setattr("fesium.core.environment.detect_php", lambda: sentinel)
 
     assert summarize_php_environment() is sentinel
@@ -87,7 +120,7 @@ def test_summarize_php_environment_probes_once_within_the_window(monkeypatch):
     """The probe costs ~78ms and eleven UI handlers used to trigger it each."""
     environment.reset_php_cache()
     calls = []
-    status = environment.EnvironmentStatus(True, "PHP 8.5.2", "PHP 8.5.2")
+    status = environment.EnvironmentStatus(True, "PHP 8.5.2", "PHP 8.5.2", PHP_BINARY)
     monkeypatch.setattr(environment, "detect_php", _counting_probe(calls, status))
 
     first = environment.summarize_php_environment()
