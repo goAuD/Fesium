@@ -30,8 +30,9 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from PIL import ImageGrab  # noqa: E402
 
-from fesium.core.environment import EnvironmentStatus  # noqa: E402
-from fesium.core.project_detection import ProjectProfile  # noqa: E402
+from fesium.core.environment import EnvironmentStatus, detect_php  # noqa: E402
+from fesium.core.project_detection import ProjectProfile, detect_project_profile  # noqa: E402
+from fesium.core.runtime_detection import decide_runtime_backend  # noqa: E402
 from fesium.ui.shell import FesiumShell  # noqa: E402
 from fesium.ui.theme.tokens import COLOR_TOKENS  # noqa: E402
 from fesium.ui.views.database_view import DatabaseView  # noqa: E402
@@ -52,17 +53,35 @@ CORNER_TRIM = 2
 README_VIEWS = ("overview", "server")
 
 
-def build_shell(project_root: Path) -> FesiumShell:
-    profile = ProjectProfile(
+def describe_project(project_root: Path) -> "tuple[ProjectProfile, EnvironmentStatus, str]":
+    """What Fesium would actually say about this folder.
+
+    A real path with invented metadata is worse than an honest placeholder:
+    the first screenshots taken this way labelled a plain HTML and JavaScript
+    project as Laravel, served from a public/ directory it does not have. If
+    the folder exists, ask the detector; only invent when there is nothing to
+    detect.
+    """
+    if project_root.exists():
+        profile = detect_project_profile(project_root)
+        environment = detect_php()
+        backend = decide_runtime_backend(profile, php_available=environment.php_available).backend_kind
+        return profile, environment, backend
+
+    placeholder = ProjectProfile(
         root=project_root,
         kind="laravel",
         document_root=project_root / "public",
         database_path=project_root / "database" / "database.sqlite",
     )
-    environment = EnvironmentStatus(True, "PHP 8.5.2 (cli)", "PHP 8.5.2 (cli)")
+    return placeholder, EnvironmentStatus(True, "PHP 8.5.2 (cli)", "PHP 8.5.2 (cli)"), "php"
+
+
+def build_shell(project_root: Path) -> FesiumShell:
+    profile, environment, backend = describe_project(project_root)
     logs = (
-        f"Selected project: {project_root}",
-        "Backend selected: php",
+        f"Selected project: {profile.root}",
+        f"Backend selected: {backend}",
         "[Fesium] Started at http://localhost:8000",
         f"[Fesium] Document root: {profile.document_root}",
         "[127.0.0.1:51422] GET /  - Accepted",
@@ -77,11 +96,12 @@ def build_shell(project_root: Path) -> FesiumShell:
         local_url="http://localhost:8000", log_lines=logs))
     shell.register_view("server", lambda parent: ServerView(
         parent, document_root=profile.document_root, port=8000, project_root=profile.root,
-        project_kind=profile.kind, backend_kind="php", server_status="running",
+        project_kind=profile.kind, backend_kind=backend, server_status="running",
         local_url="http://localhost:8000", last_error="", log_lines=logs))
     shell.register_view("database", lambda parent: DatabaseView(
-        parent, db_path=str(profile.database_path), read_only=True, source="project",
-        project_database_available=True,
+        parent, db_path=str(profile.database_path or ""), read_only=True,
+        source="project" if profile.database_path else "none",
+        project_database_available=profile.database_path is not None,
         tables=("failed_jobs", "migrations", "password_resets", "sessions", "users"),
         selected_table="users",
         selected_table_info=(
