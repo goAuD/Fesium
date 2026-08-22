@@ -28,6 +28,37 @@ def test_committed_page_matches_its_generator():
         "site/index.html is out of date - run: python scripts/build_site.py")
 
 
+def test_stylesheet_has_no_malformed_selector():
+    """A browser drops a rule whose selector it cannot parse, in silence.
+
+    This exists because a doubled dot - ``..hero`` - shipped once. The page
+    still matched its generator, because the generator had the same typo, so
+    the drift test passed while the hero rendered with no padding at all. That
+    is the failure mode a generated stylesheet has: whatever is wrong is wrong
+    consistently.
+    """
+    style = re.search(r"<style>(.*?)</style>", (SITE / "index.html").read_text(
+        encoding="utf-8"), re.S).group(1)
+
+    malformed = []
+    for block in style.split("}"):
+        selector = block.split("{")[0]
+        # Strip comments and at-rule bodies before looking at the selector.
+        selector = re.sub(r"/\*.*?\*/", " ", selector, flags=re.S).strip()
+        if not selector or selector.startswith("@"):
+            continue
+        for one in selector.split(","):
+            one = one.strip()
+            if not one:
+                malformed.append(f"empty selector in {selector!r}")
+            elif ".." in one or "##" in one:
+                malformed.append(one)
+            elif not re.match(r"^[a-zA-Z.#:*\[]", one):
+                malformed.append(one)
+
+    assert malformed == [], f"the browser will drop these rules: {malformed}"
+
+
 def test_page_states_the_version_that_is_actually_shipping():
     page = (SITE / "index.html").read_text(encoding="utf-8")
 
