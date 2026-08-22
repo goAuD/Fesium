@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 ### Added
 
 - A Semgrep full scan of `main` on every push and weekly. Only pull requests were being scanned, and a diff scan cannot close a finding on the default branch, so five findings stayed open for ten days after the code causing them was fixed.
+- `scripts/profile_hot_paths.py`, which times one UI action and a cold start.
 - `scripts/check_layout.py`, which drives the real views in a live window and measures legibility, settling and tile balance. The pytest suite is display-free and cannot see a layout bug.
 - A `Project Database` check in `Diagnostics`. Fesium serves PHP but runs no database server, so a Laravel project pointed at MySQL used to start fine and then fail on its first query with a connection error from inside the framework. Fesium now reads the project's `.env`, checks whether anything is listening at the address it asks for, and says so plainly. Only `DB_CONNECTION`, `DB_HOST`, `DB_PORT` and `DB_DATABASE` are read - never credentials.
 - Lucide icons in the sidebar, bundled as SVG sources plus rasterised PNGs under `src/fesium/assets/icons/lucide/`. They ship white on transparent and are tinted at runtime, so one file covers every state. `scripts/build_icons.py` regenerates them; nothing fetches or rasterises while the app runs.
@@ -28,6 +29,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 - Destructive-query detection now sees through leading comments and `WITH ... UPDATE` CTEs, so read-only mode cannot be talked past with a comment prefix.
 
 ### Changed
+
+- Every UI action was spawning `php -v`. Rebuilding the views probed the PHP runtime eagerly, and eleven handlers rebuild the views, so each click stalled the window for ~78ms - 98% of the time spent selecting a project. The probe is gone from that path and the app-facing summary is cached; selecting a project went from 78.6ms to 1.7ms. `Diagnostics` re-probes when opened, which is the screen where a stale answer would matter.
 
 - Every view is a bento grid now, not just `Database`. `Overview`, `Server`, `Diagnostics`, `Guide` and `Settings` follow, and the scrolling page bodies are gone with them.
 - `Overview` has real controls. The card titled `Quick Actions` used to contain none; serving state now takes the largest tile with Start, Stop and Open in Browser inline.
