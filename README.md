@@ -98,9 +98,15 @@ Preferences live in `~/.fesium/config.json`. A folder that has been moved or del
 
 ## Current UI Preview
 
-The current preview asset shows the live `Server` workspace inside the Graphite Grid shell.
+`Overview` shows what is running, where, and what just happened, with the controls in the tile itself.
 
-![Fesium Overview screenshot](docs/assets/screenshots/fesium-overview.png)
+![Fesium Overview](docs/assets/screenshots/fesium-overview.png)
+
+`Server` keeps the runtime facts compact so the live log gets the room.
+
+![Fesium Server view](docs/assets/screenshots/fesium-server.png)
+
+Both are produced by `python scripts/capture_screenshots.py`, which grabs the window's client area directly. That keeps the colours exact - a snipping tool shifted every channel by about +17 and washed the whole palette out - and every image comes out the same size.
 
 ## Quickstart
 

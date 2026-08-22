@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 - Dependabot, keeping both the pinned requirements and the SHA-pinned GitHub Actions current.
 - A Semgrep full scan of `main` on every push and weekly. Only pull requests were being scanned, and a diff scan cannot close a finding on the default branch, so five findings stayed open for ten days after the code causing them was fixed.
+- `scripts/capture_screenshots.py`, which produces the README screenshots at exact colours and identical sizes. It replaces `scripts/capture_overview_mock.py`, which only opened a window to be photographed by hand.
 - `scripts/profile_hot_paths.py`, which times one UI action and a cold start.
 - `scripts/check_layout.py`, which drives the real views in a live window and measures legibility, settling and tile balance. The pytest suite is display-free and cannot see a layout bug.
 - A `Project Database` check in `Diagnostics`. Fesium serves PHP but runs no database server, so a Laravel project pointed at MySQL used to start fine and then fail on its first query with a connection error from inside the framework. Fesium now reads the project's `.env`, checks whether anything is listening at the address it asks for, and says so plainly. Only `DB_CONNECTION`, `DB_HOST`, `DB_PORT` and `DB_DATABASE` are read - never credentials.
