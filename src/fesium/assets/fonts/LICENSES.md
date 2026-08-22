@@ -2,19 +2,13 @@
 
 Fesium bundles these font files for offline use. The relevant redistribution licenses for the bundled font binaries are:
 
-## Sora
+## Atkinson Hyperlegible
 
 - License: SIL Open Font License 1.1
+- Copyright: 2020 Braille Institute of America, Inc.
 - Upstream repository: `google/fonts`
-- Upstream license file: `ofl/sora/OFL.txt`
-- Local copy: `licenses/Sora-OFL.txt`
-
-## IBM Plex Sans
-
-- License: SIL Open Font License 1.1
-- Upstream repository: `google/fonts`
-- Upstream license file: `ofl/ibmplexsans/OFL.txt`
-- Local copy: `licenses/IBMPlexSans-OFL.txt`
+- Upstream license file: `ofl/atkinsonhyperlegible/OFL.txt`
+- Local copy: `licenses/AtkinsonHyperlegible-OFL.txt`
 
 ## JetBrains Mono
 

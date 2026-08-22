@@ -36,18 +36,33 @@ SHAPE_TOKENS = {
     "badge.radius": 999,
 }
 
+# One family for everything the app writes, plus a mono for code.
+#
+# Atkinson Hyperlegible was drawn by the Braille Institute specifically so that
+# confusable characters stay apart, and it is the only face considered here with
+# a dotted zero - which matters in a tool whose screens are ports, process ids,
+# row counts and paths. Measured at 16px against Sora, IBM Plex Sans, Source
+# Sans 3 and Public Sans, judged on the worst confusable pair rather than the
+# average, because a reader is tripped by the one pair a face gets wrong.
+#
+# It replaced Sora, whose lowercase l and digit 1 measured 0.10 apart on that
+# scale - the worst pair of any candidate - and which was being asked to set
+# 12px tile titles, work a display face was never drawn for.
+#
+# Size and weight carry the hierarchy here, which is what the bento layout
+# already does. A separate display family would argue with that.
 FONT_TOKENS = {
-    "heading": ("Sora", 28, "bold"),
-    "section_heading": ("Sora", 18, "bold"),
+    "heading": ("Atkinson Hyperlegible", 28, "bold"),
+    "section_heading": ("Atkinson Hyperlegible", 18, "bold"),
     # Tile titles are deliberately small and quiet. In a bento layout the size
     # of a tile says how important it is, so the heading does not have to
     # shout - and when every heading shouts, none of them carry meaning.
-    "tile_title": ("Sora", 12, "bold"),
+    "tile_title": ("Atkinson Hyperlegible", 12, "bold"),
     # The one figure a tile is about: a row count, a port, a status word.
-    "metric": ("Sora", 22, "bold"),
-    "body": ("IBM Plex Sans", 16),
-    "body_medium": ("IBM Plex Sans", 16, "bold"),
+    "metric": ("Atkinson Hyperlegible", 22, "bold"),
+    "body": ("Atkinson Hyperlegible", 16),
+    "body_medium": ("Atkinson Hyperlegible", 16, "bold"),
     # Right-hand side of a tile header: counts, units, short qualifiers.
-    "meta": ("IBM Plex Sans", 13),
+    "meta": ("Atkinson Hyperlegible", 13),
     "mono": ("JetBrains Mono", 14),
 }

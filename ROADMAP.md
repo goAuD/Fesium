@@ -46,7 +46,7 @@ Not planned when this section was written, but it is what the release turned out
 None of this changes how the app runs. It is what turns a working app into something someone else can look at.
 
 - [ ] Tag `v2.1.0`: move the `Unreleased` block in [CHANGELOG.md](CHANGELOG.md) under the version, and add `docs/release/v2.1.0.md` beside the v2.0.0 note
-- [ ] Full documentation pass - read `README.md`, `docs/` and the release notes against the app as it behaves now, not as it did before the bento rework. The repo has drifted before by shipping work the changelog denied.
+- [x] Full documentation pass - read `README.md`, `docs/` and the release notes against the app as it behaves now, not as it did before the bento rework. The repo has drifted before by shipping work the changelog denied.
 - [ ] GitHub Pages portfolio page - its own layout in the Fesium brand colours, carrying the screenshots and what the app is for. Deliberately deferred: the app itself comes first, and a page is only worth building once there is nothing left to correct behind it.
 
 ## v2.2.0 - Soon After

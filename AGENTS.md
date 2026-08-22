@@ -2,7 +2,7 @@
 
 ## Product Direction
 
-`Fesium` is an offline-first local dev toolbox for students and developers. The current repository contains the first desktop app in that toolbox and is mid-migration from the legacy `NanoServer` structure.
+`Fesium` is an offline-first local dev toolbox for students and developers. This repository contains the first desktop app in that toolbox. The migration off the legacy `NanoServer` structure is finished; what remains of it is the compatibility surface recorded in [ADR 0001](docs/decisions/0001-preserve-nanoserver-compat.md).
 
 ## Architecture Guardrails
 
@@ -15,8 +15,9 @@
 
 ## Design Guardrails
 
-- Follow the approved `Graphite Grid` direction: dark graphite shell, restrained cyan-based accent system, and refined panel hierarchy.
+- Follow the approved `Graphite Grid` direction: dark graphite shell, restrained matte accent, and refined panel hierarchy. Prefer muted accents over bright neon.
 - Bundle fonts in-repo only. Do not load fonts or other runtime assets from the network.
+- Brand assets are generated, not hand-drawn. `scripts/build_brand.py` owns one geometry definition and emits the mark, the README banner, the social preview and the app icons, so they cannot drift apart. Change the script, re-run it, commit what it produces.
 - Preserve the offline-first posture. The app must remain useful without internet access.
 
 ## Security Guardrails
@@ -32,7 +33,7 @@
 - Keep new code, tests, and assets in the directories that match their responsibilities.
 - Update or add tests whenever behavior changes.
 - Do not revert unrelated user changes.
-- Keep documentation aligned with the current migration state instead of pretending unfinished work is complete.
+- Keep documentation aligned with how the app behaves now instead of pretending unfinished work is complete.
 
 ## Documentation Policy
 
