@@ -44,14 +44,33 @@ def check_php_installed() -> bool:
     return detect_php().php_available
 
 
-def is_port_in_use(port: int) -> bool:
-    """Check if a port is already in use."""
+def is_port_in_use(port: int, host: str = "localhost") -> bool:
+    """Can a local server take this port?
+
+    Asked by trying to bind it, not by trying to connect to it. Every caller
+    here is about to bind - PHPServer and StaticServer both check before they
+    start, and find_available_port exists to pick one they can have - and
+    "can I bind this" is simply a different question from "is something
+    answering here". A connect test gets both directions wrong: a port bound
+    on another interface looks free, and on Windows, whose dynamic range
+    covers everything from 1024 up, the answer depends on whatever the machine
+    happens to be doing. That made the port-scan test fail intermittently on
+    CI while every other runner passed.
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        return sock.connect_ex(("localhost", port)) == 0
+        try:
+            sock.bind((host, port))
+        except OSError:
+            return True
+        return False
 
 
 def find_available_port(start_port: int = 8000, max_attempts: int = 10) -> int | None:
-    """Find an available port starting from start_port."""
+    """First bindable port at or above ``start_port``, or None if there is none.
+
+    The answer can go stale between here and the bind that follows; nothing
+    can close that window, and the callers already handle a failed start.
+    """
     for offset in range(max_attempts):
         port = start_port + offset
         if not is_port_in_use(port):

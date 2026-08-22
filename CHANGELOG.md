@@ -48,6 +48,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Fixed
 
+- Starting a local server no longer freezes the window for two seconds. The port check connected to the port instead of trying to bind it, with no timeout, which measured 2047ms per call on Windows - and up to twenty times that when scanning for a free port. Binding answers the question the callers actually have, in 0.2ms.
+- `test_find_available_port_returns_value_in_range` no longer fails at random. It scanned ports 50000-50004 and asserted one was free, which depends on what else the machine is doing; a Windows CI runner reported all five in use. The test holds a port itself now, so the answer is knowable.
+
 - `Overview`'s `Workspace` tile shows the project path on its own; the project kind moved to the tile's meta rather than sitting in a labelled row beside it.
 - Tile titles that do not fit are cut with an ellipsis instead of silently, and a meta list's label column now yields as the tile gets narrower instead of reserving a fixed 150px.
 - Text is no longer clipped to a single character. `CTkLabel` grids its inner label with a sticky taken from `anchor`, so a correctly sized frame could still contain a 9px label once that label stopped asking for width.
