@@ -19,7 +19,9 @@ cd Fesium
 python -m pip install -r requirements.txt
 ```
 
-`requirements.txt` is the single source for both runtime and contributor dependencies (pytest included).
+`requirements.txt` pins exact versions, so an install here matches what CI runs. `pyproject.toml` carries the abstract ranges instead - what the package needs in order to work - because that is what an installed copy resolves against. Dependabot keeps the pins current.
+
+Pinning is not only about reproducibility: Semgrep's supply-chain analysis skips any dependency that is not pinned, and it was skipping every one of them.
 
 ## Run the App
 

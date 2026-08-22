@@ -47,3 +47,39 @@ def test_docs_quote_the_same_minimum_python_version():
 
     assert f"Python {minimum}" in readme
     assert f"Python {minimum}" in setup_doc
+
+
+def _requirement_lines() -> list[str]:
+    text = Path("requirements.txt").read_text(encoding="utf-8")
+    return [line.strip() for line in text.splitlines() if line.strip() and not line.startswith("#")]
+
+
+def test_every_requirement_is_pinned_to_an_exact_version():
+    """Semgrep skips any dependency that is not pinned.
+
+    It was skipping all of them, so 17751 supply-chain rules ran against zero
+    packages and no dependency was ever checked for a known vulnerability.
+    """
+    unpinned = [line for line in _requirement_lines() if "==" not in line]
+
+    assert unpinned == []
+
+
+def test_pyproject_keeps_ranges_rather_than_pins():
+    """The two files have different jobs.
+
+    pyproject declares what the package needs in order to work, so it stays
+    abstract; requirements declares what an install actually gets.
+    """
+    pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
+
+    assert "customtkinter>=" in pyproject
+    assert "customtkinter==" not in pyproject
+
+
+def test_dependabot_keeps_the_pins_current():
+    """A pin with no update path is how a project freezes on a bad version."""
+    dependabot = Path(".github/dependabot.yml").read_text(encoding="utf-8")
+
+    assert "package-ecosystem: pip" in dependabot
+    assert "package-ecosystem: github-actions" in dependabot

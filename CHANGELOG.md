@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Added
 
+- Dependabot, keeping both the pinned requirements and the SHA-pinned GitHub Actions current.
 - A Semgrep full scan of `main` on every push and weekly. Only pull requests were being scanned, and a diff scan cannot close a finding on the default branch, so five findings stayed open for ten days after the code causing them was fixed.
 - `scripts/check_layout.py`, which drives the real views in a live window and measures legibility, settling and tile balance. The pytest suite is display-free and cannot see a layout bug.
 - A `Project Database` check in `Diagnostics`. Fesium serves PHP but runs no database server, so a Laravel project pointed at MySQL used to start fine and then fail on its first query with a connection error from inside the framework. Fesium now reads the project's `.env`, checks whether anything is listening at the address it asks for, and says so plainly. Only `DB_CONNECTION`, `DB_HOST`, `DB_PORT` and `DB_DATABASE` are read - never credentials.
@@ -29,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Changed
 
+- `requirements.txt` pins exact versions; `pyproject.toml` keeps the ranges. Semgrep's supply-chain analysis skips unpinned dependencies, so 17751 vulnerability rules were running against zero packages.
 - Every view is a bento grid now, not just `Database`. `Overview`, `Server`, `Diagnostics`, `Guide` and `Settings` follow, and the scrolling page bodies are gone with them.
 - `Overview` has real controls. The card titled `Quick Actions` used to contain none; serving state now takes the largest tile with Start, Stop and Open in Browser inline.
 - `Server` presents its runtime facts as a two-column list instead of a label above each value, which hands the space back to the live log.

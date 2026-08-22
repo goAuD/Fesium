@@ -1,0 +1,25 @@
+# Pinning without an update path is how a project ends up frozen on a version
+# with a known vulnerability. Both things this repo pins deliberately - exact
+# requirements and SHA-pinned actions - are kept current here.
+
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: chore
+      include: scope
+
+  # Dependabot rewrites the SHA *and* the trailing version comment, so pinned
+  # actions stay both pinned and readable.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: ci
