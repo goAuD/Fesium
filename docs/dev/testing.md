@@ -45,6 +45,21 @@ python scripts/check_layout.py
 
 It measures three things, each of which has been a real defect here: every label has room for its text, no layout keeps resizing once the window stops, and tiles of equal span come out equal width. Run it before calling a UI change done, and prove any new assertion by reintroducing the defect and watching it fail - a check that has never failed has not been tested.
 
+## Security scanning
+
+Semgrep runs twice, and the difference matters:
+
+- **On every pull request** as a diff scan, via the Semgrep Cloud Platform integration. It reports what the change introduces.
+- **On every push to `main`, and weekly**, as a full scan via `.github/workflows/semgrep.yml`. This is the one that *closes* findings.
+
+A diff scan cannot resolve anything on the default branch. Without the full scan, a finding stays Open after the code causing it is fixed and merged - five of them sat open for ten days that way. The full scan needs a `SEMGREP_APP_TOKEN` repository secret to upload results; without it the job still scans and fails on findings, it just cannot update the dashboard.
+
+Locally:
+
+```bash
+semgrep --config p/default --config p/python --config p/security-audit --config p/github-actions .
+```
+
 ## CI
 
 Tests run on every push and pull request via [.github/workflows/python-tests.yml](../../.github/workflows/python-tests.yml).
