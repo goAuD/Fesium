@@ -127,6 +127,7 @@ def _replace_runtime_views(
             server_status=state.server_status,
             local_url=state.local_url,
             log_lines=state.log_lines,
+            needs_php=state.project_needs_php,
             on_start=start_action,
             on_stop=stop_action,
             on_open_browser=open_browser_action,
@@ -189,6 +190,7 @@ def _replace_runtime_views(
             project_root=state.project_root,
             project_kind=state.project_kind,
             document_root=state.document_root,
+            needs_php=state.project_needs_php,
             database_readiness=summarize_project_database(state.project_root),
         ),
     )

@@ -1,4 +1,5 @@
 import logging
+import shutil
 import subprocess
 import time
 from dataclasses import dataclass
@@ -29,6 +30,13 @@ class EnvironmentStatus:
     php_available: bool
     php_version: str
     summary: str
+    path: str = ""
+    """Which php was probed.
+
+    A machine can carry several - a standalone install and a leftover from
+    Laragon or XAMPP are common - and PATH decides which one Fesium gets. A
+    version number alone does not say which install produced it.
+    """
 
 
 def detect_php(timeout: float = PHP_PROBE_TIMEOUT_SECONDS) -> EnvironmentStatus:
@@ -38,27 +46,34 @@ def detect_php(timeout: float = PHP_PROBE_TIMEOUT_SECONDS) -> EnvironmentStatus:
     probes (`check_php_installed` + `get_php_version`) were chained. This is
     the single probe that both callers now share.
     """
+    # Resolve first, then run what was resolved, so the reported path is
+    # definitely the binary that answered.
+    executable = shutil.which("php")
+    if executable is None:
+        logger.warning("PHP not found in PATH")
+        return EnvironmentStatus(False, "", "PHP not found in PATH")
+
     try:
         result = subprocess.run(
-            ["php", "-v"],
+            [executable, "-v"],
             capture_output=True,
             text=True,
             timeout=timeout,
             **get_subprocess_flags(),
         )
     except FileNotFoundError:
-        logger.warning("PHP not found in PATH")
+        logger.warning("PHP disappeared between resolving and running it")
         return EnvironmentStatus(False, "", "PHP not found in PATH")
     except subprocess.TimeoutExpired:
         logger.warning("PHP probe timed out after %.1fs", timeout)
-        return EnvironmentStatus(False, "", f"PHP probe timed out after {timeout:.1f}s")
+        return EnvironmentStatus(False, "", f"PHP probe timed out after {timeout:.1f}s", executable)
 
     if result.returncode != 0 or not result.stdout:
-        return EnvironmentStatus(False, "", "PHP returned a non-zero exit status")
+        return EnvironmentStatus(False, "", "PHP returned a non-zero exit status", executable)
 
     version = result.stdout.splitlines()[0]
-    logger.info("PHP found: %s", version)
-    return EnvironmentStatus(True, version, version)
+    logger.info("PHP found: %s at %s", version, executable)
+    return EnvironmentStatus(True, version, version, executable)
 
 
 def reset_php_cache() -> None:

@@ -32,6 +32,12 @@ class ControllerState:
     database_tables: tuple[str, ...] = ()
     database_selected_table: str = ""
     database_selected_table_info: tuple[dict, ...] = ()
+    project_needs_php: bool = True
+    """Whether serving this project requires PHP, from the detected profile.
+
+    Defaults to True so a state built without a project reads as "PHP matters",
+    which is the assumption that cannot hide a missing runtime.
+    """
 
 
 class FesiumController:
@@ -58,6 +64,7 @@ class FesiumController:
             local_url="",
             php_available=False,
             php_summary="",
+            project_needs_php=True,
             last_error="",
             log_lines=(),
         )
@@ -145,6 +152,7 @@ class FesiumController:
             last_error="",
             php_available=environment_status.php_available,
             php_summary=environment_status.summary,
+            project_needs_php=profile.needs_php,
             database_tables=(),
             database_selected_table="",
             database_selected_table_info=(),

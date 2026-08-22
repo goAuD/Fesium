@@ -93,7 +93,8 @@ def build_shell(project_root: Path) -> FesiumShell:
     shell.register_view("overview", lambda parent: OverviewView(
         parent, project_root=profile.root, project_kind=profile.kind,
         php_summary=environment.summary, server_status="running",
-        local_url="http://localhost:8000", log_lines=logs))
+        local_url="http://localhost:8000", log_lines=logs,
+        needs_php=profile.needs_php))
     shell.register_view("server", lambda parent: ServerView(
         parent, document_root=profile.document_root, port=8000, project_root=profile.root,
         project_kind=profile.kind, backend_kind=backend, server_status="running",
@@ -124,7 +125,8 @@ def build_shell(project_root: Path) -> FesiumShell:
     ))
     shell.register_view("environment", lambda parent: EnvironmentView(
         parent, status=environment, project_root=profile.root,
-        project_kind=profile.kind, document_root=profile.document_root))
+        project_kind=profile.kind, document_root=profile.document_root,
+        needs_php=profile.needs_php))
     shell.register_view("guide", lambda parent: GuideView(parent))
     shell.register_view("settings", lambda parent: SettingsView(
         parent, config_data={"port": 8000, "last_project": str(profile.root)}))

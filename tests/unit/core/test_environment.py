@@ -10,18 +10,24 @@ from fesium.core.environment import (
     summarize_php_environment,
 )
 
+PHP_BINARY = "C:/php/php.EXE"
+
 
 def test_detect_php_returns_available_with_version(monkeypatch):
     def fake_run(cmd, **kwargs):
-        assert cmd == ["php", "-v"]
+        # The probe resolves php on PATH and runs what it resolved, so the path
+        # it reports is definitely the binary that answered.
+        assert cmd == [PHP_BINARY, "-v"]
         assert kwargs.get("timeout") == pytest.approx(3.0)
         return SimpleNamespace(returncode=0, stdout="PHP 8.4.0 (cli)\nrest\n", stderr="")
 
+    monkeypatch.setattr("fesium.core.environment.shutil.which", lambda _name: PHP_BINARY)
     monkeypatch.setattr("fesium.core.environment.subprocess.run", fake_run)
 
     status = detect_php()
 
     assert status.php_available is True
+    assert status.path == PHP_BINARY
     assert status.php_version == "PHP 8.4.0 (cli)"
     assert status.summary == "PHP 8.4.0 (cli)"
 
