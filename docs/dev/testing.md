@@ -45,6 +45,17 @@ python scripts/check_layout.py
 
 It measures three things, each of which has been a real defect here: every label has room for its text, no layout keeps resizing once the window stops, and tiles of equal span come out equal width. Run it before calling a UI change done, and prove any new assertion by reintroducing the defect and watching it fail - a check that has never failed has not been tested.
 
+## Screenshots
+
+Do not capture the app by hand. `scripts/capture_screenshots.py` grabs the window's client area directly:
+
+```bash
+python scripts/capture_screenshots.py
+python scripts/capture_screenshots.py --project "D:/GitHub/YourProject"
+```
+
+Three reasons it exists. A snipping tool applies colour management - Windows' shifted every channel by about +17, so the app's `#121419` ground came out `#23252a`, and the script verifies the ground matches the palette exactly rather than trusting it. Windows 11 rounds the window *frame*, so a screen grab catches curved corners; the client rectangle is square and excludes the title bar. And hand-cropping produced images 2px apart in size, which shows in a README.
+
 ## Performance
 
 `scripts/profile_hot_paths.py` times what a user waits on: one UI action, and a cold start.
