@@ -31,6 +31,8 @@ Two habits that have already caught real bugs here:
 
 ## Traps specific to this codebase
 
+- **Ask whether a port can be *bound*, not whether something answers on it.** `is_port_in_use` binds. A bare `connect_ex` with no timeout measured 2 seconds per call on Windows and ran on every server start, and its answer was unreliable enough to fail CI intermittently. `project_database.probe_database` still connects, correctly - it asks a different question, about a remote service - and it sets a timeout.
+
 - **`fesium.py` shares its name with the `src/fesium/` package.** Anything doing `import fesium` from the repo root gets the launcher, not the package. The launcher declares `__path__` to bridge that. Never make it `exec()` source again - `fesium._version` exists so a plain import does the job.
 - **`CTkLabel` needs `wraplength` in pixels.** A constant is only right at one window size and clips text at every smaller one. Paragraphs go through `ui/widgets/BodyText`, gridded `sticky="ew"`.
 - **`CTkLabel.bind()` forwards to the inner canvas and label, not the frame.** For the widget's own size, use `tkinter.Frame.bind(self, ..., add="+")` - and always `add="+"`, because CustomTkinter binds `<Configure>` for itself.
