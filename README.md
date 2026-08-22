@@ -19,6 +19,7 @@ The migration off `NanoServer` is finished. Runtime code lives under `src/fesium
 - opening the running local site in the default browser
 - SQLite inspection and raw SQL execution with read-only defaults
 - a readiness check for the database a project's own `.env` asks for
+- a copyable setup report, so asking someone for help takes one paste instead of five questions
 - lightweight SQLite schema browsing and table preview
 - an in-app guide for students and first-time users
 - stored preferences for the startup project and the default server port

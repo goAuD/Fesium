@@ -1,9 +1,12 @@
 import customtkinter as ctk
 
+from fesium._version import __version__
 from fesium.core.project_database import DatabaseReadiness, describe_database_readiness
+from fesium.core.setup_report import build_setup_report, render_setup_report
 from fesium.ui.theme.styles import get_color_token, get_font_token
 from fesium.ui.widgets.bento import BentoGrid
 from fesium.ui.widgets.body_text import BodyText
+from fesium.ui.widgets.button import Button
 from fesium.ui.widgets.meta_list import MetaList
 from fesium.ui.widgets.tile import Tile
 from fesium.ui.widgets.view_header import HEADER_GAP, ViewHeader
@@ -99,6 +102,8 @@ class EnvironmentView(ctk.CTkFrame):
         document_root=None,
         database_readiness: DatabaseReadiness | None = None,
         needs_php: bool = True,
+        backend: str = "",
+        port: int | None = None,
     ):
         super().__init__(master, fg_color="transparent")
         self.grid_columnconfigure(0, weight=1)
@@ -144,6 +149,19 @@ class EnvironmentView(ctk.CTkFrame):
 
         grid.place_tile(self._build_database_tile(grid, database_readiness), row=1, column=0, span=12)
 
+        self._report = build_setup_report(
+            status,
+            version=__version__,
+            project_root=project_root,
+            project_kind=project_kind,
+            document_root=document_root,
+            needs_php=needs_php,
+            backend=backend,
+            port=port,
+            readiness=database_readiness,
+        )
+        grid.place_tile(self._build_report_tile(grid), row=2, column=0, span=12)
+
     def _build_database_tile(self, parent, database_readiness):
         """What the project's own config asks for, and whether it is there.
 
@@ -167,3 +185,54 @@ class EnvironmentView(ctk.CTkFrame):
         detail = BodyText(tile.body, described["detail"], tone="text.secondary")
         detail.grid(row=1, column=0, sticky="ew", pady=(4, 0))
         return tile
+
+    def _build_report_tile(self, parent):
+        """Everything above, as one block of text that can be handed to someone.
+
+        A student who is stuck asks a teacher, and what follows is five rounds
+        of "which PHP", "where is the project", "is MySQL running" - answers
+        that are already on this screen. Copying them turns that into one
+        paste. Paths are shortened to ~ and no credential is ever included,
+        because the whole point is that this text gets sent somewhere.
+        """
+        tile = Tile(parent, "Setup Report", meta="for sharing")
+        tile.body.grid_columnconfigure(0, weight=1)
+
+        BodyText(
+            tile.body,
+            "Copy everything on this screen as plain text, to paste into a message "
+            "when you ask for help. Your home folder is shortened to ~ and no "
+            "password is included.",
+            tone="text.secondary",
+        ).grid(row=0, column=0, sticky="ew")
+
+        self._report_feedback = ctk.CTkLabel(
+            tile.body,
+            text="",
+            text_color=get_color_token("accent.success"),
+            font=get_font_token("meta"),
+            anchor="w",
+        )
+        self._report_feedback.grid(row=1, column=0, sticky="w", pady=(10, 0))
+
+        Button(
+            tile.body,
+            "Copy Setup Report",
+            variant="secondary",
+            command=self._copy_report,
+        ).grid(row=2, column=0, sticky="w", pady=(8, 0))
+        return tile
+
+    def _copy_report(self) -> None:
+        """Put the report on the clipboard, and say so.
+
+        ``update()`` is required: Tk owns the clipboard only while the app is
+        running, and without flushing the event queue the contents are not
+        available to another application yet.
+        """
+        text = render_setup_report(self._report)
+        self.clipboard_clear()
+        self.clipboard_append(text)
+        self.update()
+        lines = len(text.splitlines())
+        self._report_feedback.configure(text=f"Copied {lines} lines to the clipboard.")

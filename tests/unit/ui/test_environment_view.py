@@ -1,7 +1,10 @@
 from pathlib import Path
 
+import pytest
+
 from fesium.core.environment import EnvironmentStatus
-from fesium.ui.views.environment_view import build_environment_rows
+from fesium.core.setup_report import render_setup_report
+from fesium.ui.views.environment_view import EnvironmentView, build_environment_rows
 
 
 def test_build_environment_rows_contains_php_summary():
@@ -63,3 +66,68 @@ def test_a_php_project_without_php_is_still_flagged():
     )
 
     assert "PHP is missing" in _row(rows, "Validation")
+
+
+# --- the Copy button, which needs a display ---------------------------------
+
+
+@pytest.fixture(scope="session")
+def tk_root():
+    """One Tk root for the whole session.
+
+    Destroying a root leaves the interpreter unable to create another, so every
+    test after the first would skip for a reason unrelated to the display.
+    """
+    ctk = pytest.importorskip("customtkinter")
+    try:
+        root = ctk.CTk()
+    except Exception as exc:  # pragma: no cover - depends on the machine
+        pytest.skip(f"no display available: {exc}")
+
+    root.geometry("1100x760")
+    try:
+        yield root
+    finally:
+        root.destroy()
+
+
+def _copy_button(widget):
+    from fesium.ui.widgets.button import Button
+
+    def walk(node):
+        yield node
+        for child in node.winfo_children():
+            yield from walk(child)
+
+    return next(w for w in walk(widget)
+                if isinstance(w, Button) and w.cget("text") == "Copy Setup Report")
+
+
+def test_copy_button_puts_the_rendered_report_on_the_clipboard(tk_root):
+    """The wiring, not the text - build_setup_report is covered headlessly.
+
+    Worth its own check because the button reports success either way: it says
+    "Copied" from a handler that could be putting nothing anywhere.
+    """
+    view = EnvironmentView(
+        tk_root,
+        _status(),
+        project_root=Path("D:/site"),
+        project_kind="standard",
+        document_root=Path("D:/site"),
+        needs_php=False,
+        backend="static",
+        port=8000,
+    )
+    view.pack(fill="both", expand=True)
+    tk_root.update_idletasks()
+
+    tk_root.clipboard_clear()
+    _copy_button(view).invoke()
+
+    copied = tk_root.clipboard_get()
+    assert copied == render_setup_report(view._report)
+    assert copied.startswith("Fesium setup report")
+    assert "lines to the clipboard" in view._report_feedback.cget("text")
+
+    view.destroy()
