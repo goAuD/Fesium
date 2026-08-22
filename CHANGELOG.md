@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Added
 
+- `scripts/check_layout.py`, which drives the real views in a live window and measures legibility, settling and tile balance. The pytest suite is display-free and cannot see a layout bug.
 - A `Project Database` check in `Diagnostics`. Fesium serves PHP but runs no database server, so a Laravel project pointed at MySQL used to start fine and then fail on its first query with a connection error from inside the framework. Fesium now reads the project's `.env`, checks whether anything is listening at the address it asks for, and says so plainly. Only `DB_CONNECTION`, `DB_HOST`, `DB_PORT` and `DB_DATABASE` are read - never credentials.
 - Lucide icons in the sidebar, bundled as SVG sources plus rasterised PNGs under `src/fesium/assets/icons/lucide/`. They ship white on transparent and are tinted at runtime, so one file covers every state. `scripts/build_icons.py` regenerates them; nothing fetches or rasterises while the app runs.
 - `CLAUDE.md` at the repo root, alongside `AGENTS.md`, covering the commands, the verification bar for UI work, and the traps specific to this codebase.
@@ -41,6 +42,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Fixed
 
+- `Overview`'s `Workspace` tile shows the project path on its own; the project kind moved to the tile's meta rather than sitting in a labelled row beside it.
+- Tile titles that do not fit are cut with an ellipsis instead of silently, and a meta list's label column now yields as the tile gets narrower instead of reserving a fixed 150px.
 - Text is no longer clipped to a single character. `CTkLabel` grids its inner label with a sticky taken from `anchor`, so a correctly sized frame could still contain a 9px label once that label stopped asking for width.
 - Panels no longer shimmer, and side-by-side tiles are the same width. A wrapped label asks Tk for its `wraplength` as its width, so it demanded back whatever width it was last given; that stretched one Diagnostics tile to 561px and squeezed its neighbour to 250px, clipping three lines of text, and the tug of war against the grid was visible as a flicker. Labels leave the width to the cell now.
 - The `Server` controls fit on one row again. They wrapped at a hardcoded 980px, which was a guess about how wide five buttons are; the row now wraps only when the buttons measurably do not fit.

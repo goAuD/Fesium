@@ -1,8 +1,7 @@
 import customtkinter as ctk
 
 from fesium.ui.widgets.bento import BentoGrid
-from fesium.ui.widgets.body_text import BodyText
-from fesium.ui.widgets.tile import Tile
+from fesium.ui.widgets.tile import text_tile
 from fesium.ui.widgets.view_header import HEADER_GAP, ViewHeader
 
 
@@ -87,7 +86,4 @@ class GuideView(ctk.CTkFrame):
         grid.grid(row=1, column=0, sticky="nsew")
 
         for section, placement in zip(build_guide_sections(), GUIDE_LAYOUT, strict=True):
-            tile = Tile(grid, section["title"])
-            body = BodyText(tile.body, section["body"])
-            body.grid(row=0, column=0, sticky="new")
-            grid.place_tile(tile, **placement)
+            grid.place_tile(text_tile(grid, section["title"], section["body"]), **placement)
