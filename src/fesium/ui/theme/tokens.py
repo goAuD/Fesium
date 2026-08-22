@@ -66,3 +66,22 @@ FONT_TOKENS = {
     "meta": ("Atkinson Hyperlegible", 13),
     "mono": ("JetBrains Mono", 14),
 }
+
+# Bottom padding, in pixels, that a control adds under its text to bring the
+# block of caps a reader sees to the centre of the control.
+#
+# Tk centres a label on the font's *line box*, not on its ink. When a face
+# reserves more room above the caps than below the baseline, the text lands
+# low, and this pushes it back. How much is a property of the face:
+#
+#                          above caps   below baseline   needs
+#   IBM Plex Sans 16 bold     5.23px         4.40px      0.42px up
+#   Atkinson 16 bold          4.51px         4.64px      0.07px down
+#
+# It lived as a hardcoded 2 in both Button and StatusBadge, measured against
+# IBM Plex Sans, and survived the swap to Atkinson as a visible 2px shove
+# upwards in every button and badge. Atkinson's line box is already balanced,
+# so it needs nothing. It sits here rather than in the widgets because it is a
+# consequence of the font decision above, and test_theme_tokens.py derives the
+# right value from the bundled files so the next swap cannot miss it.
+TEXT_CENTRING_OFFSET = 0
