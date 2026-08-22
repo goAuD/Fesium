@@ -10,5 +10,5 @@
 # Dependabot keeps these current; see .github/dependabot.yml.
 customtkinter==5.2.2
 pillow==12.3.0
-pytest==9.0.2
+pytest==9.1.1
 ruff==0.15.5
