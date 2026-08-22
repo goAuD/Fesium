@@ -35,9 +35,12 @@ def _format_project_kind(project_kind: str) -> str:
 
 
 def _format_backend_label(backend_kind: str) -> str:
+    # "Static Fallback" read as a downgrade, and for a project that does not
+    # need PHP it is not one - it is the right server. When PHP really is
+    # missing, Diagnostics says so; the label does not have to carry it.
     labels = {
         "php": "PHP Built-in Server",
-        "static": "Static Fallback",
+        "static": "Static Server",
         "none": "Not Selected",
     }
     return labels.get(backend_kind, backend_kind.replace("_", " ").title() or "Unknown")

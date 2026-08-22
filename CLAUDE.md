@@ -31,6 +31,8 @@ Two habits that have already caught real bugs here:
 
 ## Traps specific to this codebase
 
+- **The backend follows the project, not the machine.** `decide_runtime_backend` serves statically unless the project actually uses PHP, decided by `project_needs_php` - markers first (`artisan`, `composer.json`, `index.php`), then a scan bounded to depth 2 and 400 entries, because a full walk of a large folder took 6.4 seconds and this runs on project selection. An unreadable or oversized folder answers "needs PHP", since PHP serves static files too.
+
 - **`php -v` costs ~78ms, and the UI rebuilds every view after every action.** `summarize_php_environment()` is cached for that reason; `detect_php()` is not, so anything needing a guaranteed-fresh answer still has one. Do not add an eager probe to `_replace_runtime_views` - Diagnostics re-probes in its own factory, which only runs when that view is opened.
 
 - **`fesium.py` shares its name with the `src/fesium/` package.** Anything doing `import fesium` from the repo root gets the launcher, not the package. The launcher declares `__path__` to bridge that. Never make it `exec()` source again - `fesium._version` exists so a plain import does the job.

@@ -31,6 +31,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Changed
 
+- The backend follows the project rather than the machine. Fesium picked the PHP built-in server whenever PHP was on `PATH`, using the project only to build a log message, so a plain HTML and JavaScript site was served by a PHP process it had no use for - and the static server was only ever a fallback, which contradicted the Guide describing it as a first-class workflow. A project is served statically unless it actually uses PHP.
+- `Static Fallback` is now `Static Server` in the `Server` view. For a project that does not need PHP it is not a fallback; when PHP is genuinely missing, `Diagnostics` says so.
+
 - Every UI action was spawning `php -v`. Rebuilding the views probed the PHP runtime eagerly, and eleven handlers rebuild the views, so each click stalled the window for ~78ms - 98% of the time spent selecting a project. The probe is gone from that path and the app-facing summary is cached; selecting a project went from 78.6ms to 1.7ms. `Diagnostics` re-probes when opened, which is the screen where a stale answer would matter.
 
 - `requirements.txt` pins exact versions; `pyproject.toml` keeps the ranges. Semgrep's supply-chain analysis skips unpinned dependencies, so 17751 vulnerability rules were running against zero packages.
