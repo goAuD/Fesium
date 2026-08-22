@@ -6,7 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- A GitHub Pages site, built by `scripts/build_site.py` and deployed by `.github/workflows/pages.yml`. It imports `COLOR_TOKENS` from the app rather than restating the palette, because the brand assets had already drifted from the product once. The page is one self-contained file with the screenshots inlined; a test regenerates it and fails if the committed copy and the generator disagree.
+- A test that every GitHub Actions reference in every workflow is pinned to a full commit SHA. The repo already pinned them by hand - a tag is mutable and its owner can silently repoint it - but nothing stopped the next workflow from forgetting.
 
 ## [2.1.0] - 2026-08-22
 
