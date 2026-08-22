@@ -1,5 +1,14 @@
-# Runtime and contributor dependencies for Fesium
-customtkinter>=5.0.0
-pillow>=9.0.0
-pytest>=7.0.0
-ruff>=0.6.0
+# Concrete, pinned dependencies for running Fesium and working on it.
+#
+# Exact pins on purpose. pyproject.toml carries the abstract ranges - what the
+# package needs in order to work - and this file carries the concrete versions
+# an install actually gets. Two reasons it matters here: CI reproduces exactly
+# what a contributor runs, and Semgrep's supply-chain analysis skips any
+# dependency that is not pinned. It was skipping all of them, so 17751
+# vulnerability rules were running against zero packages.
+#
+# Dependabot keeps these current; see .github/dependabot.yml.
+customtkinter==5.2.2
+pillow==12.3.0
+pytest==9.0.2
+ruff==0.15.5

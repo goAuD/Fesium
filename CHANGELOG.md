@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Added
 
+- Dependabot, keeping both the pinned requirements and the SHA-pinned GitHub Actions current.
 - A Semgrep full scan of `main` on every push and weekly. Only pull requests were being scanned, and a diff scan cannot close a finding on the default branch, so five findings stayed open for ten days after the code causing them was fixed.
 - `scripts/profile_hot_paths.py`, which times one UI action and a cold start.
 - `scripts/check_layout.py`, which drives the real views in a live window and measures legibility, settling and tile balance. The pytest suite is display-free and cannot see a layout bug.
@@ -32,6 +33,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 - Every UI action was spawning `php -v`. Rebuilding the views probed the PHP runtime eagerly, and eleven handlers rebuild the views, so each click stalled the window for ~78ms - 98% of the time spent selecting a project. The probe is gone from that path and the app-facing summary is cached; selecting a project went from 78.6ms to 1.7ms. `Diagnostics` re-probes when opened, which is the screen where a stale answer would matter.
 
+- `requirements.txt` pins exact versions; `pyproject.toml` keeps the ranges. Semgrep's supply-chain analysis skips unpinned dependencies, so 17751 vulnerability rules were running against zero packages.
 - Every view is a bento grid now, not just `Database`. `Overview`, `Server`, `Diagnostics`, `Guide` and `Settings` follow, and the scrolling page bodies are gone with them.
 - `Overview` has real controls. The card titled `Quick Actions` used to contain none; serving state now takes the largest tile with Start, Stop and Open in Browser inline.
 - `Server` presents its runtime facts as a two-column list instead of a label above each value, which hands the space back to the live log.
