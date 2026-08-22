@@ -7,6 +7,7 @@ Short, dated records of architectural decisions that outlive a single feature.
 | ID | Status | Title |
 | --- | --- | --- |
 | [0001](0001-preserve-nanoserver-compat.md) | Accepted | Preserve NanoServer Compatibility During Fesium Migration |
+| [0002](0002-mysql-through-our-own-view.md) | Accepted | Reach MySQL Through Fesium's Own Database View, Not a Bundled Admin Panel |
 
 ## Adding a New ADR
 

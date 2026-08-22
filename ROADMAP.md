@@ -76,9 +76,12 @@ None of this changes how the app runs. It is what turns a working app into somet
 
 Fesium detects that a project wants MySQL and reports whether it is reachable. What it does not do is run one - and it is worth being clear that these are different jobs. Bundling a database server is what Laragon did; matching that is a much larger commitment than a connection option.
 
-- [ ] MySQL / MariaDB connection option
-- [ ] phpMyAdmin-style query interface
-- [ ] Connection string configuration
+How it is reached is settled in [docs/decisions/0002-mysql-through-our-own-view.md](docs/decisions/0002-mysql-through-our-own-view.md): through the `Database` view we already have, over `PyMySQL`, rather than by bundling or rebuilding an admin panel. That keeps read-only-by-default applying to MySQL exactly as it does to SQLite, which serving a panel in a browser would not.
+
+- [ ] MySQL / MariaDB connection: host, port, database and user, with the password asked per session and never written to disk
+- [ ] An engine seam in `core/database.py` - connect, list tables, describe columns, error type - leaving the read-only gate and risk classification untouched
+- [ ] `Diagnostics` pre-fills from the project's `.env`, credentials excluded
+- [ ] Deliberately not included: dump import/export, form-based row editing, user and privilege management
 
 ## v3.0.0 - Major (No Date)
 
