@@ -16,9 +16,9 @@ The repository is currently in a structured migration. The new `src/fesium/` pac
 
 - local project selection from the desktop app
 - Laravel-aware and standard project detection
-- PHP-backed local serving when PHP is available
-- static local hosting for plain HTML, CSS, and JavaScript projects
-- static local serving fallback when PHP is unavailable
+- PHP-backed local serving for projects that need it
+- static local hosting for plain HTML, CSS, and JavaScript projects, whether or not PHP is installed
+- static local serving as a fallback when a PHP project cannot find PHP
 - opening the running local site in the default browser
 - SQLite inspection and raw SQL execution with read-only defaults
 - a readiness check for the database a project's own `.env` asks for
@@ -63,7 +63,7 @@ From the `Server` view, `Fesium` can:
 - select a local project folder
 - auto-detect Laravel projects or treat the folder as a standard site
 - run the local site with PHP when PHP is available on your system
-- fall back to a static local server when PHP is unavailable
+- serve a static project with the static server, and fall back to it when a PHP project cannot find PHP
 - open the running local site in your browser
 - keep the controls readable at the default desktop size
 - keep the log panel visible without forcing immediate manual window resizing
@@ -119,7 +119,7 @@ python fesium.py
 
 Requires Python 3.10 or newer. Fesium serves your site. It does **not** run a database server: a project pointed at MySQL or PostgreSQL needs that service running separately, and the `Diagnostics` view says so before you open the site. SQLite needs nothing, because it is a file.
 
-PHP on your `PATH` is optional - Fesium falls back to a built-in static server when PHP is unavailable.
+PHP on your `PATH` is only needed for projects that use PHP. A plain HTML, CSS and JavaScript project is served by the built-in static server either way.
 
 Installing the package instead of running from the clone gives you a `fesium` command and `python -m fesium`:
 

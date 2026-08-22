@@ -16,7 +16,7 @@ def test_build_server_view_model_exposes_button_guards():
     )
 
     assert model["status_label"] == "Stopped"
-    assert model["backend_label"] == "Static Fallback"
+    assert model["backend_label"] == "Static Server"
     assert model["port_label"] == "8000"
     assert model["actions"]["start"] is True
     assert model["actions"]["stop"] is False
