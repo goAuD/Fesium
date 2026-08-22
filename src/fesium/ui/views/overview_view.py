@@ -6,7 +6,7 @@ from fesium.ui.theme.styles import get_color_token, get_font_token, get_shape_to
 from fesium.ui.widgets.bento import BentoGrid
 from fesium.ui.widgets.body_text import BodyText
 from fesium.ui.widgets.button import Button
-from fesium.ui.widgets.tile import Tile
+from fesium.ui.widgets.tile import Tile, text_tile
 from fesium.ui.widgets.view_header import HEADER_GAP, ViewHeader
 
 
@@ -212,26 +212,19 @@ class OverviewView(ctk.CTkFrame):
         return tile
 
     def _build_environment_tile(self, parent, model):
-        tile = Tile(
+        return text_tile(
             parent,
             "Environment",
+            model["php_summary"],
             meta="healthy" if model["php_healthy"] else "missing",
             meta_tone="accent.success" if model["php_healthy"] else "accent.danger",
         )
-        summary = BodyText(tile.body, model["php_summary"], tone="text.primary")
-        summary.grid(row=0, column=0, sticky="new")
-        tile.body.grid_rowconfigure(1, weight=1)
-        return tile
 
     def _build_workspace_tile(self, parent, model):
-        """Just the path. The project kind is already the tile's meta, and a
-        label column here left a Windows path 131px to render 157px in - paths
-        have no spaces, so Tk cannot wrap one to fit."""
-        tile = Tile(parent, "Workspace", meta=model["project_kind"])
-        path = BodyText(tile.body, model["project_root"], tone="text.primary")
-        path.grid(row=0, column=0, sticky="new")
-        tile.body.grid_rowconfigure(1, weight=1)
-        return tile
+        """The path alone. The project kind is already this tile's meta, so a
+        label column beside it only cost width - and in a quarter-width tile
+        that reserve left the path 131px to render 157px in."""
+        return text_tile(parent, "Workspace", model["project_root"], meta=model["project_kind"])
 
     def _build_activity_tile(self, parent, model):
         tile = Tile(

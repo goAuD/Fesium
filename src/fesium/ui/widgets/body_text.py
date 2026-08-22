@@ -3,7 +3,7 @@ import tkinter
 import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_font_token
-from fesium.ui.widgets.label_sizing import WidthAgnosticLabel
+from fesium.ui.widgets.width_agnostic_label import WidthAgnosticLabel
 
 # Provisional wrap used before the widget has been given a real size.
 MIN_WRAPLENGTH = 160
@@ -34,8 +34,8 @@ class BodyText(WidthAgnosticLabel):
     end of every line disappear. Recomputing the wrap on every ``<Configure>``
     keeps paragraphs inside their panel at any window size.
 
-    Grid this with ``sticky="ew"`` so the cell drives the width instead of the
-    label sizing itself from its own text.
+    ``WidthAgnosticLabel`` adds the horizontal stretch to whatever sticky it is
+    gridded with, so the cell drives the width whatever the caller passes.
     """
 
     def __init__(self, master, text: str, *, tone: str = "text.primary", font: str = "body", **kwargs):

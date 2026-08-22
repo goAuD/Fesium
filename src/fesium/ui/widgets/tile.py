@@ -1,7 +1,8 @@
 import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_font_token, get_shape_token
-from fesium.ui.widgets.label_sizing import WidthAgnosticLabel
+from fesium.ui.widgets.body_text import BodyText
+from fesium.ui.widgets.width_agnostic_label import WidthAgnosticLabel
 
 TILE_PADDING = 16
 
@@ -54,17 +55,25 @@ class Tile(ctk.CTkFrame):
         header.grid(row=0, column=0, sticky="ew", padx=padding, pady=(padding, 10))
         header.grid_columnconfigure(0, weight=1)
 
+        # A longer tile name must not make its tile wider than the grid share it
+        # was given, or two tiles meant to be equal come out 43px apart. This
+        # label leaves width to its weighted cell, and elides with an ellipsis
+        # when the name still does not fit, so a cut is never silent.
         self.title_label = WidthAgnosticLabel(
             header,
             text=title.upper(),
             text_color=get_color_token("text.secondary"),
             font=get_font_token("tile_title"),
             anchor="w",
+            elide=True,
         )
-        # sticky="ew" is load-bearing: the label asks for one character of width
-        # (see below), so it is the cell that has to hand it the real width.
-        self.title_label.grid(row=0, column=0, sticky="ew")
+        self.title_label.grid(row=0, column=0)
 
+        # The meta stays an ordinary CTkLabel. Its column is unweighted and
+        # never stretches, so it needs its natural width - detaching it here is
+        # exactly what once collapsed it to a single character. Eliding by width
+        # is not available for the same reason: the width depends on the request.
+        # truncate_meta bounds what it can demand instead.
         self.meta_label = ctk.CTkLabel(
             header,
             text=truncate_meta(meta),
@@ -73,15 +82,6 @@ class Tile(ctk.CTkFrame):
             anchor="e",
         )
         self.meta_label.grid(row=0, column=1, sticky="e")
-
-        # The title is a WidthAgnosticLabel: a longer tile name must not make its
-        # tile wider than the grid share it was given, or two tiles meant to be
-        # equal come out 43px apart. Its cell is weighted and stretched, which
-        # is what makes that safe.
-        #
-        # The meta label deliberately stays an ordinary CTkLabel. It sits in an
-        # unweighted column that never stretches, so it needs its natural width.
-        # truncate_meta bounds what it can demand instead.
 
         self.body = ctk.CTkFrame(self, fg_color="transparent")
         self.body.grid(row=1, column=0, sticky="nsew", padx=padding, pady=(0, padding))
@@ -92,3 +92,18 @@ class Tile(ctk.CTkFrame):
 
     def set_meta(self, meta: str, tone: str = "text.secondary") -> None:
         self.meta_label.configure(text=truncate_meta(meta), text_color=get_color_token(tone))
+
+
+def text_tile(parent, title: str, text: str, *, meta: str = "", meta_tone: str = "text.secondary",
+              tone: str = "text.primary") -> Tile:
+    """A tile whose whole body is one paragraph.
+
+    Three views built this same shape by hand - title, one BodyText gridded
+    "new", a weighted spacer row beneath it. Layout changes had to be repeated
+    in three places, which is precisely how the pieces drift apart.
+    """
+    tile = Tile(parent, title, meta=meta, meta_tone=meta_tone)
+    paragraph = BodyText(tile.body, text, tone=tone)
+    paragraph.grid(row=0, column=0, sticky="new")
+    tile.body.grid_rowconfigure(1, weight=1)
+    return tile
