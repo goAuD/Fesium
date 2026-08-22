@@ -11,4 +11,4 @@
 customtkinter==6.0.0
 pillow==12.3.0
 pytest==9.1.1
-ruff==0.15.5
+ruff==0.16.3
