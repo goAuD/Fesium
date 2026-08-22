@@ -1,7 +1,10 @@
 import socket
+from urllib.error import HTTPError
 from urllib.request import urlopen
 
-from fesium.core.static_server import StaticServer
+import pytest
+
+from fesium.core.static_server import StaticServer, is_hidden_path
 
 
 def test_static_server_starts_serves_index_html_and_exposes_local_url(tmp_path):
@@ -97,3 +100,114 @@ def test_static_server_uses_next_available_port_when_requested_port_is_busy(tmp_
         server.stop()
     finally:
         monkeypatch.undo()
+
+
+# --- what a project folder must not hand out --------------------------------
+
+
+@pytest.mark.parametrize("path", [
+    "/.env",
+    "/.git/config",
+    "/%2Eenv",
+    "/sub/.env",
+    "/.ssh/id_rsa",
+    "/.env?ignored=1",
+])
+def test_a_dot_path_is_never_served(path):
+    """Fesium reads four keys out of a project's .env and never the credentials.
+
+    Serving the file whole over HTTP undid that care: the static server handed
+    out .env and the whole of .git for any project served from its own root.
+    """
+    assert is_hidden_path(path) is True
+
+
+@pytest.mark.parametrize("path", ["/", "/index.html", "/assets/app.css", "/a.b/c"])
+def test_an_ordinary_path_is_still_served(path):
+    assert is_hidden_path(path) is False
+
+
+def test_the_server_refuses_dot_files_over_http(tmp_path):
+    project = tmp_path / "site"
+    (project / ".git").mkdir(parents=True)
+    (project / ".env").write_text("DB_PASSWORD=hunter2", encoding="utf-8")
+    (project / ".git" / "config").write_text("[core]", encoding="utf-8")
+    (project / "index.html").write_text("<h1>hello</h1>", encoding="utf-8")
+
+    server = StaticServer()
+    url = server.start(document_root=project, port=8141)
+    try:
+        for path in ("/.env", "/.git/config", "/%2Eenv"):
+            with pytest.raises(HTTPError) as caught:
+                urlopen(url + path)
+            assert caught.value.code == 403
+        assert "hello" in urlopen(url).read().decode("utf-8")
+    finally:
+        server.stop()
+
+
+# --- a folder with nothing to serve -----------------------------------------
+
+
+def test_a_folder_without_an_index_explains_itself(tmp_path):
+    """A directory listing of a source repo looks like a broken website.
+
+    It also says nothing about why, which is the whole problem: a SvelteKit
+    project has no index.html at its root, and the listing gave no hint that a
+    build step is what is missing.
+    """
+    project = tmp_path / "app"
+    (project / "src").mkdir(parents=True)
+    (project / "package.json").write_text("{}", encoding="utf-8")
+
+    server = StaticServer()
+    url = server.start(
+        document_root=project, port=8142,
+        hints=["This is a SvelteKit project.", "Run npm run dev on port 5173."])
+    try:
+        with pytest.raises(HTTPError) as caught:
+            urlopen(url)
+        body = caught.value.read().decode("utf-8")
+    finally:
+        server.stop()
+
+    assert caught.value.code == 404
+    assert "Nothing to serve here" in body
+    assert "SvelteKit" in body
+    assert "5173" in body
+    # The thing it replaced: a listing of the folder's contents.
+    assert "package.json" not in body
+    assert "src" not in body
+
+
+def test_the_no_index_page_stands_alone_without_hints(tmp_path):
+    project = tmp_path / "empty"
+    project.mkdir()
+
+    server = StaticServer()
+    url = server.start(document_root=project, port=8143)
+    try:
+        with pytest.raises(HTTPError) as caught:
+            urlopen(url)
+        body = caught.value.read().decode("utf-8")
+    finally:
+        server.stop()
+
+    assert "index.html" in body
+    assert "Fesium" in body
+
+
+def test_request_logs_reach_the_app_instead_of_stderr(tmp_path):
+    project = tmp_path / "site"
+    project.mkdir()
+    (project / "index.html").write_text("<h1>hi</h1>", encoding="utf-8")
+
+    logs: list[str] = []
+    server = StaticServer(on_log=logs.append)
+    url = server.start(document_root=project, port=8144)
+    try:
+        urlopen(url).read()
+    finally:
+        server.stop()
+
+    assert any("GET /" in line for line in logs)

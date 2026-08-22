@@ -247,7 +247,7 @@ def test_start_moves_controller_to_running_and_stores_local_url(tmp_path):
     class FakeBackend:
         is_running = False
 
-        def start(self, document_root, port):
+        def start(self, document_root, port, *, hints=()):
             assert document_root == tmp_path
             assert port == 8000
             self.is_running = True
@@ -286,7 +286,7 @@ def test_start_converts_backend_exceptions_into_error_state(tmp_path):
     )
 
     class FakeBackend:
-        def start(self, document_root, port):
+        def start(self, document_root, port, *, hints=()):
             raise OSError("Port 8000 is already in use")
 
     controller._backend = FakeBackend()
