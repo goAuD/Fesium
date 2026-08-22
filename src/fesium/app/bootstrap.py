@@ -116,7 +116,6 @@ def _replace_runtime_views(
     settings_actions=None,
 ) -> None:
     state = controller.state
-    environment_status = summarize_php_environment()
 
     shell.replace_view(
         "overview",
@@ -182,7 +181,11 @@ def _replace_runtime_views(
         # not on every view refresh.
         lambda parent: EnvironmentView(
             parent,
-            status=environment_status,
+            # Diagnostics re-probes rather than reusing the cached summary.
+            # It is the one screen someone opens *because* they just installed
+            # PHP, and the factory only runs when the view is shown, so the
+            # 78ms is paid where it buys an accurate answer.
+            status=summarize_php_environment(max_age=0),
             project_root=state.project_root,
             project_kind=state.project_kind,
             document_root=state.document_root,

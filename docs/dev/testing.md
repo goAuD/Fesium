@@ -45,6 +45,19 @@ python scripts/check_layout.py
 
 It measures three things, each of which has been a real defect here: every label has room for its text, no layout keeps resizing once the window stops, and tiles of equal span come out equal width. Run it before calling a UI change done, and prove any new assertion by reintroducing the defect and watching it fail - a check that has never failed has not been tested.
 
+## Performance
+
+`scripts/profile_hot_paths.py` times what a user waits on: one UI action, and a cold start.
+
+```bash
+python scripts/profile_hot_paths.py
+```
+
+Profile before optimising anything. The only real bottleneck found so far was invisible by eye - `php -v` costs about 78ms and every one of the eleven handlers that rebuild the views used to spawn it, so each click stalled the window. Two things that measurement got wrong first, and are now built into the script:
+
+- The cold start is measured in a **fresh process**. Measuring it in the profiler's own process reads about twice as fast, because customtkinter and the app are already imported.
+- Measure the path the app actually takes. An early benchmark looped `get_table_info` over every table and made the database browser look expensive; the app only ever asks for the selected one.
+
 ## Security scanning
 
 Semgrep runs twice, and the difference matters:

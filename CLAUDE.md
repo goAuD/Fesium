@@ -31,6 +31,8 @@ Two habits that have already caught real bugs here:
 
 ## Traps specific to this codebase
 
+- **`php -v` costs ~78ms, and the UI rebuilds every view after every action.** `summarize_php_environment()` is cached for that reason; `detect_php()` is not, so anything needing a guaranteed-fresh answer still has one. Do not add an eager probe to `_replace_runtime_views` - Diagnostics re-probes in its own factory, which only runs when that view is opened.
+
 - **`fesium.py` shares its name with the `src/fesium/` package.** Anything doing `import fesium` from the repo root gets the launcher, not the package. The launcher declares `__path__` to bridge that. Never make it `exec()` source again - `fesium._version` exists so a plain import does the job.
 - **`CTkLabel` needs `wraplength` in pixels.** A constant is only right at one window size and clips text at every smaller one. Paragraphs go through `ui/widgets/BodyText`, gridded `sticky="ew"`.
 - **`CTkLabel.bind()` forwards to the inner canvas and label, not the frame.** For the widget's own size, use `tkinter.Frame.bind(self, ..., add="+")` - and always `add="+"`, because CustomTkinter binds `<Configure>` for itself.
