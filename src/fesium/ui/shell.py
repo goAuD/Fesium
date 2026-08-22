@@ -9,6 +9,7 @@ from fesium.ui.theme.styles import (
     get_font_token,
 )
 from fesium.ui.theme.window_icon import apply_window_icon
+from fesium.ui.widgets.body_text import BodyText
 from fesium.ui.widgets.button import Button
 
 DEFAULT_WINDOW_GEOMETRY = "1400x960"
@@ -67,13 +68,15 @@ class FesiumShell(ctk.CTk):
         )
         brand_label.pack(anchor="w", padx=24, pady=(28, 6))
 
-        tagline_label = ctk.CTkLabel(
+        # BodyText rather than a CTkLabel with wraplength=180. A pixel wrap
+        # written into a view is only right for the string and the face it was
+        # measured against: 180 was tuned to the old body font, and swapping
+        # the face changed where the words break. BodyText takes the wrap from
+        # the width the sidebar actually gives it.
+        tagline_label = BodyText(
             self.sidebar_frame,
-            text="Local dev tools for students and developers",
-            text_color=get_color_token("text.secondary"),
-            font=get_font_token("body"),
-            wraplength=180,
-            justify="left",
+            "Local dev tools for students and developers",
+            tone="text.secondary",
         )
         tagline_label.pack(anchor="w", padx=24, pady=(0, 20))
 

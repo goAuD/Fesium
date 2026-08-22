@@ -2,7 +2,7 @@ import customtkinter as ctk
 
 from fesium.ui.theme.styles import get_color_token, get_shape_token
 
-BADGE_FONT = ("IBM Plex Sans", 12, "bold")
+BADGE_FONT = ("Atkinson Hyperlegible", 12, "bold")
 
 # Tk centres a label on the font's line box, which reserves room above the caps
 # for accents this text never uses, so the cap block lands a pixel low. Measured

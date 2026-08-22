@@ -41,7 +41,6 @@ def test_font_licences_sit_next_to_the_fonts_they_cover():
     licences = Path("src/fesium/assets/fonts/licenses")
 
     assert sorted(path.name for path in licences.glob("*.txt")) == [
-        "IBMPlexSans-OFL.txt",
+        "AtkinsonHyperlegible-OFL.txt",
         "JetBrainsMono-OFL.txt",
-        "Sora-OFL.txt",
     ]
