@@ -192,6 +192,8 @@ def _replace_runtime_views(
             document_root=state.document_root,
             needs_php=state.project_needs_php,
             database_readiness=summarize_project_database(state.project_root),
+            backend=state.backend_kind,
+            port=config.snapshot().get("port"),
         ),
     )
     shell.replace_view(

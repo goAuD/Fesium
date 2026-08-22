@@ -34,6 +34,11 @@
 - Bundle fonts in-repo only. Do not load fonts or other runtime assets from the network.
 - Preserve offline-first behavior. The app must remain useful without internet access.
 
+## Text the User Will Send Somewhere
+
+- Anything built to be copied out of the app - a report, a log excerpt, an error to paste into a ticket - goes through `core/setup_report.py`'s rules: **paths lose the home directory** and **no credential is included**. A Windows path carries the account name, and the point of such text is that it leaves the machine.
+- Prefer being safe by construction over being careful. The setup report cannot leak a password because the type it prints has no field for one, and a test asserts that. That survives an edit by someone who has not read this file.
+
 ## Security
 
 - SQLite read-only mode stays enabled by default, resets on every launch.
