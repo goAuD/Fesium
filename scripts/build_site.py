@@ -94,12 +94,10 @@ header.top .wrap{{display:flex; align-items:center; gap:14px; height:64px}}
 header.top img{{width:28px; height:28px; display:block}}
 header.top .name{{font-weight:700; letter-spacing:-.01em}}
 header.top nav{{margin-left:auto; display:flex; gap:22px; font-size:15px}}
-header.top nav a{{color:var(--muted)}}
+header.top nav a{{color:var(--muted); white-space:nowrap}}
 header.top nav a:hover{{color:var(--ink); text-decoration:none}}
 
-.hero{{padding:88px 0 64px; border-bottom:1px solid var(--border-soft)}}
-.hero-grid{{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:56px; align-items:center}}
-.hero img{{width:168px; height:168px; display:block}}
+..hero{{padding:76px 0 60px; border-bottom:1px solid var(--border-soft)}}
 .eyebrow{{
   font-size:13px; letter-spacing:.16em; text-transform:uppercase;
   color:var(--accent); margin:0 0 16px; font-weight:700;
@@ -144,8 +142,18 @@ h2{{font-size:29px; letter-spacing:-.015em}}
 @media(max-width:900px){{
   .bento{{grid-template-columns:repeat(2,1fr)}}
   .span3,.span4,.span6{{grid-column:span 2}}
-  .hero-grid{{grid-template-columns:1fr}}
-  .hero img{{width:120px; height:120px}}
+}}
+
+/* The five section anchors want 421px of their own and a 390px phone leaves
+   about 240px for them, so every link was wrapping inside itself - three lines
+   for "How it is built", one for "GitHub", which is what made the row look
+   ragged rather than merely tight. Below this width the anchors go. The GitHub
+   link stays because it is the only one that does something rather than
+   scrolling to a section a reader will reach anyway. */
+@media(max-width:680px){{
+  header.top nav a.section{{display:none}}
+  header.top nav{{gap:0}}
+  .hero{{padding:56px 0 48px}}
 }}
 @media(max-width:560px){{
   .bento{{grid-template-columns:1fr}}
@@ -279,18 +287,17 @@ footer nav{{margin-left:auto; display:flex; gap:22px; flex-wrap:wrap}}
     <img src="{mark}" alt="">
     <span class="name">Fesium</span>
     <nav>
-      <a href="#what">What it does</a>
-      <a href="#who">Who it is for</a>
-      <a href="#built">How it is built</a>
-      <a href="#get">Get it</a>
+      <a class="section" href="#what">What it does</a>
+      <a class="section" href="#who">Who it is for</a>
+      <a class="section" href="#built">How it is built</a>
+      <a class="section" href="#get">Get it</a>
       <a href="{REPO_URL}">GitHub</a>
     </nav>
   </div>
 </header>
 
 <div class="hero">
-  <div class="wrap hero-grid">
-    <div>
+  <div class="wrap">
       <p class="eyebrow">Offline-first desktop app</p>
       <h1>Run your site. Read your database. Find out what is missing.</h1>
       <p>Fesium started because a webdev teacher could not hand out a Laragon licence key
@@ -302,8 +309,6 @@ footer nav{{margin-left:auto; display:flex; gap:22px; flex-wrap:wrap}}
         <a class="btn btn-primary" href="#get">Get started</a>
         <a class="btn btn-secondary" href="{REPO_URL}">View the source</a>
       </div>
-    </div>
-    <img src="{mark}" alt="The Fesium mark: a tilted orbit and its nucleus cut out of a solid square">
   </div>
 </div>
 
