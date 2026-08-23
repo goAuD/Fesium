@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+### Added
+
+- A dark-ground twin of the social preview, `docs/assets/brand/fesium-social-preview-dark.png`. The light card stays the one GitHub is pointed at, since a dark card disappears into GitHub's own dark theme; the dark one is for a light surface - a slide, a printed page, a light-themed site. Same geometry, different ink: `build_social_preview` takes its palette as arguments rather than carrying a second copy of the function that could drift from it. A test asserts the two are genuinely a pair, measuring 236/255 against 28/255, so emitting the same image twice fails.
+
+### Changed
+
+- `README.md` leads with what Fesium is for instead of where it came from. The first two paragraphs were the NanoServer migration and the layout of `src/fesium/` - contributor detail, at the point where a visitor decides whether to care. It now names the difference in the first line, and the migration and compatibility notes moved down to `Origin`, where someone who came looking for them will be.
+
 ### Fixed
 
 - The macOS CI stall is root-caused and fixed. Five jobs, always `macos-latest`, died inside `Run tests` with no output - until `faulthandler_timeout` turned the fifth into a one-minute traceback naming the line: `root.update()` in the widget tests' `_settle`, Tk's event-loop pump, which on the macOS runner sometimes never returns. The suite now settles with `update_idletasks()`, which runs the same geometry pass without waiting on the window server, and the one test that needed a delivered event dispatches it by hand.

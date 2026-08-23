@@ -42,6 +42,76 @@ def test_social_preview_png_matches_github_recommendation():
     assert read_png_dimensions(png_path) == (1280, 640)
 
 
+def mean_luminance(path: Path) -> int:
+    """Rough average brightness of a PNG, 0-255, without an image library.
+
+    Decodes the pixels with zlib and the PNG filter rules. The suite runs on
+    the runtime dependencies alone, and this is the one number that says
+    whether a card reads as light or dark.
+    """
+    import struct
+    import zlib
+
+    data = path.read_bytes()
+    header = data.index(b"IHDR") + 4
+    width, height, depth, colour = struct.unpack(">IIBB", data[header:header + 10])
+    assert (depth, colour) == (8, 2), f"expected 8-bit RGB, got depth={depth} colour={colour}"
+
+    raw, index = bytearray(), 8
+    while index < len(data):
+        length, kind = struct.unpack(">I", data[index:index + 4])[0], data[index + 4:index + 8]
+        if kind == b"IDAT":
+            raw += data[index + 8:index + 8 + length]
+        index += 12 + length
+    pixels = zlib.decompress(bytes(raw))
+
+    stride, previous, total = width * 3, bytearray(width * 3), 0
+    at = 0
+    for _ in range(height):
+        filter_type, at = pixels[at], at + 1
+        line = bytearray(pixels[at:at + stride])
+        at += stride
+        for i in range(stride):
+            left = line[i - 3] if i >= 3 else 0
+            up = previous[i]
+            if filter_type == 1:
+                line[i] = (line[i] + left) & 0xFF
+            elif filter_type == 2:
+                line[i] = (line[i] + up) & 0xFF
+            elif filter_type == 3:
+                line[i] = (line[i] + (left + up) // 2) & 0xFF
+            elif filter_type == 4:
+                upper_left = previous[i - 3] if i >= 3 else 0
+                estimate = left + up - upper_left
+                candidates = (abs(estimate - left), abs(estimate - up),
+                              abs(estimate - upper_left))
+                nearest = (left, up, upper_left)[candidates.index(min(candidates))]
+                line[i] = (line[i] + nearest) & 0xFF
+        total += sum(line)
+        previous = line
+    return round(total / (width * height * 3))
+
+
+def test_the_social_previews_are_a_light_and_dark_pair():
+    """Two cards, and genuinely different ones.
+
+    The card before these baked the app's dark ground in and measured 29/255,
+    so GitHub rendered it as a black rectangle. The light card is what GitHub
+    is pointed at; the dark one is for a light surface. Asserting only that
+    both files exist would pass if the generator emitted the same image twice,
+    which is exactly what a copy-pasted palette would do.
+    """
+    light = Path("docs/assets/brand/fesium-social-preview.png")
+    dark = Path("docs/assets/brand/fesium-social-preview-dark.png")
+
+    assert read_png_dimensions(dark) == (1280, 640)
+    assert dark.stat().st_size < 1_000_000
+
+    light_mean, dark_mean = mean_luminance(light), mean_luminance(dark)
+    assert light_mean > 200, f"the light card reads dark at {light_mean}/255"
+    assert dark_mean < 60, f"the dark card reads light at {dark_mean}/255"
+
+
 def test_brand_assets_have_a_generator():
     """The script is the source of truth, not a hand-edited SVG beside the PNG.
 
