@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 - `README.md` leads with what Fesium is for instead of where it came from. The first two paragraphs were the NanoServer migration and the layout of `src/fesium/` - contributor detail, at the point where a visitor decides whether to care. It now names the difference in the first line, and the migration and compatibility notes moved down to `Origin`, where someone who came looking for them will be.
 
+- The positioning now says the same thing on every surface that carries it. `README.md` names Junior Developer Accessibility as a coinage and says which way it points, because searching the phrase returns only material about junior developers learning to build accessible interfaces - the opposite arrangement to the one meant, and the one a reader lands on by default. The Pages site was already making the argument without naming it, while its `<title>` and `og:description` still carried `local dev tools for students and developers` - which is exactly the text a search result and a link preview show. The brand images keep their own tagline, deliberately.
+
 ### Fixed
 
 - The macOS CI stall is root-caused and fixed. Five jobs, always `macos-latest`, died inside `Run tests` with no output - until `faulthandler_timeout` turned the fifth into a one-minute traceback naming the line: `root.update()` in the widget tests' `_settle`, Tk's event-loop pump, which on the macOS runner sometimes never returns. The suite now settles with `update_idletasks()`, which runs the same geometry pass without waiting on the window server, and the one test that needed a delivered event dispatches it by hand.

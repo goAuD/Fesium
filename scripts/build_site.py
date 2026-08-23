@@ -289,14 +289,15 @@ footer nav{{margin-left:auto; display:flex; gap:22px; flex-wrap:wrap}}
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fesium - local dev tools for students and developers</title>
+<title>Fesium - a local dev toolbox that explains itself</title>
 <meta name="description" content="An offline-first desktop app that serves your local site,
  reads your SQLite database, and tells you what is missing before it breaks. Built for
  people who are still learning.">
 <meta name="theme-color" content="{c['bg.app']}">
 <meta property="og:title" content="Fesium">
-<meta property="og:description" content="Local dev tools for students and developers.
- Offline-first, read-only by default, and it explains what is wrong.">
+<meta property="og:description" content="A local dev toolbox that explains itself: what
+ is running, what is missing, and what to send when you ask for help. Offline-first and
+ read-only by default.">
 <meta property="og:image" content="{PAGES_URL}/social-preview.png">
 <meta property="og:url" content="{PAGES_URL}/">
 <meta property="og:type" content="website">
@@ -379,6 +380,10 @@ footer nav{{margin-left:auto; display:flex; gap:22px; flex-wrap:wrap}}
     <p class="lead">Most developer tools assume you already know. That's a fair assumption
     about most of their users, and it leaves a gap. Fesium aims at the gap, and treats it as
     an accessibility problem rather than something a better README would fix.</p>
+    <p class="lead">There's a name for that here: <strong>Junior Developer
+    Accessibility</strong>, and it points the opposite way to how it reads. Accessibility
+    normally means work a developer does for a user. This is the tooling meeting the
+    developer who's still learning it.</p>
     <p class="lead">Claims like that are cheap, so here's one place it changed a decision.
     Five typefaces were measured on how far apart they keep the characters beginners
     confuse, at the size the app actually sets them:</p>
