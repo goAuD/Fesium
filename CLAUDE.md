@@ -47,6 +47,14 @@ Two habits that have already caught real bugs here:
 - **Nothing inside a tile gets a fixed pixel height.** `CTkTextbox` requests 200px by default. Three stacked exceed the window, grid stops applying row weights, and the tile that should be largest is the one that clips. Ask for little and let `row_weight` decide.
 - **setuptools ships no non-Python file unless declared.** The bundled fonts and icons are `[tool.setuptools.package-data]`. If you add an asset, add it there, or an installed Fesium starts without it.
 - **The floor is Python 3.10**, because `X | None` annotations are built at import time. CI runs 3.10 so the claim stays tested. Do not raise or lower it without changing `pyproject.toml`, the docs and the matrix together - a contract test checks all three agree.
+- **Never reach the local server by name.** `localhost` resolves to `::1` before `127.0.0.1` on Windows and macOS, and both servers bind IPv4 only, so a client going by name attempts IPv6 first against a port nothing is listening on. Measured 2131ms against 2ms on Windows; on a macOS CI runner the attempt is not refused, it hangs, and it held a test job open until it was cancelled three times. `LOOPBACK` in `core/server.py` is the literal address, both servers bind and report it, and a test pins it. `is_port_in_use` binds (may I have this port); `wait_until_serving` connects (is what I spawned usable) - opposite questions, opposite methods.
+
+- **A constant tuned against another constant goes stale in silence.** Three times here: `wraplength=180` tuned to the old body font, `TEXT_CENTRING_OFFSET=2` tuned to IBM Plex Sans's line box, and the Pages screenshot bleed tuned to the figure's padding. None failed until the thing they were tuned against changed, and then all three failed visibly. Derive the value from what it depends on, or write a test that reads both and asserts the relationship. Never write down the answer alone.
+
+- **Never size a layout against `100vw`.** It counts the scrollbar and the layout does not, so anything derived from it is about seventeen pixels too wide. The Pages screenshots overflowed on desktop that way while my own arithmetic said they fitted, because the arithmetic had no scrollbar in it. Size against the container: `calc(100% + Npx)` with a matching negative margin. A test refuses `100vw` in a declaration.
+
+- **A test that makes an HTTP call without a timeout does not fail, it waits.** And a job that never finishes never says anything at all. Every call in the suite sets one, enforced by a test that greps for the ones that do not, and `faulthandler_timeout` in `pyproject.toml` dumps a traceback after two minutes so the next hang names its own file and line.
+
 - **SQLite cannot bind an identifier.** A table name in a `FROM` clause has to be validated (`validate_table_name`); everywhere else uses bound parameters, including schema inspection via `pragma_table_info(?)`.
 
 ## House style
@@ -57,4 +65,6 @@ Two habits that have already caught real bugs here:
 
 ## Git
 
-Work on a branch, commit per finished piece of work, open a **draft** PR and let the repo owner merge it. Commit messages say what was wrong and how it was verified, not just what changed.
+Work on a branch, commit per finished piece of work, open a **draft** PR and let the repo owner merge it.
+
+**A merged PR's branch is closed to you.** Commits pushed to it afterwards go nowhere, silently. That has stranded work twice here: once a one-character CSS fix that then shipped broken to the live site, once seven commits including a whole security review. Before pushing to a branch you have been working on for a while, check whether its PR has already been merged - and if it has, open a new one rather than assuming the push landed. Commit messages say what was wrong and how it was verified, not just what changed.

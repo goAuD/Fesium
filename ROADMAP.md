@@ -71,6 +71,14 @@ Order of work, per the [handoff audit](docs/specs/2026-08-23-handoff-audit-and-c
 - [ ] `Diagnostics` pre-fills from the project's `.env`, credentials excluded
 - [ ] Deliberately not included: dump import/export, form-based row editing, user and privilege management
 
+## Open, not scheduled
+
+Carried between working sessions so they are not rediscovered.
+
+- [ ] **A macOS CI job stalls at random.** Three times, always `macos-latest`, moving between Python versions, always inside `Run tests`. The address fix removed one cause and the Ubuntu race removed another, but the macOS stall has not been reproduced or root-caused. `timeout-minutes: 15` bounds it and `faulthandler_timeout` will name the test and the line the next time it happens - so the next occurrence is evidence rather than a mystery. Do not disable a test on a guess before then.
+- [ ] **Surface the build advice in `Diagnostics` and the setup report.** `core/node_project.py` already recognises SvelteKit, Next, Nuxt, Astro, Angular, CRA, Vue CLI and Vite from a project's `package.json`, and says which command builds it and on which port its dev server runs. That advice currently only appears on the page the static server returns when a folder has no `index.html`. The same lines belong on the `Diagnostics` screen and inside the copyable setup report, where someone looks *before* they hit the problem.
+- [ ] **The `.well-known` exception, if a project ever needs one.** Every dot-path is refused, deliberately. Revisit only when something real asks for it.
+
 ## Later
 
 No dates. Picked up when something real asks for them.
