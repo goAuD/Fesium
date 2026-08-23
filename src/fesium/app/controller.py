@@ -3,8 +3,10 @@ from pathlib import Path
 
 from fesium.core.browser import open_local_url
 from fesium.core.database import DatabaseManager, build_table_preview_query, is_read_query
+from fesium.core.database_engines import MYSQL_READ_VERBS, MySQLEngine, query_is_read
 from fesium.core.environment import summarize_php_environment
 from fesium.core.node_project import describe_node_project, detect_node_project
+from fesium.core.project_database import ConnectionSettings, DatabaseRequirement, probe_database
 from fesium.core.project_detection import detect_project_profile
 from fesium.core.runtime_detection import decide_runtime_backend
 from fesium.core.security import normalize_existing_directory, validate_single_sql_statement
@@ -39,6 +41,16 @@ class ControllerState:
     Defaults to True so a state built without a project reads as "PHP matters",
     which is the assumption that cannot hide a missing runtime.
     """
+    database_engine: str = "sqlite"
+    """Which engine the database view talks to - "sqlite" or "mysql"."""
+    database_connection_settings: ConnectionSettings | None = None
+    """Server connection settings for a MySQL session.
+
+    Deliberately credential-free: no field of this frozen dataclass may ever
+    carry a password, because it gets repr'd into logs and replaced constantly.
+    The password lives in one private attribute on the controller instead.
+    """
+    database_connected: bool = False
 
 
 class FesiumController:
@@ -50,6 +62,11 @@ class FesiumController:
         self.log_limit = log_limit
         self._backend = None
         self._project_database_path: Path | None = None
+        # Session-scoped MySQL state. The password is deliberately kept here,
+        # on one private attribute - never on ControllerState (which is frozen,
+        # replaced constantly and repr'd into logs) and never on disk.
+        self._mysql_manager = None
+        self._database_password: str | None = None
         self.state = ControllerState(
             project_root=None,
             project_kind="unknown",
@@ -79,10 +96,12 @@ class FesiumController:
         return self._project_database_path is not None
 
     def _database_browser_snapshot(self, preferred_table: str = "") -> tuple[tuple[str, ...], str, tuple[dict, ...]]:
-        if self.state.database_path is None:
+        if self._mysql_manager is not None:
+            database = self._mysql_manager
+        elif self.state.database_path is None:
             return (), "", ()
-
-        database = DatabaseManager(str(self.state.database_path), read_only=True)
+        else:
+            database = DatabaseManager(str(self.state.database_path), read_only=True)
         if not hasattr(database, "list_tables") or not hasattr(database, "get_table_info"):
             return (
                 self.state.database_tables,
@@ -157,7 +176,14 @@ class FesiumController:
             database_tables=(),
             database_selected_table="",
             database_selected_table_info=(),
+            database_engine="sqlite",
+            database_connection_settings=None,
+            database_connected=False,
         )
+        # A MySQL session belongs to one project selection; switching projects
+        # drops it and forgets the password.
+        self._mysql_manager = None
+        self._database_password = None
         self._refresh_database_browser()
         self._backend = None
         self.append_log(f"Selected project: {profile.root}")
@@ -209,7 +235,111 @@ class FesiumController:
         return True
 
     def set_database_read_only(self, enabled: bool) -> None:
+        if self.state.database_connected and enabled != self.state.database_read_only:
+            # The read-only session pin is applied when MySQL connects, so a
+            # mid-session flip would leave the server enforcing something the
+            # flag no longer says. Drop the session; the next connect applies
+            # the new setting.
+            self.disconnect_mysql()
+            self.append_log(
+                "[Fesium] MySQL session dropped - reconnect to apply the new read-only setting"
+            )
         self.state = replace(self.state, database_read_only=enabled)
+
+    def connect_mysql(self, settings: ConnectionSettings, password: str, *, engine=None) -> bool:
+        """Connect to a MySQL server for this session.
+
+        The password lives only in a private attribute here and inside the
+        engine built for it - never on ControllerState, never on disk. The
+        probe runs first so a dead host fails in under a second instead of
+        stalling on the driver's own timeout.
+        """
+        if not settings.host or not settings.port or not settings.database:
+            message = "Host, port and database name are all required to connect to MySQL"
+            self._record_database_error(message)
+            return False
+
+        requirement = DatabaseRequirement(
+            connection="mysql",
+            host=settings.host,
+            port=settings.port,
+            database=settings.database,
+        )
+        reachable = probe_database(requirement)
+        if reachable is False:
+            message = (
+                f"Nothing is listening at {settings.address}. Start the MySQL server or check "
+                f"the host and port, then connect again."
+            )
+            self._record_database_error(message)
+            return False
+
+        engine = engine if engine is not None else MySQLEngine(
+            host=settings.host,
+            port=settings.port,
+            user=settings.user,
+            password=password,
+        )
+        manager = DatabaseManager(settings.database, read_only=self.state.database_read_only, engine=engine)
+        ok, result = manager.execute("SELECT 1")
+        if not ok:
+            message = (
+                f"MySQL at {settings.address} refused the connection: {result}. "
+                f"Check the user, the password and the database name."
+            )
+            self._record_database_error(message)
+            return False
+
+        self._mysql_manager = manager
+        self._database_password = password
+        self.state = replace(
+            self.state,
+            database_engine="mysql",
+            database_connection_settings=settings,
+            database_connected=True,
+            database_last_result={"kind": "none"},
+            database_last_error="",
+            database_tables=(),
+            database_selected_table="",
+            database_selected_table_info=(),
+        )
+        self._refresh_database_browser()
+        self.append_log(f"[Fesium] Connected to MySQL at {settings.address}")
+        return True
+
+    def disconnect_mysql(self) -> bool:
+        """Drop the MySQL session and forget the password."""
+        if not self.state.database_connected and self._mysql_manager is None:
+            return False
+
+        address = ""
+        if self.state.database_connection_settings is not None:
+            address = self.state.database_connection_settings.address
+
+        self._mysql_manager = None
+        self._database_password = None
+        self.state = replace(
+            self.state,
+            database_engine="sqlite",
+            database_connection_settings=None,
+            database_connected=False,
+            database_last_result={"kind": "none"},
+            database_last_error="",
+            database_tables=(),
+            database_selected_table="",
+            database_selected_table_info=(),
+        )
+        suffix = f" at {address}" if address else ""
+        self.append_log(f"[Fesium] Disconnected from MySQL{suffix}")
+        return True
+
+    def _record_database_error(self, message: str) -> None:
+        self.state = replace(
+            self.state,
+            database_last_error=message,
+            database_last_result={"kind": "error", "message": message},
+        )
+        self.append_log(f"[Fesium] ERROR: {message}")
 
     def select_database_table(self, table_name: str) -> bool:
         if not table_name:
@@ -243,7 +373,7 @@ class FesiumController:
             )
             return False
 
-        if self.state.database_path is None:
+        if self.state.database_path is None and self._mysql_manager is None:
             message = "No database selected"
             self.state = replace(
                 self.state,
@@ -252,7 +382,18 @@ class FesiumController:
             )
             return False
 
-        if self.state.database_read_only and not is_read_query(query):
+        using_mysql = self._mysql_manager is not None
+        database = self._mysql_manager if using_mysql else DatabaseManager(
+            str(self.state.database_path),
+            read_only=self.state.database_read_only,
+        )
+        # Read verbs are engine knowledge: SHOW and DESCRIBE are reads on
+        # MySQL but unknown words to the SQLite verb set.
+        classify_read = (
+            (lambda q: query_is_read(q, MYSQL_READ_VERBS)) if using_mysql else is_read_query
+        )
+
+        if self.state.database_read_only and not classify_read(query):
             message = "Read-only mode: Write operations are disabled"
             self.state = replace(
                 self.state,
@@ -261,10 +402,6 @@ class FesiumController:
             )
             return False
 
-        database = DatabaseManager(
-            str(self.state.database_path),
-            read_only=self.state.database_read_only,
-        )
         success, result = database.execute(query)
         if not success:
             self.state = replace(
@@ -274,7 +411,7 @@ class FesiumController:
             )
             return False
 
-        if is_read_query(query):
+        if classify_read(query):
             normalized_result = {
                 "kind": "read",
                 "columns": result["columns"],
