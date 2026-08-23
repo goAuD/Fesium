@@ -3,9 +3,9 @@
        alt="Fesium - local dev tools for students and developers">
 </h1>
 
-**Fesium is a local development toolbox built around Junior Developer Accessibility.**
+**Fesium is a local development toolbox designed around Junior Developer Accessibility.**
 
-It serves your site and reads your SQLite database, which is what a local dev tool does. It also explains itself: what is running, what is missing, what is safe to do, and what to paste when you ask someone for help.
+It serves your site and reads your SQLite database. It also explains what is running, what is missing, what is safe to do, and what to send when asking for help.
 
 That last part is the difference. Most developer tools assume you already know - a fair assumption about most of their users, and it leaves a gap. Fesium aims at the gap, and treats it as an accessibility problem rather than something a better README would fix. A beginner is not short of intelligence; they are short of a mental model of the system, and the tool can supply one.
 
