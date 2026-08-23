@@ -171,7 +171,12 @@ h2{{font-size:29px; letter-spacing:-.015em}}
      the column - but only as far as their own width, since upscaling a
      screenshot just makes it soft. The clamp is also what keeps this from
      overflowing the page on a narrow window. */
-  --bleed:clamp(0px, calc((100vw - 100%) / 2 - 12px), 100px);
+  /* The floor is not 0 but 13px, the figure's own padding plus its border.
+     Below that the image starts further in than the paragraphs above and
+     below it, which reads as the screenshot being the narrow thing on the
+     page - and it was, by 26px, before any of this. There is always at least
+     24px of room each side, since that is the wrap's padding. */
+  --bleed:clamp(13px, calc((100vw - 100%) / 2 - 12px), 100px);
   margin-left:calc(var(--bleed) * -1);
   margin-right:calc(var(--bleed) * -1);
 }}
