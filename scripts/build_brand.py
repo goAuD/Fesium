@@ -168,6 +168,10 @@ def write_mark_svg(path: Path, color: tuple[int, int, int]) -> None:
     """
     hexof = "#%02x%02x%02x"
     ex, ey = _electron_center()
+    # newline="\n" keeps the bytes identical on every platform: this file is
+    # read back as raw bytes by build_site.py's data_uri, so a Windows CRLF
+    # here would bake itself into the site's embedded copy and fail the
+    # site-contract test on every other OS.
     path.write_text(
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" '
         'role="img" aria-label="Fesium">\n'
@@ -179,7 +183,7 @@ def write_mark_svg(path: Path, color: tuple[int, int, int]) -> None:
         f'  <circle cx="{ex:.0f}" cy="{ey:.0f}" r="{ELECTRON_R}" '
         f'fill="{hexof % color}" />\n'
         "</svg>\n",
-        encoding="utf-8")
+        encoding="utf-8", newline="\n")
 
 
 REGULAR = "AtkinsonHyperlegible-Regular.ttf"
