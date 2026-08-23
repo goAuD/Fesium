@@ -40,6 +40,14 @@ select = ["E", "F", "W", "I", "UP", "B", "C4"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+# Dump every thread's traceback if one test runs this long, then let it carry
+# on. A hung test says nothing on its own: a macOS runner held a job open until
+# it was cancelled, three times, and the log ended mid-progress-bar with no
+# indication of which test or where. This turns the next one into a stack
+# trace. Nothing here comes close to two minutes - the whole suite is under
+# ten seconds - so it only ever fires on something genuinely stuck.
+faulthandler_timeout = 120
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 
