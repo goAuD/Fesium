@@ -21,7 +21,7 @@ def test_app_metadata_defaults_to_fesium_brand():
 
 def test_release_version_is_the_one_we_mean_to_ship():
     """Pinned rather than pattern-matched, so a bump is always deliberate."""
-    assert __version__ == "2.1.0"
+    assert __version__ == "2.2.0"
 
 
 def test_changelog_carries_a_section_for_the_shipped_version():
