@@ -60,29 +60,44 @@ def test_stylesheet_has_no_malformed_selector():
 
 
 def test_screenshots_are_never_narrower_than_the_text_around_them():
-    """The figure's padding and border inset the image; the bleed cancels it.
+    """The figure insets its image; the shots block widens by exactly that.
 
-    Two constants that have to agree, which is the shape of bug this project
-    has now hit three times - a wraplength tied to a typeface, a centring
-    offset tied to a font's metrics, and this. Reported as the screenshots
-    looking like the narrow thing on the page, which they were: 26px narrower
-    than every paragraph above and below them.
+    `.shot` carries padding and a border, so the picture starts inside the
+    column while every paragraph runs its full width. Reported as the
+    screenshots looking like the narrow thing on the page, which they were, by
+    26px. Two constants that have to agree - the shape of bug this project has
+    hit three times now, after a wraplength tied to a typeface and a centring
+    offset tied to a font's metrics.
+
+    Nothing here is measured against the viewport. 100vw counts the scrollbar
+    and the layout does not, so the first attempt at this was a scrollbar's
+    width too wide and pushed the screenshots off the right edge.
     """
     style = re.search(r"<style>(.*?)</style>", (SITE / "index.html").read_text(
         encoding="utf-8"), re.S).group(1)
 
-    floor = int(re.search(r"--bleed:clamp\((\d+)px", style).group(1))
-    # The base rule, not the narrow-screen override that follows it - the
-    # override drops the side borders and is measured against its own bleed.
+    # Every .shots rule, not the first one found. The mobile override appears
+    # earlier in the stylesheet than the base rule, so matching once checked
+    # the wrong one and passed while the base rule was wrong.
+    widenings = [int(value) for value in re.findall(
+        r"\.shots\{[^}]*?width:calc\(100% \+ (\d+)px\)", style, re.S)]
+    assert len(widenings) >= 2, f"expected the base and the overrides, got {widenings}"
+    widened = min(widenings)
+    # The base rule, not the narrow-screen override that drops the side borders.
     blocks = [block for block in re.findall(r"\.shot\{([^}]*)\}", style)
               if "border:" in block and "padding:" in block]
     assert len(blocks) == 1, f"expected one base .shot rule, found {len(blocks)}"
-    padding = int(re.search(r"padding:(\d+)px", blocks[0]).group(1))
-    border = int(re.search(r"border:(\d+)px", blocks[0]).group(1))
+    inset = (int(re.search(r"padding:(\d+)px", blocks[0]).group(1))
+             + int(re.search(r"border:(\d+)px", blocks[0]).group(1)))
 
-    assert floor >= padding + border, (
-        f"the bleed floor is {floor}px but the figure insets its image by "
-        f"{padding + border}px, so the screenshot sits inside the text column")
+    assert widened >= 2 * inset, (
+        f"the shots block widens by {widened}px but the figure insets its image "
+        f"by {inset}px a side, so the screenshot sits inside the text column")
+    # Comments stripped first: the stylesheet explains why 100vw is avoided,
+    # and the explanation should not be what trips the check.
+    declarations = re.sub(r"/\*.*?\*/", " ", style, flags=re.S)
+    assert "100vw" not in declarations, (
+        "size the shots against the column, not the viewport")
 
 
 def test_page_states_the_version_that_is_actually_shipping():
