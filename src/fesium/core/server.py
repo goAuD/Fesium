@@ -10,7 +10,9 @@ import socket
 import subprocess
 import sys
 import threading
+import time
 from collections.abc import Callable
+from pathlib import Path
 
 from fesium.core.config import trace_execution
 
@@ -44,7 +46,24 @@ def check_php_installed() -> bool:
     return detect_php().php_available
 
 
-def is_port_in_use(port: int, host: str = "localhost") -> bool:
+# Bind and connect on the same literal address, never on the name.
+#
+# "localhost" resolves to ::1 before 127.0.0.1 on Windows and macOS, and both
+# servers bind IPv4 only. A client that goes by name therefore tries IPv6
+# first, against a port nothing is listening on. Measured on Windows that
+# costs 2131ms against 2ms to the literal address - and on a macOS CI runner
+# the IPv6 attempt does not refuse at all, it hangs, which is what left a
+# test job running until GitHub's six hour limit.
+LOOPBACK = "127.0.0.1"
+
+# The PHP built-in server serves the document root raw - .env and .git/config
+# included, with none of the checks ProjectFileHandler applies on the Python
+# side. This router restores the same filter: dot-paths get a 403, everything
+# else returns false and falls through to the built-in handler.
+PHP_ROUTER = Path(__file__).resolve().parents[1] / "assets" / "php" / "router.php"
+
+
+def is_port_in_use(port: int, host: str = LOOPBACK) -> bool:
     """Can a local server take this port?
 
     Asked by trying to bind it, not by trying to connect to it. Every caller
@@ -63,6 +82,29 @@ def is_port_in_use(port: int, host: str = "localhost") -> bool:
         except OSError:
             return True
         return False
+
+
+def wait_until_serving(port: int, *, timeout: float = 15.0, host: str = LOOPBACK) -> bool:
+    """Block until something answers on ``port``, or give up.
+
+    Connecting, not binding - the opposite of :func:`is_port_in_use`, and for
+    the opposite reason. That function asks "may I have this port", which only
+    a bind can answer. This one asks "is the server I just spawned ready to be
+    used", which only a connect can answer.
+
+    ``php -S`` is a subprocess, so ``Popen`` returning does not mean PHP has
+    bound anything yet. Without this the app reported "Started", enabled Open
+    in Browser, and handed the user a connection error if they were quick -
+    and reported success just the same when PHP never came up at all.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(0.5)
+            if sock.connect_ex((host, port)) == 0:
+                return True
+        time.sleep(0.05)
+    return False
 
 
 def find_available_port(start_port: int = 8000, max_attempts: int = 10) -> int | None:
@@ -119,7 +161,7 @@ class PHPServer:
 
         self.port = port
         self.document_root = document_root
-        command = ["php", "-S", f"localhost:{port}", "-t", document_root]
+        command = ["php", "-S", f"{LOOPBACK}:{port}", "-t", document_root, str(PHP_ROUTER)]
 
         try:
             self.last_error = ""
@@ -136,8 +178,17 @@ class PHPServer:
             self._log_thread = threading.Thread(target=self._capture_logs, daemon=True)
             self._log_thread.start()
 
-            logger.info("Server started at http://localhost:%s", port)
-            self.on_log(f"[Fesium] Started at http://localhost:{port}")
+            if not wait_until_serving(port):
+                self.stop()
+                self.last_error = (
+                    f"PHP did not start listening on port {port}. "
+                    "Check the log above for what it printed.")
+                logger.error(self.last_error)
+                self.on_log(f"[Fesium] ERROR: {self.last_error}")
+                return False
+
+            logger.info("Server started at http://%s:%s", LOOPBACK, port)
+            self.on_log(f"[Fesium] Started at http://{LOOPBACK}:{port}")
             self.on_log(f"[Fesium] Document root: {document_root}")
             return True
         except FileNotFoundError:
@@ -192,4 +243,4 @@ class PHPServer:
     @property
     def url(self) -> str:
         """Get the server URL."""
-        return f"http://localhost:{self.port}"
+        return f"http://{LOOPBACK}:{self.port}"

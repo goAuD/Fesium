@@ -35,3 +35,8 @@ dist/
 # Local assistant workspaces (AGENTS.md and CLAUDE.md are tracked on purpose)
 .sam/
 .claude/
+
+# Dated implementation plans. Kept locally as working notes, but the code, the
+# changelog and the specs say the same things better, and they are the one part
+# of docs/ that reads as somebody else's working file.
+docs/plans/

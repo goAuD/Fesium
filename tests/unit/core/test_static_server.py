@@ -1,3 +1,4 @@
+import http.client
 import socket
 from urllib.error import HTTPError
 from urllib.request import urlopen
@@ -5,6 +6,12 @@ from urllib.request import urlopen
 import pytest
 
 from fesium.core.static_server import StaticServer, is_hidden_path
+
+# Every request here talks to a server this process just started on the
+# loopback address, so ten seconds is generous. The point is not the number: a
+# request with no timeout waits forever, and one that did held a macOS CI job
+# open until GitHub's six hour limit.
+HTTP_TIMEOUT = 10
 
 
 def test_static_server_starts_serves_index_html_and_exposes_local_url(tmp_path):
@@ -16,9 +23,9 @@ def test_static_server_starts_serves_index_html_and_exposes_local_url(tmp_path):
     server = StaticServer(on_log=logs.append)
 
     url = server.start(document_root=project, port=8123)
-    body = urlopen(url).read().decode("utf-8")
+    body = urlopen(url, timeout=HTTP_TIMEOUT).read().decode("utf-8")
 
-    assert url == "http://localhost:8123"
+    assert url == "http://127.0.0.1:8123"
     assert server.is_running is True
     assert "hello" in body
     assert any("Started" in line for line in logs)
@@ -67,7 +74,7 @@ def test_static_server_stop_marks_server_not_running_and_allows_restart(tmp_path
 
     url = server.start(document_root=project, port=8128)
 
-    assert url == "http://localhost:8128"
+    assert url == "http://127.0.0.1:8128"
     assert server.is_running is True
 
     server.stop()
@@ -95,7 +102,7 @@ def test_static_server_uses_next_available_port_when_requested_port_is_busy(tmp_
     monkeypatch.setattr("fesium.core.static_server.find_available_port", lambda port: alternate_port)
     try:
         url = server.start(document_root=project, port=busy_port)
-        assert url == f"http://localhost:{alternate_port}"
+        assert url == f"http://127.0.0.1:{alternate_port}"
         assert server.port == alternate_port
         server.stop()
     finally:
@@ -112,6 +119,12 @@ def test_static_server_uses_next_available_port_when_requested_port_is_busy(tmp_
     "/sub/.env",
     "/.ssh/id_rsa",
     "/.env?ignored=1",
+    # Double-encoded forms: is_hidden_path decodes once, translate_path
+    # decodes again, so only decoding to a fixed point sees what the stdlib
+    # will open.
+    "/%252Eenv",
+    "/%252Egit/config",
+    "/sub/%252Eenv",
 ])
 def test_a_dot_path_is_never_served(path):
     """Fesium reads four keys out of a project's .env and never the credentials.
@@ -137,11 +150,74 @@ def test_the_server_refuses_dot_files_over_http(tmp_path):
     server = StaticServer()
     url = server.start(document_root=project, port=8141)
     try:
-        for path in ("/.env", "/.git/config", "/%2Eenv"):
+        # The double-encoded form is the interesting one: it decodes to a
+        # dot path only on the second pass, inside translate_path.
+        for path in ("/.env", "/.git/config", "/%2Eenv", "/%252Eenv"):
             with pytest.raises(HTTPError) as caught:
-                urlopen(url + path)
+                urlopen(url + path, timeout=HTTP_TIMEOUT)
             assert caught.value.code == 403
-        assert "hello" in urlopen(url).read().decode("utf-8")
+        assert "hello" in urlopen(url, timeout=HTTP_TIMEOUT).read().decode("utf-8")
+    finally:
+        server.stop()
+
+
+def test_a_symlink_out_of_the_root_is_refused(tmp_path):
+    """A cloned repo can carry a link that leaves its own folder.
+
+    translate_path follows links without asking where they land, so without a
+    containment check the link served whatever it pointed at - on a machine
+    that means any file the user can read.
+    """
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret.txt").write_text("top secret", encoding="utf-8")
+
+    project = tmp_path / "site"
+    project.mkdir()
+    (project / "index.html").write_text("<h1>hello</h1>", encoding="utf-8")
+    try:
+        (project / "leak").symlink_to(outside, target_is_directory=True)
+    except OSError:
+        pytest.skip("symlinks are not available on this filesystem or need privileges")
+
+    server = StaticServer()
+    url = server.start(document_root=project, port=8145)
+    try:
+        with pytest.raises(HTTPError) as caught:
+            urlopen(url + "/leak/secret.txt", timeout=HTTP_TIMEOUT)
+        assert caught.value.code == 403
+        assert "top secret" not in caught.value.read().decode("utf-8")
+        assert "hello" in urlopen(url, timeout=HTTP_TIMEOUT).read().decode("utf-8")
+    finally:
+        server.stop()
+
+
+def test_a_request_with_a_foreign_host_header_is_refused(tmp_path):
+    """DNS rebinding names the server with the attacker's own domain.
+
+    The page rebinds that domain to 127.0.0.1 and reads responses same-origin;
+    what gives it away is the Host header, which a direct local client never
+    sends as anything but 127.0.0.1 or localhost on this port.
+    """
+    project = tmp_path / "site"
+    project.mkdir()
+    (project / "index.html").write_text("<h1>hello</h1>", encoding="utf-8")
+
+    server = StaticServer()
+    server.start(document_root=project, port=8146)
+    try:
+        connection = http.client.HTTPConnection("127.0.0.1", 8146, timeout=HTTP_TIMEOUT)
+        try:
+            connection.request("GET", "/", headers={"Host": "evil.example:8146"})
+            assert connection.getresponse().status == 403
+
+            # A local client naming the server properly still gets through.
+            connection.request("GET", "/", headers={"Host": "127.0.0.1:8146"})
+            response = connection.getresponse()
+            assert response.status == 200
+            assert "hello" in response.read().decode("utf-8")
+        finally:
+            connection.close()
     finally:
         server.stop()
 
@@ -166,7 +242,7 @@ def test_a_folder_without_an_index_explains_itself(tmp_path):
         hints=["This is a SvelteKit project.", "Run npm run dev on port 5173."])
     try:
         with pytest.raises(HTTPError) as caught:
-            urlopen(url)
+            urlopen(url, timeout=HTTP_TIMEOUT)
         body = caught.value.read().decode("utf-8")
     finally:
         server.stop()
@@ -188,7 +264,7 @@ def test_the_no_index_page_stands_alone_without_hints(tmp_path):
     url = server.start(document_root=project, port=8143)
     try:
         with pytest.raises(HTTPError) as caught:
-            urlopen(url)
+            urlopen(url, timeout=HTTP_TIMEOUT)
         body = caught.value.read().decode("utf-8")
     finally:
         server.stop()
@@ -206,7 +282,7 @@ def test_request_logs_reach_the_app_instead_of_stderr(tmp_path):
     server = StaticServer(on_log=logs.append)
     url = server.start(document_root=project, port=8144)
     try:
-        urlopen(url).read()
+        urlopen(url, timeout=HTTP_TIMEOUT).read()
     finally:
         server.stop()
 

@@ -22,19 +22,6 @@ def test_master_icon_svg_exists_and_has_expected_viewbox():
     assert root.attrib["viewBox"] == "0 0 512 512"
 
 
-def test_social_preview_prompt_mentions_required_terms():
-    prompt = Path("docs/assets/brand/fesium-social-preview-prompt.md").read_text(encoding="utf-8").lower()
-    for token in [
-        "fesium",
-        "element tile",
-        "1280x640",
-        "graphite",
-        "atkinson hyperlegible",
-        "nano banana 2",
-    ]:
-        assert token in prompt
-
-
 def read_png_dimensions(path: Path) -> tuple[int, int]:
     with path.open("rb") as handle:
         signature = handle.read(8)

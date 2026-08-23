@@ -62,5 +62,6 @@ where = ["src"]
   "icons/lucide/*.png",
   "icons/lucide/*.svg",
   "icons/lucide/*.txt",
+  "php/*.php",
 ]
 "fesium.assets.fonts" = ["*.ttf", "*.md", "licenses/*.txt"]
