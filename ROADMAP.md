@@ -2,9 +2,9 @@
 
 Planned direction for `Fesium` after the v2.0.0 rebrand. Items here are intent, not a commitment - priorities shift as the app is used in classroom and dev environments.
 
-Current released line: **v2.1.x** (see [docs/release/v2.1.0.md](docs/release/v2.1.0.md)).
+Current released line: **v2.2.x** (see [docs/release/v2.2.0.md](docs/release/v2.2.0.md)).
 
-## v2.1.0 - Next
+## v2.1.0 - Shipped 2026-08-22
 
 Focus: UI polish and quality-of-life on top of the new shell.
 
@@ -47,7 +47,29 @@ None of this changes how the app runs. It is what turns a working app into somet
 
 - [x] Tag `v2.1.0`: move the `Unreleased` block in [CHANGELOG.md](CHANGELOG.md) under the version, and add `docs/release/v2.1.0.md` beside the v2.0.0 note
 - [x] Full documentation pass - read `README.md`, `docs/` and the release notes against the app as it behaves now, not as it did before the bento rework. The repo has drifted before by shipping work the changelog denied.
+
+## v2.2.0 - Shipped 2026-08-23
+
+The hardening-and-handoff release: what two days of review found, closed, and wrote down. Full list in [CHANGELOG.md](CHANGELOG.md); narrative in [docs/release/v2.2.0.md](docs/release/v2.2.0.md).
+
+- [x] Server hardening from an independent security review: dot-paths refused on both backends (including double-encoded forms), requests must resolve inside the document root, Host header must name this server, address fixed to `127.0.0.1`. Findings in [docs/reviews/ox-alpha-review-2026-08-23.md](docs/reviews/ox-alpha-review-2026-08-23.md).
+- [x] A `Setup Report` in `Diagnostics`: one button that copies everything as pasteable text, home folders shortened to `~`, no credential can appear in it.
+- [x] ADR 0002 recorded: MySQL will be reached through our own `Database` view over PyMySQL, not a bundled admin panel.
 - [x] GitHub Pages portfolio page - its own layout in the Fesium brand colours, carrying the screenshots and what the app is for. Built by [scripts/build_site.py](scripts/build_site.py) from the app's own `COLOR_TOKENS`, so it cannot drift from the product it describes.
+
+## Next up - MySQL Support
+
+The agreed next task. Fesium detects that a project wants MySQL and reports whether it is reachable. What it does not do is run one - and it is worth being clear that these are different jobs. Bundling a database server is what Laragon did; matching that is a much larger commitment than a connection option.
+
+How it is reached is settled in [docs/decisions/0002-mysql-through-our-own-view.md](docs/decisions/0002-mysql-through-our-own-view.md): through the `Database` view we already have, over `PyMySQL`, rather than by bundling or rebuilding an admin panel. That keeps read-only-by-default applying to MySQL exactly as it does to SQLite, which serving a panel in a browser would not.
+
+Order of work, per the [handoff audit](docs/specs/2026-08-23-handoff-audit-and-continuation-plan.md):
+
+- [ ] An engine seam in `core/database.py` - connect, list tables, describe columns, error type, file-vs-server connection model - as its own refactor with no behavior change, proven by the existing suite
+- [ ] The PyMySQL engine behind that seam: `%s` placeholders, identifier quoting, and read/write classification that knows MySQL verbs (`SHOW`, `DESCRIBE` read; `REPLACE`, `CALL`, `GRANT`, `CREATE`, `RENAME`, `LOAD DATA` write)
+- [ ] Connection UI in the `Database` view: host, port, database and user, with the password asked per session and never written to disk
+- [ ] `Diagnostics` pre-fills from the project's `.env`, credentials excluded
+- [ ] Deliberately not included: dump import/export, form-based row editing, user and privilege management
 
 ## Open, not scheduled
 
@@ -57,7 +79,9 @@ Carried between working sessions so they are not rediscovered.
 - [ ] **Surface the build advice in `Diagnostics` and the setup report.** `core/node_project.py` already recognises SvelteKit, Next, Nuxt, Astro, Angular, CRA, Vue CLI and Vite from a project's `package.json`, and says which command builds it and on which port its dev server runs. That advice currently only appears on the page the static server returns when a folder has no `index.html`. The same lines belong on the `Diagnostics` screen and inside the copyable setup report, where someone looks *before* they hit the problem.
 - [ ] **The `.well-known` exception, if a project ever needs one.** Every dot-path is refused, deliberately. Revisit only when something real asks for it.
 
-## v2.2.0 - Soon After
+## Later
+
+No dates. Picked up when something real asks for them.
 
 ### System Tray Integration
 
@@ -72,24 +96,11 @@ Carried between working sessions so they are not rediscovered.
 - [ ] Command-line arguments: `--port`, `--root`, `--no-gui`
 - [ ] Daemon mode support
 
-## v2.3.0 - Later
-
 ### Multi-Project Support
 
 - [ ] Tab interface for multiple projects
 - [ ] Each project runs on a different port
 - [ ] Quick switch between projects
-
-### MySQL Support
-
-Fesium detects that a project wants MySQL and reports whether it is reachable. What it does not do is run one - and it is worth being clear that these are different jobs. Bundling a database server is what Laragon did; matching that is a much larger commitment than a connection option.
-
-How it is reached is settled in [docs/decisions/0002-mysql-through-our-own-view.md](docs/decisions/0002-mysql-through-our-own-view.md): through the `Database` view we already have, over `PyMySQL`, rather than by bundling or rebuilding an admin panel. That keeps read-only-by-default applying to MySQL exactly as it does to SQLite, which serving a panel in a browser would not.
-
-- [ ] MySQL / MariaDB connection: host, port, database and user, with the password asked per session and never written to disk
-- [ ] An engine seam in `core/database.py` - connect, list tables, describe columns, error type - leaving the read-only gate and risk classification untouched
-- [ ] `Diagnostics` pre-fills from the project's `.env`, credentials excluded
-- [ ] Deliberately not included: dump import/export, form-based row editing, user and privilege management
 
 ## v3.0.0 - Major (No Date)
 
@@ -112,7 +123,7 @@ Fesium is a **desktop GUI application** that uses local file dialogs and the hos
 
 ### MySQL Status
 
-MySQL support is not yet implemented. Currently Fesium is SQLite-only. The planned MySQL/MariaDB addition lives under **v2.3.0** above.
+MySQL support is not yet implemented. Currently Fesium is SQLite-only. The planned MySQL/MariaDB addition lives under **Next up** above.
 
 ---
 

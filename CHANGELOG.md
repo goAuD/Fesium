@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-08-23
+
 ### Fixed
 
 - The screenshots on the Pages site are sized against the column they sit in rather than against the viewport. `100vw` counts the scrollbar and the layout does not, so the previous attempt came out a scrollbar's width too wide and pushed them off the right edge on a desktop window - while still leaving them narrower than the body text on a phone. They now widen by exactly the figure's own padding and border, which puts them flush with the paragraphs above and below at every size, reach both screen edges below 680px, and take their full 1272px only above 1360px where there is demonstrably room. Checked at twelve widths from 320px to 1920px with a scrollbar accounted for.
