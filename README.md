@@ -9,6 +9,8 @@ It serves your site and reads your SQLite database. It also explains what is run
 
 That last part is the difference. Most developer tools assume you already know - a fair assumption about most of their users, and it leaves a gap. Fesium aims at the gap, and treats it as an accessibility problem rather than something a better README would fix. A beginner is not short of intelligence; they are short of a mental model of the system, and the tool can supply one.
 
+Accessibility in software normally means work a developer does for a user; Junior Developer Accessibility means the opposite arrangement, where the tooling meets the developer who is still learning it. Look for prior art and you find a great deal about juniors learning to build accessible things, and nothing about whether what they learn on is accessible to them. I spent long enough on the wrong side of that to think it deserves a name.
+
 ## Current Scope
 
 `Fesium` currently targets:
