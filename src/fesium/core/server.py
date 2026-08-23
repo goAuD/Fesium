@@ -11,6 +11,7 @@ import subprocess
 import sys
 import threading
 from collections.abc import Callable
+from pathlib import Path
 
 from fesium.core.config import trace_execution
 
@@ -53,6 +54,12 @@ def check_php_installed() -> bool:
 # the IPv6 attempt does not refuse at all, it hangs, which is what left a
 # test job running until GitHub's six hour limit.
 LOOPBACK = "127.0.0.1"
+
+# The PHP built-in server serves the document root raw - .env and .git/config
+# included, with none of the checks ProjectFileHandler applies on the Python
+# side. This router restores the same filter: dot-paths get a 403, everything
+# else returns false and falls through to the built-in handler.
+PHP_ROUTER = Path(__file__).resolve().parents[1] / "assets" / "php" / "router.php"
 
 
 def is_port_in_use(port: int, host: str = LOOPBACK) -> bool:
@@ -130,7 +137,7 @@ class PHPServer:
 
         self.port = port
         self.document_root = document_root
-        command = ["php", "-S", f"{LOOPBACK}:{port}", "-t", document_root]
+        command = ["php", "-S", f"{LOOPBACK}:{port}", "-t", document_root, str(PHP_ROUTER)]
 
         try:
             self.last_error = ""

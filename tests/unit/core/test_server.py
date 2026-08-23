@@ -1,12 +1,19 @@
 import socket
 from pathlib import Path
+from urllib.error import HTTPError
+from urllib.request import urlopen
+
+import pytest
 
 from fesium.core.server import (
     LOOPBACK,
+    PHP_ROUTER,
     PHPServer,
     find_available_port,
     is_port_in_use,
 )
+
+HTTP_TIMEOUT = 10
 
 
 def _listening_socket():
@@ -84,6 +91,43 @@ def test_the_php_server_reports_the_address_it_was_told_to_bind():
     server.port = 8000
 
     assert server.url == "http://127.0.0.1:8000"
+
+
+def test_the_php_router_ships_with_the_package():
+    """The dot-path filter only protects servers it is actually passed to."""
+    assert PHP_ROUTER.is_file()
+    assert PHP_ROUTER.name == "router.php"
+
+
+def test_the_php_built_in_server_refuses_dot_paths(tmp_path):
+    """`php -S` alone serves .env raw - the router restores the Python filter.
+
+    Skipped where PHP is not installed; the guarantee matters wherever the
+    PHP backend can start at all.
+    """
+    from fesium.core.environment import detect_php
+
+    if not detect_php().php_available:
+        pytest.skip("PHP is not installed on this machine")
+
+    project = tmp_path / "site"
+    project.mkdir()
+    (project / "index.php").write_text("hello", encoding="utf-8")
+    (project / ".env").write_text("DB_PASSWORD=hunter2", encoding="utf-8")
+
+    server = PHPServer()
+    assert server.start(str(project), port=8151) is True
+    try:
+        base = server.url
+        # Plain and double-encoded dot paths both have to be refused.
+        for path in ("/.env", "/%2Eenv", "/%252Eenv"):
+            with pytest.raises(HTTPError) as caught:
+                urlopen(base + path, timeout=HTTP_TIMEOUT)
+            assert caught.value.code == 403
+        body = urlopen(base + "/", timeout=HTTP_TIMEOUT).read().decode("utf-8")
+        assert "hello" in body
+    finally:
+        server.stop()
 
 
 def test_every_http_call_in_the_suite_has_a_timeout():
