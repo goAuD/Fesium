@@ -16,6 +16,10 @@ dependencies = [
   # customtkinter imports PIL for CTkImage but does not declare it, and Fesium
   # tints its bundled icons through Pillow at runtime.
   "pillow>=9.0.0",
+  # MySQL support (ADR 0002). Imported lazily inside the method that
+  # connects, so a SQLite-only user never needs it installed - but pip
+  # cannot express that, so it ships as an unconditional dependency.
+  "pymysql>=1.1,<2",
 ]
 
 [project.scripts]

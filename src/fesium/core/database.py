@@ -59,9 +59,9 @@ class DatabaseManager:
     are delegated to a DatabaseEngine (SQLite by default).
     """
 
-    def __init__(self, db_path: str = None, read_only: bool = True):
+    def __init__(self, db_path: str = None, read_only: bool = True, engine: Any | None = None):
         self.db_path = db_path
-        self._engine = SqliteEngine()
+        self._engine = engine if engine is not None else SqliteEngine()
         self._connection: Any | None = None
         self.read_only = read_only
 

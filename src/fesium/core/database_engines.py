@@ -122,3 +122,105 @@ class SqliteEngine:
             }
             for row in rows
         ]
+
+
+# Long enough for a busy local server to answer, short enough that a dead
+# host cannot freeze the UI. probe_database() answers "is anything there"
+# first; this bounds the connect attempt that follows it.
+MYSQL_CONNECT_TIMEOUT_SECONDS = 5
+
+
+class MySQLEngine:
+    """MySQL support over PyMySQL.
+
+    The driver is imported lazily inside the methods that need it: a
+    SQLite-only user never has to install pymysql for Fesium to work.
+    ``connector`` is injectable so the test suite can hand in a fake and
+    never open a socket.
+    """
+
+    placeholder = "%s"
+    read_verbs = MYSQL_READ_VERBS
+    # Verbs that write or change state on MySQL but are absent from SQLite's
+    # vocabulary. REPLACE is destructive on both; the rest exist only here.
+    extra_write_verbs = frozenset({"CALL", "GRANT", "REVOKE", "CREATE", "RENAME", "TRUNCATE", "LOAD"})
+
+    def __init__(
+        self,
+        *,
+        host: str,
+        port: int = 3306,
+        user: str,
+        password: str,
+        connect_timeout: int = MYSQL_CONNECT_TIMEOUT_SECONDS,
+        connector=None,
+    ):
+        self.host = host
+        self.port = port
+        self.user = user
+        self.password = password  # session memory only - never persisted
+        self.connect_timeout = connect_timeout
+        self._connector = connector
+
+    @property
+    def errors(self) -> tuple[type[BaseException], ...]:
+        import pymysql
+
+        return (pymysql.MySQLError,)
+
+    def connect(self, target: str, *, read_only: bool):
+        import pymysql
+
+        connector = self._connector if self._connector is not None else pymysql.connect
+        conn = connector(
+            host=self.host,
+            port=self.port,
+            user=self.user,
+            password=self.password,
+            database=target or None,
+            charset="utf8mb4",
+            connect_timeout=self.connect_timeout,
+        )
+        if read_only:
+            # Keyword gating alone is trivially bypassed on a dialect it does
+            # not know, so the session itself is pinned read-only too.
+            with conn.cursor() as cursor:
+                cursor.execute("SET SESSION TRANSACTION READ ONLY")
+        return conn
+
+    def availability_error(self, target: str) -> str | None:
+        # A MySQL target is not a file. The bounded connect attempt is the
+        # availability check; its failure surfaces as a connection error.
+        return None
+
+    def list_tables_query(self) -> tuple[str, tuple]:
+        # information_schema for the current schema; DATABASE() names the
+        # schema so nothing is interpolated into the SQL string.
+        return (
+            "SELECT table_name FROM information_schema.tables "
+            "WHERE table_schema = DATABASE() ORDER BY table_name",
+            (),
+        )
+
+    def table_columns_query(self, table_name: str) -> tuple[str, tuple]:
+        # Same posture as pragma_table_info(?): the table name travels as a
+        # bound parameter instead of being formatted into the SQL string.
+        return (
+            "SELECT column_name, column_type, is_nullable, column_key "
+            "FROM information_schema.columns "
+            "WHERE table_schema = DATABASE() AND table_name = %s "
+            "ORDER BY ordinal_position",
+            (table_name,),
+        )
+
+    def interpret_column_rows(self, rows: list[tuple]) -> list[dict]:
+        return [
+            {
+                "name": row[0],
+                "type": row[1],
+                "nullable": row[2] == "YES",
+                "primary_key": row[3] == "PRI",
+            }
+            for row in rows
+        ]
+
