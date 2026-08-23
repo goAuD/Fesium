@@ -19,6 +19,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ### Fixed
 
+- Starting the PHP backend waits until it is actually listening before reporting success. `php -S` is a subprocess, so `Popen` returning said nothing about whether PHP had bound anything - measured at roughly **600ms** on this machine, during which Fesium logged `Started`, enabled `Open in Browser` and would have handed the user a connection error. A backend that never comes up now reports the failure instead of the same success. Found because the new PHP router test raced and failed on Ubuntu CI while passing everywhere slower.
+
 - The local server is reached at `127.0.0.1` rather than `localhost`, and binds there too. The name resolves to `::1` before `127.0.0.1` on Windows and macOS while both servers bind IPv4 only, so anything connecting by name tried IPv6 first, against a port nothing was listening on. On Windows that measured **2131ms against 2ms**. On a macOS runner the IPv6 attempt is not refused at all, it hangs - which is what left a `macos-latest / py3.11` job running until it was cancelled, three times. The suite went from 23s to 6.8s as a side effect, since every HTTP test was paying that timeout.
 
 - Every HTTP call in the test suite sets a timeout, and the test job has a `timeout-minutes`. Neither did, so one stalled connection could hold a runner for six hours and report nothing at all. A test greps for calls without one; the job timeout is the backstop for whatever is not thought of.

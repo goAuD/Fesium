@@ -10,6 +10,7 @@ import socket
 import subprocess
 import sys
 import threading
+import time
 from collections.abc import Callable
 from pathlib import Path
 
@@ -83,6 +84,29 @@ def is_port_in_use(port: int, host: str = LOOPBACK) -> bool:
         return False
 
 
+def wait_until_serving(port: int, *, timeout: float = 15.0, host: str = LOOPBACK) -> bool:
+    """Block until something answers on ``port``, or give up.
+
+    Connecting, not binding - the opposite of :func:`is_port_in_use`, and for
+    the opposite reason. That function asks "may I have this port", which only
+    a bind can answer. This one asks "is the server I just spawned ready to be
+    used", which only a connect can answer.
+
+    ``php -S`` is a subprocess, so ``Popen`` returning does not mean PHP has
+    bound anything yet. Without this the app reported "Started", enabled Open
+    in Browser, and handed the user a connection error if they were quick -
+    and reported success just the same when PHP never came up at all.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(0.5)
+            if sock.connect_ex((host, port)) == 0:
+                return True
+        time.sleep(0.05)
+    return False
+
+
 def find_available_port(start_port: int = 8000, max_attempts: int = 10) -> int | None:
     """First bindable port at or above ``start_port``, or None if there is none.
 
@@ -153,6 +177,15 @@ class PHPServer:
             self._stop_logging.clear()
             self._log_thread = threading.Thread(target=self._capture_logs, daemon=True)
             self._log_thread.start()
+
+            if not wait_until_serving(port):
+                self.stop()
+                self.last_error = (
+                    f"PHP did not start listening on port {port}. "
+                    "Check the log above for what it printed.")
+                logger.error(self.last_error)
+                self.on_log(f"[Fesium] ERROR: {self.last_error}")
+                return False
 
             logger.info("Server started at http://%s:%s", LOOPBACK, port)
             self.on_log(f"[Fesium] Started at http://{LOOPBACK}:{port}")

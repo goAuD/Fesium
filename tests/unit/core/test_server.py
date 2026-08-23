@@ -1,4 +1,5 @@
 import socket
+import time
 from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import urlopen
@@ -11,6 +12,7 @@ from fesium.core.server import (
     PHPServer,
     find_available_port,
     is_port_in_use,
+    wait_until_serving,
 )
 
 HTTP_TIMEOUT = 10
@@ -144,3 +146,26 @@ def test_every_http_call_in_the_suite_has_a_timeout():
                 offenders.append(f"{path.name}:{number}")
 
     assert offenders == [], f"add a timeout to these calls: {offenders}"
+
+
+def test_wait_until_serving_answers_as_soon_as_something_listens():
+    sock, port = _listening_socket()
+    try:
+        assert wait_until_serving(port, timeout=5) is True
+    finally:
+        sock.close()
+
+
+def test_wait_until_serving_gives_up_rather_than_waiting_forever():
+    """The deadline is the point: a server that never comes up must say so.
+
+    php -S is a subprocess, so Popen returning does not mean PHP has bound
+    anything. Without this the app logged "Started", enabled Open in Browser,
+    and handed the user a connection error if they were quick - a window
+    measured at roughly 600ms on this machine - and reported the same success
+    when PHP never came up at all.
+    """
+    start = time.monotonic()
+
+    assert wait_until_serving(9, timeout=1.0) is False
+    assert time.monotonic() - start < 4
