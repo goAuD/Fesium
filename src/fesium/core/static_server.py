@@ -16,6 +16,22 @@ _GROUND, _PANEL, _BORDER = "#121419", "#181d25", "#2b3440"
 _INK, _MUTED, _ACCENT = "#eef3f7", "#8f9aa8", "#5DA9B3"
 
 
+def _fully_unquote(text: str) -> str:
+    """Decode percent-escapes until the string stops changing.
+
+    One pass is not enough: this check runs before ``translate_path``, which
+    unquotes again on its own. A single decode let ``/%252Eenv`` through as
+    ``%2Eenv`` - not a dot segment here, but ``.env`` by the time the stdlib
+    opened the file. Decoding to a fixed point means both layers see the same
+    path. Each pass that changes anything shortens the string, so this ends.
+    """
+    decoded = urllib.parse.unquote(text)
+    while decoded != text:
+        text = decoded
+        decoded = urllib.parse.unquote(text)
+    return decoded
+
+
 def is_hidden_path(request_path: str) -> bool:
     """Does this request reach for a dot-file or a dot-directory?
 
@@ -25,10 +41,10 @@ def is_hidden_path(request_path: str) -> bool:
     ``.env`` and deliberately never touches the credentials in it - serving the
     file whole rather undoes that care.
 
-    Segments are checked after unquoting, so ``%2Eenv`` is the same request as
-    ``.env``.
+    Segments are checked after unquoting to a fixed point, so ``%2Eenv`` and
+    its double-encoded form ``%252Eenv`` are both the same request as ``.env``.
     """
-    path = urllib.parse.unquote(urllib.parse.urlsplit(request_path).path)
+    path = _fully_unquote(urllib.parse.urlsplit(request_path).path)
     return any(segment.startswith(".") for segment in path.replace("\\", "/").split("/") if segment)
 
 

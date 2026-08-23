@@ -118,6 +118,12 @@ def test_static_server_uses_next_available_port_when_requested_port_is_busy(tmp_
     "/sub/.env",
     "/.ssh/id_rsa",
     "/.env?ignored=1",
+    # Double-encoded forms: is_hidden_path decodes once, translate_path
+    # decodes again, so only decoding to a fixed point sees what the stdlib
+    # will open.
+    "/%252Eenv",
+    "/%252Egit/config",
+    "/sub/%252Eenv",
 ])
 def test_a_dot_path_is_never_served(path):
     """Fesium reads four keys out of a project's .env and never the credentials.
@@ -143,7 +149,9 @@ def test_the_server_refuses_dot_files_over_http(tmp_path):
     server = StaticServer()
     url = server.start(document_root=project, port=8141)
     try:
-        for path in ("/.env", "/.git/config", "/%2Eenv"):
+        # The double-encoded form is the interesting one: it decodes to a
+        # dot path only on the second pass, inside translate_path.
+        for path in ("/.env", "/.git/config", "/%2Eenv", "/%252Eenv"):
             with pytest.raises(HTTPError) as caught:
                 urlopen(url + path, timeout=HTTP_TIMEOUT)
             assert caught.value.code == 403
