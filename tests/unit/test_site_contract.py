@@ -59,6 +59,32 @@ def test_stylesheet_has_no_malformed_selector():
     assert malformed == [], f"the browser will drop these rules: {malformed}"
 
 
+def test_screenshots_are_never_narrower_than_the_text_around_them():
+    """The figure's padding and border inset the image; the bleed cancels it.
+
+    Two constants that have to agree, which is the shape of bug this project
+    has now hit three times - a wraplength tied to a typeface, a centring
+    offset tied to a font's metrics, and this. Reported as the screenshots
+    looking like the narrow thing on the page, which they were: 26px narrower
+    than every paragraph above and below them.
+    """
+    style = re.search(r"<style>(.*?)</style>", (SITE / "index.html").read_text(
+        encoding="utf-8"), re.S).group(1)
+
+    floor = int(re.search(r"--bleed:clamp\((\d+)px", style).group(1))
+    # The base rule, not the narrow-screen override that follows it - the
+    # override drops the side borders and is measured against its own bleed.
+    blocks = [block for block in re.findall(r"\.shot\{([^}]*)\}", style)
+              if "border:" in block and "padding:" in block]
+    assert len(blocks) == 1, f"expected one base .shot rule, found {len(blocks)}"
+    padding = int(re.search(r"padding:(\d+)px", blocks[0]).group(1))
+    border = int(re.search(r"border:(\d+)px", blocks[0]).group(1))
+
+    assert floor >= padding + border, (
+        f"the bleed floor is {floor}px but the figure insets its image by "
+        f"{padding + border}px, so the screenshot sits inside the text column")
+
+
 def test_page_states_the_version_that_is_actually_shipping():
     page = (SITE / "index.html").read_text(encoding="utf-8")
 

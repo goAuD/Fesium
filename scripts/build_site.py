@@ -154,13 +154,32 @@ h2{{font-size:29px; letter-spacing:-.015em}}
   header.top nav a.section{{display:none}}
   header.top nav{{gap:0}}
   .hero{{padding:56px 0 48px}}
+  /* Edge to edge on a phone. 48px of side padding is an eighth of the screen,
+     and a screenshot of a desktop app needs every pixel it can get. */
+  .shots{{--bleed:calc((100vw - 100%) / 2)}}
+  .shot{{padding:8px; border-left:0; border-right:0}}
 }}
 @media(max-width:560px){{
   .bento{{grid-template-columns:1fr}}
   .span2,.span3,.span4,.span6{{grid-column:span 1}}
 }}
 
-.shots{{display:grid; gap:var(--gutter); margin-top:38px}}
+.shots{{
+  display:grid; gap:var(--gutter); margin-top:38px;
+  /* The screenshots are 1276px wide and the reading column is 1072px, so inside
+     it they were always shown smaller than they were captured. Let them out of
+     the column - but only as far as their own width, since upscaling a
+     screenshot just makes it soft. The clamp is also what keeps this from
+     overflowing the page on a narrow window. */
+  /* The floor is not 0 but 13px, the figure's own padding plus its border.
+     Below that the image starts further in than the paragraphs above and
+     below it, which reads as the screenshot being the narrow thing on the
+     page - and it was, by 26px, before any of this. There is always at least
+     24px of room each side, since that is the wrap's padding. */
+  --bleed:clamp(13px, calc((100vw - 100%) / 2 - 12px), 100px);
+  margin-left:calc(var(--bleed) * -1);
+  margin-right:calc(var(--bleed) * -1);
+}}
 .shot{{border:1px solid var(--border); background:var(--panel-alt); padding:12px}}
 .shot img{{width:100%; height:auto; display:block}}
 .shot figcaption{{
@@ -197,53 +216,55 @@ footer nav{{margin-left:auto; display:flex; gap:22px; flex-wrap:wrap}}
     server = data_uri(SCREENSHOTS / "fesium-server.png")
 
     capabilities = "".join([
-        tile("span3", "Serving", "<p>Point Fesium at a folder and it works out what the "
-             "project is. A site that uses PHP gets PHP. A plain HTML, CSS and JavaScript "
-             "site gets the built-in static server - <strong>not</strong> a PHP process it "
-             "has no use for, which is what most tools hand it.</p>",
+        tile("span3", "Serving", "<p>Pick a folder. Fesium looks at what is in it and works "
+             "out how to serve it - PHP if the project uses PHP, the built-in static server "
+             "if it's plain HTML, CSS and JavaScript. There's nothing to configure.</p>",
              metric="One folder, one click"),
-        tile("span3", "Database", "<p>Browse the tables, columns and keys of the project's "
-             "SQLite file, or any file you pick. Run one statement at a time. "
-             "<strong>Read-only is on at every launch</strong> and write mode lasts only "
-             "for the session, so a stray DELETE cannot happen by muscle memory.</p>",
+        tile("span3", "Database", "<p>Browse the tables, columns and keys in your project's "
+             "SQLite file, or any file you point it at, and run a statement when you need "
+             "one. <strong>Read-only is on every time it starts.</strong> You can turn it "
+             "off, but only for that session, so a DELETE you didn't mean has to be "
+             "deliberate.</p>",
              metric="Read-only by default"),
         tile("span4", "Diagnostics", "<p>Fesium serves your site. It does not run a "
-             "database server - and a Laravel project pointed at MySQL used to start "
-             "cleanly and then fail on its first query, with an error thrown from inside "
-             "the framework where a student has no chance of reading it. Fesium now reads "
-             "the project's <code>.env</code>, checks whether anything is actually "
-             "listening where it asks, and says so in plain words <em>before</em> you open "
-             "the site. It reads the host, the port and the database name. "
-             "<strong>Never the credentials.</strong></p>",
+             "database. A Laravel project pointed at MySQL would start up fine and then "
+             "fall over on its first query, somewhere four layers inside the framework "
+             "where the message stops meaning anything. Fesium reads the project's "
+             "<code>.env</code>, checks whether anything's listening at the address it "
+             "asks for, and tells you <em>before</em> you open the site. It reads the host, "
+             "the port and the database name. <strong>It never touches the "
+             "password.</strong></p>",
              meta="before it breaks"),
-        tile("span2", "Offline", "<p>No account, no telemetry, no CDN, nothing fetched at "
-             "runtime. Fonts and icons are in the package. It works on a locked-down "
-             "school machine, which is the machine it was written for.</p>",
+        tile("span2", "Offline", "<p>No account, no telemetry, no CDN. The fonts and icons "
+             "ship inside the package, so nothing is fetched while it runs. Which is the "
+             "point, on a machine where installing things is the hard part.</p>",
              metric="Zero network"),
     ])
 
     engineering = "".join([
-        tile("span2", "Selecting a project", "<p>Every UI action was spawning "
-             "<code>php -v</code>, and eleven handlers rebuild the views, so each click "
-             "stalled the window. Found by profiling, not by guessing.</p>",
+        tile("span2", "Selecting a project", "<p>Every click was spawning "
+             "<code>php -v</code>, and eleven different handlers rebuild the views. A "
+             "profiler found it. 78 milliseconds is too small to catch by eye and too big "
+             "to leave alone.</p>",
              metric="78.6ms &rarr; 1.7ms"),
-        tile("span2", "Starting a server", "<p>The port check connected to the port "
-             "instead of trying to bind it, with no timeout. Binding answers the question "
-             "the callers actually have.</p>",
+        tile("span2", "Starting a server", "<p>The port check was connecting to the port "
+             "instead of trying to bind it, with no timeout set. Binding is the question "
+             "the callers were really asking, and it answers in a fifth of a "
+             "millisecond.</p>",
              metric="2047ms &rarr; 0.2ms"),
-        tile("span2", "Contrast", "<p>Every button and every text-on-surface pairing "
-             "clears WCAG AA, and a test fails the build if one stops doing so.</p>",
+        tile("span2", "Contrast", "<p>Every button and every piece of text on every surface "
+             "clears WCAG AA. A test checks the whole palette, so it stays that way.</p>",
              metric="AA, enforced"),
-        tile("span6", "The suite cannot see a layout bug, so something else has to",
-             "<p>The unit tests run headless, with no display, no PHP and no network - "
-             "which makes them fast and portable, and completely blind to a panel that "
-             "clips its own text. So there is a second instrument: "
-             "<code>scripts/check_layout.py</code> drives the real views in a live window "
-             "and measures legibility, settling and tile balance. It has caught two real "
-             "regressions that every unit test happily passed. The rule that came out of "
-             "it: <strong>a check that has never failed has not been tested</strong> - so "
-             "every new assertion is proved against the broken code before it is "
-             "trusted.</p>"),
+        tile("span6", "Tests that cannot see the screen",
+             "<p>The unit tests run headless - no display, no PHP, no network. That makes "
+             "them quick and portable, and completely blind to a panel that clips its own "
+             "text. So there's a second tool: <code>scripts/check_layout.py</code> opens "
+             "the real views in a real window and measures legibility, settling and tile "
+             "balance. It has caught two regressions that every unit test was perfectly "
+             "happy with.</p><p>It also produced the rule the rest of the suite follows "
+             "now: <strong>if a check has never failed, it hasn't been tested</strong>. "
+             "New assertions get run against the broken code first, to watch them "
+             "fail.</p>"),
     ])
 
     typeface_rows = "".join(
@@ -300,11 +321,10 @@ footer nav{{margin-left:auto; display:flex; gap:22px; flex-wrap:wrap}}
   <div class="wrap">
       <p class="eyebrow">Offline-first desktop app</p>
       <h1>Run your site. Read your database. Find out what is missing.</h1>
-      <p>Fesium started because a webdev teacher could not hand out a Laragon licence key
-      and the assignment still needed a local PHP server. It is a long way past that now,
-      but the audience has not changed: it is for the person whose machine is locked down,
-      whose error message came from four frameworks deep, and who has not yet learned which
-      half of it matters.</p>
+      <p>It started because a webdev teacher couldn't hand out Laragon licence keys and the
+      assignment still needed a local PHP server. It's grown a fair way past that. Who it's
+      for hasn't changed: someone on a machine they can't install much on, staring at an
+      error thrown four frameworks deep, still learning which half of it matters.</p>
       <div class="cta">
         <a class="btn btn-primary" href="#get">Get started</a>
         <a class="btn btn-secondary" href="{REPO_URL}">View the source</a>
@@ -315,8 +335,8 @@ footer nav{{margin-left:auto; display:flex; gap:22px; flex-wrap:wrap}}
 <section id="what">
   <div class="wrap">
     <h2>What it does</h2>
-    <p class="lead">Four things, properly, instead of twenty things badly. It is a local
-    server and a database viewer that explain themselves.</p>
+    <p class="lead">A local server and a database viewer. Both try to tell you what's going
+    on instead of leaving you to work it out.</p>
     <div class="bento">{capabilities}</div>
   </div>
 </section>
@@ -324,9 +344,10 @@ footer nav{{margin-left:auto; display:flex; gap:22px; flex-wrap:wrap}}
 <section id="screens">
   <div class="wrap">
     <h2>What it looks like</h2>
-    <p class="lead">Every view is a bento grid, so the size of a panel tells you how much it
-    matters. Screenshots are captured from the running app by a script, not photographed -
-    a snipping tool shifted every colour channel by about +17 and washed the palette out.</p>
+    <p class="lead">Every view is a bento grid: the bigger the panel, the more it matters.
+    These are captured straight from the running app by a script. The first attempt used a
+    snipping tool, which shifted every colour channel by about +17 and washed the whole
+    palette out.</p>
     <div class="shots">
       <figure class="shot">
         <img src="{overview}" width="1276" height="816" loading="lazy"
@@ -349,12 +370,12 @@ footer nav{{margin-left:auto; display:flex; gap:22px; flex-wrap:wrap}}
 <section id="who">
   <div class="wrap">
     <h2>Built for people who are still learning</h2>
-    <p class="lead">Most developer tools are written for people who already know. That is a
-    reasonable choice and it leaves a real gap. Fesium aims at the gap - and treats it as an
-    accessibility problem, not a documentation one.</p>
-    <p class="lead">It is easy to put that on a page and never let it decide anything, so
-    here is a decision it actually made. The app's typeface was chosen by measuring how far
-    apart five faces keep the characters a beginner confuses, at the size the app sets them:</p>
+    <p class="lead">Most developer tools assume you already know. That's a fair assumption
+    about most of their users, and it leaves a gap. Fesium aims at the gap, and treats it as
+    an accessibility problem rather than something a better README would fix.</p>
+    <p class="lead">Claims like that are cheap, so here's one place it changed a decision.
+    Five typefaces were measured on how far apart they keep the characters beginners
+    confuse, at the size the app actually sets them:</p>
     <div class="scroller">
     <table>
       <thead><tr><th scope="col">Typeface</th><th scope="col">Mean separation</th>
@@ -362,23 +383,23 @@ footer nav{{margin-left:auto; display:flex; gap:22px; flex-wrap:wrap}}
       <tbody>{typeface_rows}</tbody>
     </table>
     </div>
-    <p class="lead">Read the worst pair, not the average: a reader is not tripped by a mean,
-    they are tripped by the one pair a face gets wrong. Source Sans 3 takes the best average
-    and is still disqualified by a single column, and the previous heading face put
-    <code>l</code> and <code>1</code> 0.10 apart on a scale where 1.00 means the two shapes
-    share nothing.</p>
-    <p class="lead">Fesium is set in <strong>Atkinson Hyperlegible</strong>, drawn by the
-    Braille Institute for exactly this, and the only candidate with a dotted zero. On a
-    screen made of ports, process ids, row counts and file paths, the zero is the character
-    that costs the most when it is misread.</p>
+    <p class="lead">The column that decides it is the worst pair. Nobody misreads an
+    average; you misread the one pair a face gets wrong. Source Sans 3 has the best mean
+    here and still fails on it, and so did the heading face Fesium used before -
+    <code>l</code> and <code>1</code> sat 0.10 apart, on a scale where 1.00 means the shapes
+    have nothing in common.</p>
+    <p class="lead">Fesium is set in <strong>Atkinson Hyperlegible</strong>. The Braille
+    Institute drew it for exactly this, and it was the only candidate with a dotted zero.
+    These screens are mostly ports, process ids, row counts and file paths, so the zero
+    earns its keep.</p>
   </div>
 </section>
 
 <section id="built">
   <div class="wrap">
     <h2>How it is held together</h2>
-    <p class="lead">It is a portfolio piece, so the interesting part is not the feature list.
-    It is what happens when a claim cannot be checked.</p>
+    <p class="lead">Most of the work went into things a feature list cannot show. A few of
+    them, with the numbers that came out.</p>
     <div class="bento">{engineering}</div>
   </div>
 </section>
@@ -386,8 +407,8 @@ footer nav{{margin-left:auto; display:flex; gap:22px; flex-wrap:wrap}}
 <section id="get">
   <div class="wrap">
     <h2>Get it</h2>
-    <p class="lead">Python 3.10 or newer. PHP only if your project actually uses PHP - a
-    plain HTML, CSS and JavaScript project is served either way.</p>
+    <p class="lead">You'll need Python 3.10 or newer. PHP only if your project uses it -
+    plain HTML, CSS and JavaScript works without.</p>
 <pre><code><span class="c"># run it from a clone</span>
 git clone {REPO_URL}.git
 cd Fesium
@@ -397,10 +418,9 @@ python fesium.py
 <span class="c"># or install it and get a command</span>
 python -m pip install -e .
 fesium</code></pre>
-    <p class="lead">Fesium serves your site; it does not run a database server. A project
-    pointed at MySQL or PostgreSQL needs that service running separately, and Diagnostics
-    tells you so before you open the site. SQLite needs nothing at all, because it is a
-    file.</p>
+    <p class="lead">Fesium serves your site. It doesn't run a database server, so if your
+    project points at MySQL or PostgreSQL you'll need that running separately - Diagnostics
+    will say so before you open the site. SQLite is a file, so it needs nothing.</p>
     <div class="cta">
       <a class="btn btn-primary" href="{REPO_URL}/releases/latest">Download v{__version__}</a>
       <a class="btn btn-secondary" href="{REPO_URL}/blob/main/docs/dev/setup.md">Setup guide</a>
