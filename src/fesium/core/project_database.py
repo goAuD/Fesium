@@ -49,6 +49,28 @@ class DatabaseReadiness:
     """None when nothing was probed - no project, no config, or SQLite."""
 
 
+@dataclass(frozen=True)
+class ConnectionSettings:
+    """What the user typed to reach a server-backed database.
+
+    Deliberately carries no password. ``DatabaseRequirement`` has none either,
+    and with both structures credential-free there is nowhere natural for a
+    password to be persisted by accident: it lives in one private attribute on
+    the controller, for the length of a session, and never reaches disk.
+    """
+
+    engine: str
+    """Which driver this describes - ``mysql`` today."""
+    host: str
+    port: int
+    database: str
+    user: str
+
+    @property
+    def address(self) -> str:
+        return f"{self.host}:{self.port}"
+
+
 def parse_env_values(text: str) -> dict[str, str]:
     """Pull the whitelisted keys out of .env text.
 

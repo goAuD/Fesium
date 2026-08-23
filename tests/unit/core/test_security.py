@@ -1,3 +1,4 @@
+from fesium.core.database_engines import MySQLEngine
 from fesium.core.security import (
     classify_query_risk,
     normalize_existing_directory,
@@ -93,3 +94,40 @@ def test_validate_single_sql_statement_accepts_one_statement():
 
     assert ok is True
     assert message == ""
+
+
+def test_classify_query_risk_learns_the_connected_engines_verbs():
+    """The confirmation gate only ever knew SQLite's vocabulary.
+
+    On MySQL that left GRANT, REVOKE, CALL, RENAME and LOAD DATA running in
+    write mode with no prompt at all, while DROP and TRUNCATE prompted - a
+    gate as wide as one dialect in an app that speaks two. The engine supplies
+    the verbs it adds; the second assertion in each pair is the state this was
+    in before, and it is what makes the first one worth writing.
+    """
+    mysql = MySQLEngine.extra_destructive_verbs
+
+    for query in (
+        "GRANT ALL ON shop.* TO 'app'@'localhost'",
+        "REVOKE ALL ON shop.* FROM 'app'@'localhost'",
+        "CALL wipe_everything()",
+        "RENAME TABLE users TO users_old",
+        "LOAD DATA INFILE 'rows.csv' INTO TABLE users",
+    ):
+        assert classify_query_risk(query, extra_destructive=mysql).requires_confirmation, query
+        assert not classify_query_risk(query).requires_confirmation, query
+
+
+def test_creating_a_table_is_not_called_destructive():
+    """A prompt that lies is one the user learns to click through."""
+    risk = classify_query_risk(
+        "CREATE TABLE parts (id INT)",
+        extra_destructive=MySQLEngine.extra_destructive_verbs,
+    )
+
+    assert risk.requires_confirmation is False
+
+
+def test_the_shared_destructive_verbs_need_no_engine_to_be_caught():
+    assert classify_query_risk("DROP TABLE users").requires_confirmation is True
+    assert classify_query_risk("TRUNCATE users").requires_confirmation is True

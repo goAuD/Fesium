@@ -65,11 +65,13 @@ How it is reached is settled in [docs/decisions/0002-mysql-through-our-own-view.
 
 Order of work, per the [handoff audit](docs/specs/2026-08-23-handoff-audit-and-continuation-plan.md):
 
-- [ ] An engine seam in `core/database.py` - connect, list tables, describe columns, error type, file-vs-server connection model - as its own refactor with no behavior change, proven by the existing suite
-- [ ] The PyMySQL engine behind that seam: `%s` placeholders, identifier quoting, and read/write classification that knows MySQL verbs (`SHOW`, `DESCRIBE` read; `REPLACE`, `CALL`, `GRANT`, `CREATE`, `RENAME`, `LOAD DATA` write)
-- [ ] Connection UI in the `Database` view: host, port, database and user, with the password asked per session and never written to disk
-- [ ] `Diagnostics` pre-fills from the project's `.env`, credentials excluded
+- [x] An engine seam in `core/database.py` - connect, list tables, describe columns, error type, file-vs-server connection model - as its own refactor with no behavior change, proven by the existing suite (the seam lives in `core/database_engines.py`; the audit counted five SQLite-specific points, not four - the file-existence check was the fifth)
+- [x] The PyMySQL engine behind that seam: `%s` placeholders, information_schema lookups with bound parameters, and read/write classification that knows MySQL verbs (`SHOW`, `DESCRIBE`, `DESC` read; `REPLACE`, `CALL`, `GRANT`, `CREATE`, `RENAME`, `TRUNCATE`, `LOAD` write)
+- [x] Connection UI in the `Database` view: host, port, database and user, with the password asked per session and never written to disk
+- [x] The form pre-fills from the project's `.env` via `detect_database_requirement()`, credentials excluded
 - [ ] Deliberately not included: dump import/export, form-based row editing, user and privilege management
+
+Also shipped with it, decided while building: on MySQL the read-only guarantee is doubled. Keyword gating alone is trivially bypassed on a dialect it does not know, so connecting in read-only mode issues `SET SESSION TRANSACTION READ ONLY`. Recorded as an amendment on [ADR 0002](docs/decisions/0002-mysql-through-our-own-view.md).
 
 ## Open, not scheduled
 
@@ -123,7 +125,7 @@ Fesium is a **desktop GUI application** that uses local file dialogs and the hos
 
 ### MySQL Status
 
-MySQL support is not yet implemented. Currently Fesium is SQLite-only. The planned MySQL/MariaDB addition lives under **Next up** above.
+MySQL and MariaDB are supported from the `Database` view over PyMySQL: connection form, schema browsing, previews, raw SQL, read-only session pinning. Not implemented, deliberately: dump import/export, form-based row editing, user and privilege management. See ADR 0002 for why no admin panel is bundled.
 
 ---
 
