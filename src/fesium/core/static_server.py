@@ -92,6 +92,9 @@ class ProjectFileHandler(SimpleHTTPRequestHandler):
         super().__init__(*args, **kwargs)
 
     def send_head(self):
+        if not self._host_names_this_server():
+            self.send_error(HTTPStatus.FORBIDDEN, "Not served")
+            return None
         if is_hidden_path(self.path):
             self.send_error(HTTPStatus.FORBIDDEN, "Not served")
             return None
@@ -99,6 +102,18 @@ class ProjectFileHandler(SimpleHTTPRequestHandler):
             self.send_error(HTTPStatus.FORBIDDEN, "Not served")
             return None
         return super().send_head()
+
+    def _host_names_this_server(self) -> bool:
+        """Does the request's Host header name this server?
+
+        Binding to 127.0.0.1 keeps the network out, but not the browser: a web
+        page can rebind its own domain to 127.0.0.1 - DNS rebinding - and then
+        read responses same-origin, because its requests carry its own domain
+        in Host. A client talking to Fesium directly always sends 127.0.0.1 or
+        localhost with this server's port.
+        """
+        port = self.server.server_address[1]
+        return self.headers.get("Host", "") in (f"{LOOPBACK}:{port}", f"localhost:{port}")
 
     def _stays_inside_the_root(self) -> bool:
         """Does what this request resolves to live under the document root?

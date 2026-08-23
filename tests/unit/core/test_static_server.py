@@ -1,3 +1,4 @@
+import http.client
 import socket
 from urllib.error import HTTPError
 from urllib.request import urlopen
@@ -187,6 +188,36 @@ def test_a_symlink_out_of_the_root_is_refused(tmp_path):
         assert caught.value.code == 403
         assert "top secret" not in caught.value.read().decode("utf-8")
         assert "hello" in urlopen(url, timeout=HTTP_TIMEOUT).read().decode("utf-8")
+    finally:
+        server.stop()
+
+
+def test_a_request_with_a_foreign_host_header_is_refused(tmp_path):
+    """DNS rebinding names the server with the attacker's own domain.
+
+    The page rebinds that domain to 127.0.0.1 and reads responses same-origin;
+    what gives it away is the Host header, which a direct local client never
+    sends as anything but 127.0.0.1 or localhost on this port.
+    """
+    project = tmp_path / "site"
+    project.mkdir()
+    (project / "index.html").write_text("<h1>hello</h1>", encoding="utf-8")
+
+    server = StaticServer()
+    url = server.start(document_root=project, port=8146)
+    try:
+        connection = http.client.HTTPConnection("127.0.0.1", 8146, timeout=HTTP_TIMEOUT)
+        try:
+            connection.request("GET", "/", headers={"Host": "evil.example:8146"})
+            assert connection.getresponse().status == 403
+
+            # A local client naming the server properly still gets through.
+            connection.request("GET", "/", headers={"Host": "127.0.0.1:8146"})
+            response = connection.getresponse()
+            assert response.status == 200
+            assert "hello" in response.read().decode("utf-8")
+        finally:
+            connection.close()
     finally:
         server.stop()
 
