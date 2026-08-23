@@ -6,7 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+### Security
+
+- The static server no longer serves dot-files. A project served from its own root handed out `.env` in full and the whole of `.git` over HTTP - `GET /.env` returned `DB_PASSWORD=...` with a 200. Localhost only, but Fesium reads exactly four keys out of a project's `.env` and deliberately never touches the credentials in it, and serving the file whole undid that care entirely. Any path with a dot-segment is refused, checked after unquoting so `%2Eenv` is the same request as `.env`.
+
 ### Fixed
+
+- A folder with no `index.html` explains itself instead of listing its files. Opening a SvelteKit project showed a directory listing of the repository - `.git/`, `node_modules/`, `package.json` - which looks like a broken website and says nothing about why. Fesium now reads the project's `package.json`, recognises the framework, and answers with what is actually missing: which command builds it, where a build already sits if there is one, and that `npm run dev` serves it on its own port and rebuilds as you edit, which Fesium does not do.
 
 - The Pages site's header no longer breaks apart on a phone. The five section links are flex children with no `white-space` rule, so when the row was squeezed each one wrapped *inside itself* - three lines for `How it is built`, one for `GitHub` - which is what made it look ragged rather than merely tight. Measured against the bundled face: the links want 421px and a 390px phone leaves about 240px for them, so it cannot fit below roughly 570px however it is styled. Links no longer break mid-phrase at any width, and below 680px the section anchors are hidden, leaving the one link that does something rather than scrolling to a section a reader reaches anyway. With them gone there is 126px of headroom on a 320px screen, so the wordmark stays.
 

@@ -4,6 +4,7 @@ from pathlib import Path
 from fesium.core.browser import open_local_url
 from fesium.core.database import DatabaseManager, build_table_preview_query, is_read_query
 from fesium.core.environment import summarize_php_environment
+from fesium.core.node_project import describe_node_project, detect_node_project
 from fesium.core.project_detection import detect_project_profile
 from fesium.core.runtime_detection import decide_runtime_backend
 from fesium.core.security import normalize_existing_directory, validate_single_sql_statement
@@ -310,6 +311,21 @@ class FesiumController:
             return int(self.config.get("port", 8000))
         return 8000
 
+    def _start_backend(self, document_root):
+        """Start the backend, telling a static server what it is serving.
+
+        Only the static server takes the hint, and only because it is the one
+        that has to answer a browser with something when there is no
+        index.html to send. PHP has its own answer for that.
+        """
+        port = self._resolve_port()
+        if self.state.backend_kind != "static":
+            return self._backend.start(document_root, port)
+
+        root = self.state.project_root
+        hints = describe_node_project(detect_node_project(root)) if root else []
+        return self._backend.start(document_root, port, hints=hints)
+
     def start(self) -> bool:
         if not self.state.document_root:
             self.state = replace(
@@ -336,7 +352,7 @@ class FesiumController:
             self._backend = self._build_backend()
 
         try:
-            result = self._backend.start(normalized_document_root, self._resolve_port())
+            result = self._start_backend(normalized_document_root)
         except Exception as exc:
             backend_message = getattr(self._backend, "last_error", "")
             message = backend_message or str(exc) or exc.__class__.__name__
