@@ -226,13 +226,23 @@ class EnvironmentView(ctk.CTkFrame):
     def _copy_report(self) -> None:
         """Put the report on the clipboard, and say so.
 
-        ``update()`` is required: Tk owns the clipboard only while the app is
-        running, and without flushing the event queue the contents are not
-        available to another application yet.
+        This used to call ``update()`` here, with a comment claiming the
+        clipboard would not reach another application without flushing the
+        event queue. That was wrong. Tk serves the clipboard by delayed
+        rendering - it hands the text over when something asks for it - and
+        what answers that request is the running main loop, not anything this
+        handler does. Measured four ways: with the loop running the text
+        arrives whichever flush is used, and with the loop stopped it arrives
+        with neither.
+
+        The call was not merely useless. ``update()`` enters the platform
+        event loop, and on a macOS CI runner that sometimes never returns,
+        which is what held a test job open until it was cancelled five times.
+        This is the last such call a test could reach.
         """
         text = render_setup_report(self._report)
         self.clipboard_clear()
         self.clipboard_append(text)
-        self.update()
+        self.update_idletasks()
         lines = len(text.splitlines())
         self._report_feedback.configure(text=f"Copied {lines} lines to the clipboard.")
