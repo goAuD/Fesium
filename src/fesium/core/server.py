@@ -44,7 +44,18 @@ def check_php_installed() -> bool:
     return detect_php().php_available
 
 
-def is_port_in_use(port: int, host: str = "localhost") -> bool:
+# Bind and connect on the same literal address, never on the name.
+#
+# "localhost" resolves to ::1 before 127.0.0.1 on Windows and macOS, and both
+# servers bind IPv4 only. A client that goes by name therefore tries IPv6
+# first, against a port nothing is listening on. Measured on Windows that
+# costs 2131ms against 2ms to the literal address - and on a macOS CI runner
+# the IPv6 attempt does not refuse at all, it hangs, which is what left a
+# test job running until GitHub's six hour limit.
+LOOPBACK = "127.0.0.1"
+
+
+def is_port_in_use(port: int, host: str = LOOPBACK) -> bool:
     """Can a local server take this port?
 
     Asked by trying to bind it, not by trying to connect to it. Every caller
@@ -119,7 +130,7 @@ class PHPServer:
 
         self.port = port
         self.document_root = document_root
-        command = ["php", "-S", f"localhost:{port}", "-t", document_root]
+        command = ["php", "-S", f"{LOOPBACK}:{port}", "-t", document_root]
 
         try:
             self.last_error = ""
@@ -136,8 +147,8 @@ class PHPServer:
             self._log_thread = threading.Thread(target=self._capture_logs, daemon=True)
             self._log_thread.start()
 
-            logger.info("Server started at http://localhost:%s", port)
-            self.on_log(f"[Fesium] Started at http://localhost:{port}")
+            logger.info("Server started at http://%s:%s", LOOPBACK, port)
+            self.on_log(f"[Fesium] Started at http://{LOOPBACK}:{port}")
             self.on_log(f"[Fesium] Document root: {document_root}")
             return True
         except FileNotFoundError:
@@ -192,4 +203,4 @@ class PHPServer:
     @property
     def url(self) -> str:
         """Get the server URL."""
-        return f"http://localhost:{self.port}"
+        return f"http://{LOOPBACK}:{self.port}"

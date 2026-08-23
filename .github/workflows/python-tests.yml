@@ -44,6 +44,10 @@ jobs:
   test:
     name: ${{ matrix.os }} / py${{ matrix.python-version }}
     runs-on: ${{ matrix.os }}
+    # A hung test otherwise holds the runner until GitHub's six hour default.
+    # One did: a request with no timeout, to a server reached by name rather
+    # than by address, on macOS where the IPv6 attempt never refuses.
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:

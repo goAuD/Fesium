@@ -8,7 +8,7 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from io import BytesIO
 from pathlib import Path
 
-from fesium.core.server import find_available_port, is_port_in_use
+from fesium.core.server import LOOPBACK, find_available_port, is_port_in_use
 
 # Straight from the app's own palette, so the page a browser lands on looks
 # like the app that served it.
@@ -130,14 +130,14 @@ class StaticServer:
             port = available_port
 
         handler = partial(ProjectFileHandler, directory=str(root), hints=tuple(hints))
-        self._httpd = ThreadingHTTPServer(("localhost", port), handler)
+        self._httpd = ThreadingHTTPServer((LOOPBACK, port), handler)
         self._httpd.fesium_log = self.on_log
         self._thread = threading.Thread(target=self._httpd.serve_forever, daemon=True)
         self._thread.start()
         self.port = port
         self.document_root = root
         self.last_error = ""
-        url = f"http://localhost:{port}"
+        url = f"http://{LOOPBACK}:{port}"
         self.on_log(f"[Fesium] Started static server at {url}")
         return url
 
