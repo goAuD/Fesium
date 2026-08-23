@@ -98,9 +98,12 @@ def holder(tk_root):
 
 
 def _settle(root):
+    # update() would enter the platform event loop, and on the macOS CI runner
+    # it sometimes never comes back - four job timeouts were spent inside this
+    # call before its traceback said so. update_idletasks() runs the geometry
+    # pass these assertions need without ever waiting on the window server.
     for _ in range(6):
         root.update_idletasks()
-        root.update()
 
 
 def test_a_plain_label_with_a_detached_width_collapses(holder):
@@ -176,5 +179,10 @@ def test_elide_marks_a_title_that_does_not_fit(holder):
     label = WidthAgnosticLabel(frame, text="A VERY LONG TILE TITLE INDEED", anchor="w", elide=True)
     label.grid(row=0, column=0)
     _settle(root)
+
+    # Elision listens for <Configure>, which update() would deliver - but
+    # update() is the call that hangs on macOS CI. Calling the handler
+    # directly exercises the same code path against the real measured width.
+    label._apply_elision()
 
     assert label._label.cget("text").endswith(ELLIPSIS)

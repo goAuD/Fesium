@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+### Fixed
+
+- The macOS CI stall is root-caused and fixed. Five jobs, always `macos-latest`, died inside `Run tests` with no output - until `faulthandler_timeout` turned the fifth into a one-minute traceback naming the line: `root.update()` in the widget tests' `_settle`, Tk's event-loop pump, which on the macOS runner sometimes never returns. The suite now settles with `update_idletasks()`, which runs the same geometry pass without waiting on the window server, and the one test that needed a delivered event dispatches it by hand.
+
 ## [2.2.0] - 2026-08-23
 
 ### Fixed
