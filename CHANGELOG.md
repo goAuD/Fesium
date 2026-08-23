@@ -10,6 +10,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 - The static server no longer serves dot-files. A project served from its own root handed out `.env` in full and the whole of `.git` over HTTP - `GET /.env` returned `DB_PASSWORD=...` with a 200. Localhost only, but Fesium reads exactly four keys out of a project's `.env` and deliberately never touches the credentials in it, and serving the file whole undid that care entirely. Any path with a dot-segment is refused, checked after unquoting so `%2Eenv` is the same request as `.env`.
 
+- A security review of the local servers ([findings](docs/reviews/ox-alpha-review-2026-08-23.md)) turned up three ways past that filter, all closed now:
+  - **Double-encoded paths.** The filter unquoted once while `translate_path` unquotes again, so `GET /%252Eenv` passed as `%2Eenv` and was served as `.env`. The check now decodes to a fixed point, so both layers see the same path.
+  - **Links out of the project folder.** `translate_path` follows symlinks and junctions wherever they land - a cloned repo carrying one could serve any file the user can read. Requests must now resolve to a path inside the document root; on Windows resolving also expands short names, closing the `GIT~1` route to a dot directory. NTFS streams (`/.env::$DATA`) fall under the same checks.
+  - **DNS rebinding.** Binding to `127.0.0.1` keeps the network out but not the browser: a page can rebind its own domain to `127.0.0.1` and read responses same-origin. Such requests carry the attacker's domain in `Host`, which is now required to be `127.0.0.1` or `localhost` on this server's port.
+
+- The PHP built-in server applies the same dot-path filter. `php -S ... -t docroot` alone serves the document root raw, so on the PHP backend `GET /.env` needed no trick at all. A bundled `router.php` refuses dot paths - decoded to a fixed point, like the Python side - and falls through to the built-in handler for everything else.
+
 ### Fixed
 
 - The local server is reached at `127.0.0.1` rather than `localhost`, and binds there too. The name resolves to `::1` before `127.0.0.1` on Windows and macOS while both servers bind IPv4 only, so anything connecting by name tried IPv6 first, against a port nothing was listening on. On Windows that measured **2131ms against 2ms**. On a macOS runner the IPv6 attempt is not refused at all, it hangs - which is what left a `macos-latest / py3.11` job running until it was cancelled, three times. The suite went from 23s to 6.8s as a side effect, since every HTTP test was paying that timeout.
