@@ -204,7 +204,7 @@ def test_a_request_with_a_foreign_host_header_is_refused(tmp_path):
     (project / "index.html").write_text("<h1>hello</h1>", encoding="utf-8")
 
     server = StaticServer()
-    url = server.start(document_root=project, port=8146)
+    server.start(document_root=project, port=8146)
     try:
         connection = http.client.HTTPConnection("127.0.0.1", 8146, timeout=HTTP_TIMEOUT)
         try:
