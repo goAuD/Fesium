@@ -40,6 +40,15 @@ select = ["E", "F", "W", "I", "UP", "B", "C4"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+# A test that hangs dumps every thread's traceback and ends the run, naming
+# the file and the line it blocked on. This exists because a macOS CI job
+# stalled three times inside Run tests, always past the last passing test and
+# into the first one that creates a Tk root - with no output to say where.
+# 60s is far above the slowest honest test and far below the job's 15-minute
+# timeout, so a hang costs a minute of evidence instead of a quarter hour of
+# silence.
+faulthandler_timeout = 60
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 
