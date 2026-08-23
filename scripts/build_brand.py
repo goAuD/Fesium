@@ -259,14 +259,27 @@ def build_banner(path: Path, height: int = 300) -> None:
     img.save(path, optimize=True)
 
 
-def build_social_preview(path: Path, width: int = 1280, height: int = 640) -> None:
+def build_social_preview(
+    path: Path,
+    *,
+    ground: tuple[int, int, int] = INK,
+    mark_colour: tuple[int, int, int] = ACCENT_DEEP,
+    word_colour: tuple[int, int, int] = GROUND,
+    tag_colour: tuple[int, int, int] = MUTED_DEEP,
+    width: int = 1280,
+    height: int = 640,
+) -> None:
     """GitHub's social preview, at the size GitHub asks for.
 
-    The ground is light on purpose. The previous preview baked the app's dark
-    background in and measured a mean luminance of 29/255, so GitHub's card
-    rendered it as a black rectangle - the complaint that prompted this
-    rework. Near-white ground, deep-teal mark, dark wordmark: it reads in both
-    GitHub themes, where a dark card vanishes into the dark one.
+    The default ground is light on purpose. The preview before this one baked
+    the app's dark background in and measured a mean luminance of 29/255, so
+    GitHub's card rendered it as a black rectangle - the complaint that
+    prompted the rework. Near-white ground, deep-teal mark, dark wordmark: it
+    reads in both GitHub themes, where a dark card vanishes into the dark one.
+
+    The palette is arguments rather than constants so the dark variant is the
+    same geometry with different ink, not a second copy of this function that
+    can drift from it.
     """
     mark_size, mark_gap, line_gap = 224, 56, 20
     wordmark = load_font(BOLD, 96)
@@ -280,7 +293,7 @@ def build_social_preview(path: Path, width: int = 1280, height: int = 640) -> No
     # measured to the exact middle.
     top = (height - stack) // 2 - 16
 
-    img = Image.new("RGB", (width, height), INK)
+    img = Image.new("RGB", (width, height), ground)
     draw = ImageDraw.Draw(img)
     # One accent rule along the bottom, tying the card to the banner.
     draw.rectangle([0, height - 10, width, height], fill=ACCENT)
@@ -290,16 +303,16 @@ def build_social_preview(path: Path, width: int = 1280, height: int = 640) -> No
     cx, cy = width // 2, top + mark_size // 2
     for radius in range(300, 0, -2):
         weight = (1 - radius / 300) * 0.07
-        blend = tuple(round(INK[i] + (ACCENT_DEEP[i] - INK[i]) * weight)
+        blend = tuple(round(ground[i] + (mark_colour[i] - ground[i]) * weight)
                       for i in range(3))
         draw.ellipse([cx - radius, cy - radius, cx + radius, cy + radius], fill=blend)
 
-    mark = draw_line_mark(mark_size, ACCENT_DEEP)
+    mark = draw_line_mark(mark_size, mark_colour)
     img.paste(mark, (cx - mark_size // 2, top), mark)
 
     text_y = top + mark_size + mark_gap
-    draw_ink(draw, cx, text_y, words, wordmark, GROUND, centre=True)
-    draw_ink(draw, cx, text_y + word_h + line_gap, tag, tagline, MUTED_DEEP, centre=True)
+    draw_ink(draw, cx, text_y, words, wordmark, word_colour, centre=True)
+    draw_ink(draw, cx, text_y + word_h + line_gap, tag, tagline, tag_colour, centre=True)
 
     img.save(path, optimize=True)
 
@@ -340,6 +353,12 @@ def main() -> int:
     write_mark_svg(BRAND_DIR / "fesium-orbit.svg", ACCENT)
     build_banner(BRAND_DIR / "fesium-banner.png")
     build_social_preview(BRAND_DIR / "fesium-social-preview.png")
+    # A dark-ground twin of the same card. Not what GitHub is pointed at - a
+    # dark card disappears into GitHub's own dark theme - but the one to reach
+    # for on a light surface: a slide, a printed page, a light-themed site.
+    build_social_preview(
+        BRAND_DIR / "fesium-social-preview-dark.png",
+        ground=GROUND, mark_colour=ACCENT, word_colour=INK, tag_colour=MUTED)
 
     master = draw_mark(256)
     master.save(ICON_DIR / "fesium-orbit-256.png", optimize=True)
@@ -356,6 +375,7 @@ def main() -> int:
         BRAND_DIR / "fesium-orbit.svg",
         BRAND_DIR / "fesium-banner.png",
         BRAND_DIR / "fesium-social-preview.png",
+        BRAND_DIR / "fesium-social-preview-dark.png",
         ICON_DIR / "fesium-orbit-256.png",
         ICON_DIR / "fesium-orbit.ico",
     ):

@@ -3,9 +3,11 @@
        alt="Fesium - local dev tools for students and developers">
 </h1>
 
-`Fesium` is the new direction of the original `NanoServer` project: a lightweight desktop app for serving local sites, inspecting SQLite databases, and keeping a student-friendly workflow fast, safe, and offline-first.
+**Fesium is a local development toolbox built around Junior Developer Accessibility.**
 
-The migration off `NanoServer` is finished. Runtime code lives under `src/fesium/`, the old flat modules are gone, and every view is built on the same bento grid. What is left of the old project is two deliberate compatibility surfaces - the `nanoserver.py` launcher and a one-time read of `~/.nanoserver/config.json` - both scoped for removal in v3.0.0 by [ADR 0001](docs/decisions/0001-preserve-nanoserver-compat.md).
+It serves your site and reads your SQLite database, which is what a local dev tool does. It also explains itself: what is running, what is missing, what is safe to do, and what to paste when you ask someone for help.
+
+That last part is the difference. Most developer tools assume you already know - a fair assumption about most of their users, and it leaves a gap. Fesium aims at the gap, and treats it as an accessibility problem rather than something a better README would fix. A beginner is not short of intelligence; they are short of a mental model of the system, and the tool can supply one.
 
 ## Current Scope
 
@@ -133,7 +135,9 @@ Fesium/
 
 ## Origin
 
-The project started as `NanoServer`, built as a free alternative for school environments where tools like Laragon were no longer a practical option. `Fesium` keeps that purpose, but gives it a stronger architecture, a better product shell, and a clearer long-term direction.
+It started as `NanoServer`, written because a webdev teacher could not hand out Laragon licence keys and the assignment still needed a local PHP server. Fesium keeps that purpose and gives it a stronger architecture, a better shell and a clearer direction.
+
+The migration off `NanoServer` is finished. Runtime code lives under `src/fesium/`, the old flat modules are gone, and every view is built on the same bento grid. Two deliberate compatibility surfaces remain - the `nanoserver.py` launcher and a one-time read of `~/.nanoserver/config.json` - both scoped for removal in v3.0.0 by [ADR 0001](docs/decisions/0001-preserve-nanoserver-compat.md).
 
 ## Contributing
 
