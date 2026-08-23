@@ -460,7 +460,11 @@ def main() -> int:
 
     SITE.mkdir(exist_ok=True)
     page = SITE / "index.html"
-    page.write_text(build(), encoding="utf-8")
+    # newline="\n" so the committed page is byte-identical however it is
+    # generated - the contract test compares it to a fresh build, and a
+    # platform-dependent line ending would fail that comparison everywhere
+    # but the OS that produced the commit.
+    page.write_text(build(), encoding="utf-8", newline="\n")
     # Open Graph needs a real file at an absolute URL, so this one is copied
     # rather than inlined.
     shutil.copy(BRAND / "fesium-social-preview.png", SITE / "social-preview.png")

@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Fesium">
-  <rect x="28" y="28" width="456" height="456" fill="#5da9b3" />
-  <ellipse cx="256" cy="256" rx="186" ry="84" fill="none" stroke="#121419" stroke-width="52" transform="rotate(-24 256 256)" />
-  <circle cx="256" cy="256" r="52" fill="#121419" />
+  <ellipse cx="256" cy="256" rx="196" ry="86" fill="none" stroke="#5da9b3" stroke-width="36" transform="rotate(-24 256 256)" />
+  <circle cx="256" cy="256" r="54" fill="#5da9b3" />
+  <circle cx="77" cy="336" r="24" fill="#5da9b3" />
 </svg>
