@@ -154,9 +154,10 @@ h2{{font-size:29px; letter-spacing:-.015em}}
   header.top nav a.section{{display:none}}
   header.top nav{{gap:0}}
   .hero{{padding:56px 0 48px}}
-  /* Edge to edge on a phone. 48px of side padding is an eighth of the screen,
-     and a screenshot of a desktop app needs every pixel it can get. */
-  .shots{{--bleed:calc((100vw - 100%) / 2)}}
+  /* Edge to edge on a phone. 48px is exactly the wrap's two paddings, so this
+     reaches both screen edges and no further - a screenshot of a desktop app
+     needs every pixel it can get. */
+  .shots{{width:calc(100% + 48px); margin-left:-24px}}
   .shot{{padding:8px; border-left:0; border-right:0}}
 }}
 @media(max-width:560px){{
@@ -164,21 +165,26 @@ h2{{font-size:29px; letter-spacing:-.015em}}
   .span2,.span3,.span4,.span6{{grid-column:span 1}}
 }}
 
+/* Only once there is demonstrably room. At 1360px the column is 1072px wide
+   and centred, leaving 144px on each side, so 100px of bleed clears the edge
+   by a comfortable margin even with a scrollbar taken out. Below that the
+   screenshots stay flush with the text rather than crowding it. */
+@media(min-width:1360px){{
+  .shots{{width:calc(100% + 200px); margin-left:-100px}}
+}}
+
 .shots{{
   display:grid; gap:var(--gutter); margin-top:38px;
-  /* The screenshots are 1276px wide and the reading column is 1072px, so inside
-     it they were always shown smaller than they were captured. Let them out of
-     the column - but only as far as their own width, since upscaling a
-     screenshot just makes it soft. The clamp is also what keeps this from
-     overflowing the page on a narrow window. */
-  /* The floor is not 0 but 13px, the figure's own padding plus its border.
-     Below that the image starts further in than the paragraphs above and
-     below it, which reads as the screenshot being the narrow thing on the
-     page - and it was, by 26px, before any of this. There is always at least
-     24px of room each side, since that is the wrap's padding. */
-  --bleed:clamp(13px, calc((100vw - 100%) / 2 - 12px), 100px);
-  margin-left:calc(var(--bleed) * -1);
-  margin-right:calc(var(--bleed) * -1);
+  /* Sized against the column it sits in, never against the viewport.
+     100vw counts the scrollbar and the layout does not, so anything measured
+     that way is a scrollbar's width too wide - which is what pushed these off
+     the right edge on a desktop window.
+
+     26px is the figure's own padding plus its border, so this cancels exactly
+     that and the picture lines up with the paragraphs above and below it. It
+     always fits: the wrap keeps 24px of padding on each side. */
+  width:calc(100% + 26px);
+  margin-left:-13px;
 }}
 .shot{{border:1px solid var(--border); background:var(--panel-alt); padding:12px}}
 .shot img{{width:100%; height:auto; display:block}}

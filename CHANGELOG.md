@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/), and this
 
 ## [Unreleased]
 
+### Fixed
+
+- The screenshots on the Pages site are sized against the column they sit in rather than against the viewport. `100vw` counts the scrollbar and the layout does not, so the previous attempt came out a scrollbar's width too wide and pushed them off the right edge on a desktop window - while still leaving them narrower than the body text on a phone. They now widen by exactly the figure's own padding and border, which puts them flush with the paragraphs above and below at every size, reach both screen edges below 680px, and take their full 1272px only above 1360px where there is demonstrably room. Checked at twelve widths from 320px to 1920px with a scrollbar accounted for.
+
 ### Security
 
 - The static server no longer serves dot-files. A project served from its own root handed out `.env` in full and the whole of `.git` over HTTP - `GET /.env` returned `DB_PASSWORD=...` with a 200. Localhost only, but Fesium reads exactly four keys out of a project's `.env` and deliberately never touches the credentials in it, and serving the file whole undid that care entirely. Any path with a dot-segment is refused, checked after unquoting so `%2Eenv` is the same request as `.env`.
