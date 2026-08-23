@@ -49,6 +49,14 @@ None of this changes how the app runs. It is what turns a working app into somet
 - [x] Full documentation pass - read `README.md`, `docs/` and the release notes against the app as it behaves now, not as it did before the bento rework. The repo has drifted before by shipping work the changelog denied.
 - [x] GitHub Pages portfolio page - its own layout in the Fesium brand colours, carrying the screenshots and what the app is for. Built by [scripts/build_site.py](scripts/build_site.py) from the app's own `COLOR_TOKENS`, so it cannot drift from the product it describes.
 
+## Open, not scheduled
+
+Carried between working sessions so they are not rediscovered.
+
+- [ ] **A macOS CI job stalls at random.** Three times, always `macos-latest`, moving between Python versions, always inside `Run tests`. The address fix removed one cause and the Ubuntu race removed another, but the macOS stall has not been reproduced or root-caused. `timeout-minutes: 15` bounds it and `faulthandler_timeout` will name the test and the line the next time it happens - so the next occurrence is evidence rather than a mystery. Do not disable a test on a guess before then.
+- [ ] **Surface the build advice in `Diagnostics` and the setup report.** `core/node_project.py` already recognises SvelteKit, Next, Nuxt, Astro, Angular, CRA, Vue CLI and Vite from a project's `package.json`, and says which command builds it and on which port its dev server runs. That advice currently only appears on the page the static server returns when a folder has no `index.html`. The same lines belong on the `Diagnostics` screen and inside the copyable setup report, where someone looks *before* they hit the problem.
+- [ ] **The `.well-known` exception, if a project ever needs one.** Every dot-path is refused, deliberately. Revisit only when something real asks for it.
+
 ## v2.2.0 - Soon After
 
 ### System Tray Integration
