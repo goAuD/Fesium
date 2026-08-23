@@ -1,43 +1,33 @@
 """
 Fesium - Database Module
-Handles SQLite database queries with transaction handling and read-only mode support.
+Handles database queries with transaction handling and read-only mode support.
 
-SQLite cannot bind an identifier as a parameter, so the one place a table name
-is interpolated (``build_table_preview_query``) is gated by
-``validate_table_name``. Everything else uses bound parameters.
+Engine-specific behaviour lives in ``database_engines``. This module keeps
+what is engine-neutral: the read-only gate, the risk-aware classification,
+transaction handling, ``validate_table_name`` and the result shape the views
+consume.
 """
 
 import logging
-import os
 import re
-import sqlite3
 from contextlib import contextmanager
 from typing import Any
 
 from fesium.core.config import trace_execution
-from fesium.core.security import classify_query_risk, strip_sql_leading_noise
+from fesium.core.database_engines import SqliteEngine, query_is_read
 
 logger = logging.getLogger(__name__)
 
 
 def is_read_query(query: str) -> bool:
     """
-    Safely detect if query is read-only.
+    Safely detect if query is read-only against SQLite's verb set.
+
     Handles injection tricks like ';;;SELECT * FROM users;' and leading
-    comments that would otherwise mask the real first keyword.
+    comments that would otherwise mask the real first keyword. Engines with
+    other read verbs classify through ``query_is_read`` instead.
     """
-    body = strip_sql_leading_noise(query)
-    if not body:
-        return True
-
-    first_word = body.split()[0].upper() if body.split() else ""
-    read_only_keywords = {"SELECT", "PRAGMA", "EXPLAIN", "WITH"}
-
-    if first_word == "WITH" and classify_query_risk(query).requires_confirmation:
-        # WITH CTE that contains a destructive body - not read-only.
-        return False
-
-    return first_word in read_only_keywords
+    return query_is_read(query, SqliteEngine.read_verbs)
 
 
 TABLE_NAME_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
@@ -49,7 +39,12 @@ def validate_table_name(table_name: str) -> bool:
 
 
 def build_table_preview_query(table_name: str, *, limit: int = 100) -> str:
-    """Build a safe preview query for a known SQLite table."""
+    """Build a safe preview query for a known table.
+
+    The name is validated rather than quoted: ``validate_table_name`` admits
+    only ``[A-Za-z_][A-Za-z0-9_]*``, which needs no quoting on any engine
+    this module supports.
+    """
     if not validate_table_name(table_name):
         raise ValueError(f"Invalid table name: {table_name}")
 
@@ -59,13 +54,15 @@ def build_table_preview_query(table_name: str, *, limit: int = 100) -> str:
 
 class DatabaseManager:
     """
-    SQLite database manager with proper transaction handling.
-    Uses context manager pattern for safe transactions.
+    Database manager with proper transaction handling.
+    Uses context manager pattern for safe transactions. SQL engine specifics
+    are delegated to a DatabaseEngine (SQLite by default).
     """
 
     def __init__(self, db_path: str = None, read_only: bool = True):
         self.db_path = db_path
-        self._connection: sqlite3.Connection | None = None
+        self._engine = SqliteEngine()
+        self._connection: Any | None = None
         self.read_only = read_only
 
     def set_database(self, db_path: str) -> None:
@@ -82,8 +79,7 @@ class DatabaseManager:
         if not self.db_path:
             raise ValueError("No database path set")
 
-        conn = sqlite3.connect(self.db_path)
-        conn.row_factory = sqlite3.Row
+        conn = self._engine.connect(self.db_path, read_only=self.read_only)
         try:
             yield conn
         finally:
@@ -108,10 +104,11 @@ class DatabaseManager:
         if not self.db_path:
             return False, "No database selected"
 
-        if not os.path.exists(self.db_path):
-            return False, f"Database file not found: {self.db_path}"
+        unavailable = self._engine.availability_error(self.db_path)
+        if unavailable:
+            return False, unavailable
 
-        is_read = is_read_query(query)
+        is_read = query_is_read(query, self._engine.read_verbs)
 
         if self.read_only and not is_read:
             return False, "Read-only mode: Write operations are disabled"
@@ -137,7 +134,7 @@ class DatabaseManager:
                 logger.info("Query affected %s rows", affected)
                 return True, {"affected": affected}
 
-        except sqlite3.Error as exc:
+        except self._engine.errors as exc:
             logger.error("SQL Error: %s", exc)
             return False, str(exc)
         except Exception as exc:
@@ -146,18 +143,13 @@ class DatabaseManager:
 
     @trace_execution
     def list_tables(self) -> list[str]:
-        """List the browseable tables, skipping SQLite's own bookkeeping.
+        """List the browseable tables, skipping the engine's own bookkeeping.
 
-        SQLite reserves the ``sqlite_`` prefix for internal tables such as
-        ``sqlite_sequence`` and ``sqlite_stat1``. They are noise in a schema
-        browser. GLOB is used rather than LIKE because ``_`` is a literal in a
-        GLOB pattern but a single-character wildcard in LIKE.
+        What counts as bookkeeping is engine knowledge - see
+        ``SqliteEngine.list_tables_query`` for the SQLite side.
         """
-        success, result = self.execute(
-            "SELECT name FROM sqlite_master "
-            "WHERE type='table' AND name NOT GLOB 'sqlite_*' "
-            "ORDER BY name"
-        )
+        sql, params = self._engine.list_tables_query()
+        success, result = self.execute(sql, params)
         if success:
             return [row[0] for row in result["rows"]]
         return []
@@ -168,21 +160,10 @@ class DatabaseManager:
             logger.warning("Invalid table name rejected: %s", table_name)
             return []
 
-        # pragma_table_info() is the table-valued form of `PRAGMA table_info`,
-        # so the table name travels as a bound parameter instead of being
-        # formatted into the SQL string.
-        success, result = self.execute(
-            "SELECT * FROM pragma_table_info(?)",
-            (table_name,),
-        )
+        # The engine supplies a query that takes the table name as a bound
+        # parameter, never formatted into the SQL string.
+        sql, params = self._engine.table_columns_query(table_name)
+        success, result = self.execute(sql, params)
         if success:
-            return [
-                {
-                    "name": row[1],
-                    "type": row[2],
-                    "nullable": not row[3],
-                    "primary_key": bool(row[5]),
-                }
-                for row in result["rows"]
-            ]
+            return self._engine.interpret_column_rows(result["rows"])
         return []
