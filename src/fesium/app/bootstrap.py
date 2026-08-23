@@ -13,10 +13,14 @@ from fesium.core.preferences import (
     normalize_default_project,
     normalize_port,
 )
-from fesium.core.project_database import summarize_project_database
+from fesium.core.project_database import (
+    ConnectionSettings,
+    detect_database_requirement,
+    summarize_project_database,
+)
 from fesium.core.security import classify_query_risk, validate_single_sql_statement
 from fesium.ui.shell import DEFAULT_WINDOW_GEOMETRY, FesiumShell
-from fesium.ui.views.database_view import DatabaseView
+from fesium.ui.views.database_view import DatabaseView, build_connection_form_model
 from fesium.ui.views.environment_view import EnvironmentView
 from fesium.ui.views.guide_view import GuideView
 from fesium.ui.views.overview_view import OverviewView
@@ -113,6 +117,8 @@ def _replace_runtime_views(
     select_database_table_action=None,
     preview_database_table_action=None,
     run_sql_action=None,
+    connect_mysql_action=None,
+    disconnect_mysql_action=None,
     settings_actions=None,
 ) -> None:
     state = controller.state
@@ -153,11 +159,22 @@ def _replace_runtime_views(
             on_open_browser=open_browser_action,
         ),
     )
+    # While a MySQL session is active the view shows the database it is
+    # pointed at, not a stale SQLite file path. getattr defaults keep this
+    # working for states built before these fields existed.
+    db_path_display = ""
+    if getattr(state, "database_connected", False) and getattr(
+        state, "database_connection_settings", None
+    ) is not None:
+        db_path_display = state.database_connection_settings.database
+    elif state.database_path:
+        db_path_display = str(state.database_path)
+
     shell.replace_view(
         "database",
         lambda parent: DatabaseView(
             parent,
-            db_path=str(state.database_path) if state.database_path else "",
+            db_path=db_path_display,
             read_only=state.database_read_only,
             source=state.database_source,
             project_database_available=controller.project_database_available,
@@ -173,6 +190,14 @@ def _replace_runtime_views(
             on_select_table=select_database_table_action,
             on_preview_table=preview_database_table_action,
             on_run_sql=run_sql_action,
+            connection_form=build_connection_form_model(
+                detect_database_requirement(state.project_root),
+                connected=getattr(state, "database_connected", False),
+                settings=getattr(state, "database_connection_settings", None),
+                last_error=state.database_last_error,
+            ),
+            on_connect_mysql=connect_mysql_action,
+            on_disconnect_mysql=disconnect_mysql_action,
         ),
     )
     shell.replace_view(
@@ -244,6 +269,8 @@ def main() -> None:
             select_database_table_action=select_database_table_action,
             preview_database_table_action=preview_database_table_action,
             run_sql_action=run_sql_action,
+            connect_mysql_action=connect_mysql_action,
+            disconnect_mysql_action=disconnect_mysql_action,
             settings_actions=settings_actions,
         )
 
@@ -318,6 +345,27 @@ def main() -> None:
                     return
 
         controller.run_database_query(query)
+        refresh_runtime_views()
+
+    def connect_mysql_action(values: dict) -> None:
+        try:
+            port = int(values.get("port") or 0)
+        except (TypeError, ValueError):
+            port = 0
+        settings = ConnectionSettings(
+            engine="mysql",
+            host=values.get("host", ""),
+            port=port,
+            database=values.get("database", ""),
+            user=values.get("user", ""),
+        )
+        # The password travels from the entry widget straight into the
+        # controller's session attribute; it is not kept anywhere here.
+        controller.connect_mysql(settings, values.get("password", ""))
+        refresh_runtime_views()
+
+    def disconnect_mysql_action() -> None:
+        controller.disconnect_mysql()
         refresh_runtime_views()
 
     def apply_port_action(raw: str) -> PreferenceResult:

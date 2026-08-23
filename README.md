@@ -5,7 +5,7 @@
 
 **Fesium is a local development toolbox designed around Junior Developer Accessibility.**
 
-It serves your site and reads your SQLite database. It also explains what is running, what is missing, what is safe to do, and what to send when asking for help.
+It serves your site and reads your SQLite or MySQL database. It also explains what is running, what is missing, what is safe to do, and what to send when asking for help.
 
 That last part is the difference. Most developer tools assume you already know - a fair assumption about most of their users, and it leaves a gap. Fesium aims at the gap, and treats it as an accessibility problem rather than something a better README would fix. A beginner is not short of intelligence; they are short of a mental model of the system, and the tool can supply one.
 
@@ -22,9 +22,10 @@ Accessibility in software normally means work a developer does for a user; Junio
 - static local serving as a fallback when a PHP project cannot find PHP
 - opening the running local site in the default browser
 - SQLite inspection and raw SQL execution with read-only defaults
+- MySQL and MariaDB support through the same `Database` view, over PyMySQL
 - a readiness check for the database a project's own `.env` asks for
 - a copyable setup report, so asking someone for help takes one paste instead of five questions
-- lightweight SQLite schema browsing and table preview
+- lightweight schema browsing and table preview for SQLite and MySQL
 - an in-app guide for students and first-time users
 - stored preferences for the startup project and the default server port
 - offline-first desktop usage
@@ -34,7 +35,7 @@ This is the first app in a future local-toolbox direction, but the repo does not
 ## Principles
 
 - **Offline-first:** no runtime dependency on external assets or hosted services
-- **Security-first defaults:** read-only SQLite mode, local-only server assumptions, explicit destructive-action handling
+- **Security-first defaults:** read-only database mode (SQLite and MySQL), local-only server assumptions, explicit destructive-action handling
 - **Student-friendly:** lightweight setup, clear diagnostics, minimal friction on school or restricted machines
 - **Modular architecture:** runtime logic under `src/fesium/` instead of a single monolithic script
 
@@ -67,13 +68,14 @@ From the `Database` view, `Fesium` can:
 - let you manually select a `.sqlite`, `.db`, or `.db3` file
 - reset back to the detected project database
 - browse detected tables in the active SQLite file
+- connect to a MySQL or MariaDB server from the same view: host, port, and database pre-fill from the project's `.env`, and the password is asked once per session and never written to disk
 - inspect column names, types, nullability, and primary-key flags
 - generate a quick `SELECT * LIMIT 100` preview for the selected table
-- run one SQL statement at a time
-- keep `Read-only` mode enabled by default on every launch
+- run one SQL statement at a time - on MySQL, `SHOW`, `DESCRIBE`, `DESC`, and `EXPLAIN` count as reads too
+- keep `Read-only` mode enabled by default on every launch; on MySQL the session itself is pinned read-only with `SET SESSION TRANSACTION READ ONLY`, so the gate does not rely on keyword matching alone
 - require confirmation before destructive queries run in write mode
 
-The database tooling is intentionally SQLite-only and lightweight: a focused schema browser, not a database IDE.
+The database tooling is intentionally lightweight - a focused schema browser for SQLite and MySQL/MariaDB, not a database IDE. There is no dump import or export, no form-based row editing, and no user or privilege management; that is the deliberate price of not bundling an admin panel (see ADR 0002).
 
 ## Settings
 

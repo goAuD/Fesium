@@ -18,6 +18,66 @@ SOURCE_BADGES = {
     "none": ("No Database Selected", "accent.danger"),
 }
 
+MYSQL_DEFAULT_PORT = 3306
+
+
+def build_connection_form_model(requirement, *, connected, settings=None, last_error=""):
+    """Build the MySQL connection form content beside ``build_database_summary``.
+
+    Host, port and database pre-fill from what ``detect_database_requirement()``
+    read out of the project's .env - which deliberately carries no credentials,
+    so the user and the password are always typed. The password is never part
+    of this model: its value starts empty every rebuild and lives only in the
+    entry widget until Connect hands it straight to the controller.
+    """
+    server_backed = bool(requirement and requirement.needs_a_server)
+    visible = server_backed or connected or settings is not None
+
+    if settings is not None:
+        host = settings.host
+        port = str(settings.port)
+        database = settings.database
+        user = settings.user
+        engine_label = settings.engine
+    elif server_backed:
+        host = requirement.host
+        port = str(requirement.port) if requirement.port else str(MYSQL_DEFAULT_PORT)
+        database = requirement.database
+        user = ""
+        engine_label = requirement.connection
+    else:
+        host = port = database = user = ""
+        engine_label = "mysql"
+
+    if connected and settings is not None:
+        status = f"Connected to {engine_label} at {settings.address} as {user or 'the session user'}"
+        status_tone = "accent.success"
+    elif visible and last_error:
+        status = last_error
+        status_tone = "accent.danger"
+    elif visible:
+        status = "Host, port and database come from the project's .env; type the user and its password."
+        status_tone = "text.secondary"
+    else:
+        status = ""
+        status_tone = "text.secondary"
+
+    return {
+        "visible": visible,
+        "engine_label": engine_label,
+        "fields": (
+            {"key": "host", "label": "Host", "value": host, "secret": False},
+            {"key": "port", "label": "Port", "value": port, "secret": False},
+            {"key": "database", "label": "Database", "value": database, "secret": False},
+            {"key": "user", "label": "User", "value": user, "secret": False},
+            {"key": "password", "label": "Password", "value": "", "secret": True},
+        ),
+        "connected": connected,
+        "button_label": "Disconnect" if connected else "Connect",
+        "status": status,
+        "status_tone": status_tone,
+    }
+
 
 def format_query_result_table(columns: list, rows: list) -> str:
     if not columns:
@@ -175,6 +235,9 @@ class DatabaseView(ctk.CTkFrame):
         on_select_table=None,
         on_preview_table=None,
         on_run_sql=None,
+        connection_form: dict | None = None,
+        on_connect_mysql=None,
+        on_disconnect_mysql=None,
     ):
         super().__init__(master, fg_color="transparent")
         self.grid_columnconfigure(0, weight=1)
@@ -209,7 +272,13 @@ class DatabaseView(ctk.CTkFrame):
 
         grid.place_tile(
             self._build_connection_tile(
-                grid, summary, on_select_database, on_reset_project_database
+                grid,
+                summary,
+                on_select_database,
+                on_reset_project_database,
+                connection_form=connection_form,
+                on_connect_mysql=on_connect_mysql,
+                on_disconnect_mysql=on_disconnect_mysql,
             ),
             row=0,
             column=0,
@@ -247,7 +316,17 @@ class DatabaseView(ctk.CTkFrame):
             row_weight=3,
         )
 
-    def _build_connection_tile(self, parent, summary, on_select_database, on_reset_project_database):
+    def _build_connection_tile(
+        self,
+        parent,
+        summary,
+        on_select_database,
+        on_reset_project_database,
+        *,
+        connection_form=None,
+        on_connect_mysql=None,
+        on_disconnect_mysql=None,
+    ):
         tile = Tile(parent, "Connection")
         body = tile.body
         body.grid_columnconfigure(0, weight=1)
@@ -266,7 +345,81 @@ class DatabaseView(ctk.CTkFrame):
             command=on_reset_project_database,
         )
         reset_button.grid(row=0, column=2, sticky="e")
+
+        if connection_form is not None and connection_form.get("visible"):
+            self._build_server_form(body, connection_form, on_connect_mysql, on_disconnect_mysql)
         return tile
+
+    def _build_server_form(self, parent, form_model, on_connect_mysql, on_disconnect_mysql):
+        """The server-backed connection form: fields, status line, buttons.
+
+        The entries hold the only copies of what the user typed; Connect
+        collects them into one dict and hands it straight to the controller.
+        Nothing here is stored on the view beyond the widget references.
+        """
+        form = ctk.CTkFrame(parent, fg_color="transparent")
+        form.grid(row=1, column=0, columnspan=3, sticky="ew", pady=(12, 0))
+
+        self.connection_entries = {}
+        for column, field in enumerate(form_model["fields"]):
+            form.grid_columnconfigure(column, weight=1, uniform="connection_fields")
+
+            label = ctk.CTkLabel(
+                form,
+                text=field["label"],
+                text_color=get_color_token("text.secondary"),
+                font=get_font_token("meta"),
+                anchor="w",
+            )
+            label.grid(row=0, column=column, sticky="ew")
+
+            entry = ctk.CTkEntry(
+                form,
+                fg_color=get_color_token("bg.app"),
+                text_color=get_color_token("text.primary"),
+                font=get_font_token("body_medium"),
+                border_width=0,
+                corner_radius=get_shape_token("input.radius"),
+                show="*" if field["secret"] else "",
+            )
+            if field["value"]:
+                entry.insert(0, field["value"])
+            entry.grid(row=1, column=column, sticky="ew", pady=(4, 0))
+            self.connection_entries[field["key"]] = entry
+
+        status_row = ctk.CTkFrame(form, fg_color="transparent")
+        status_row.grid(row=2, column=0, columnspan=len(form_model["fields"]), sticky="ew", pady=(12, 0))
+        status_row.grid_columnconfigure(0, weight=1)
+
+        if form_model["status"]:
+            status = BodyText(status_row, form_model["status"], tone=form_model["status_tone"])
+            status.grid(row=0, column=0, sticky="w", padx=(0, 16))
+
+        connected = bool(form_model["connected"])
+        disconnect_button = Button(
+            status_row,
+            "Disconnect",
+            variant="secondary",
+            enabled=connected,
+            command=on_disconnect_mysql if on_disconnect_mysql else None,
+        )
+        disconnect_button.grid(row=0, column=1, sticky="e", padx=(0, 8))
+
+        connect_button = Button(
+            status_row,
+            "Connect",
+            variant="primary",
+            enabled=not connected,
+            command=lambda: on_connect_mysql(self._collect_connection_values())
+            if on_connect_mysql
+            else None,
+        )
+        connect_button.grid(row=0, column=2, sticky="e")
+
+    def _collect_connection_values(self) -> dict:
+        return {
+            key: entry.get().strip() for key, entry in getattr(self, "connection_entries", {}).items()
+        }
 
     def _build_tables_tile(self, parent, schema_model, on_select_table):
         count = schema_model["table_count"]

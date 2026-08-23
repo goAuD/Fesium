@@ -42,6 +42,7 @@
 ## Security
 
 - SQLite read-only mode stays enabled by default, resets on every launch.
+- Database credentials are never written to disk. A MySQL password is asked per session and held in one private controller attribute for the session only - never in `ControllerState` (which is frozen and repr'd into logs), never in `~/.fesium/config.json`, and never read out of a project's `.env`, whose allowed keys stay exactly `DB_CONNECTION`, `DB_HOST`, `DB_PORT` and `DB_DATABASE`. A test pins that no state field or repr carries it.
 - Destructive database actions require explicit confirmation.
 - Local server behavior is `localhost`-first.
 - Validate project paths and document roots before server startup.

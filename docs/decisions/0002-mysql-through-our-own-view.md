@@ -3,6 +3,7 @@
 - Status: Accepted
 - Date: 2026-08-22
 - Superseded by: -
+- Amended 2026-08-23, when this was built: read-only on MySQL is enforced twice. Keyword classification gates what the query box accepts, and connecting in read-only mode additionally issues `SET SESSION TRANSACTION READ ONLY`, because keyword gating alone is trivially bypassed on a dialect it does not know. The engine seam lives in `core/database_engines.py` as a flat module beside `core/database.py`; the audit's "four places" turned out to be five once the file-existence check was counted.
 
 ## Context
 
