@@ -95,7 +95,29 @@ class ProjectFileHandler(SimpleHTTPRequestHandler):
         if is_hidden_path(self.path):
             self.send_error(HTTPStatus.FORBIDDEN, "Not served")
             return None
+        if not self._stays_inside_the_root():
+            self.send_error(HTTPStatus.FORBIDDEN, "Not served")
+            return None
         return super().send_head()
+
+    def _stays_inside_the_root(self) -> bool:
+        """Does what this request resolves to live under the document root?
+
+        ``translate_path`` clamps ``..`` segments, but it follows symlinks and
+        junctions without asking where they land - so a cloned repo carrying a
+        link out of its own folder would serve whatever it points at. On
+        Windows, resolving also expands short names, so ``GIT~1`` can no longer
+        reach a dot directory behind the textual filter's back. Anything that
+        ends up outside the root, or whose real path still has a dot segment,
+        is refused.
+        """
+        root = Path(self.directory).resolve()
+        try:
+            real = Path(self.translate_path(self.path)).resolve()
+            relative = real.relative_to(root)
+        except (OSError, ValueError):
+            return False
+        return not any(part.startswith(".") for part in relative.parts)
 
     def list_directory(self, path):
         """Replace the file listing with something that explains itself."""

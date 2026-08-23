@@ -160,6 +160,37 @@ def test_the_server_refuses_dot_files_over_http(tmp_path):
         server.stop()
 
 
+def test_a_symlink_out_of_the_root_is_refused(tmp_path):
+    """A cloned repo can carry a link that leaves its own folder.
+
+    translate_path follows links without asking where they land, so without a
+    containment check the link served whatever it pointed at - on a machine
+    that means any file the user can read.
+    """
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "secret.txt").write_text("top secret", encoding="utf-8")
+
+    project = tmp_path / "site"
+    project.mkdir()
+    (project / "index.html").write_text("<h1>hello</h1>", encoding="utf-8")
+    try:
+        (project / "leak").symlink_to(outside, target_is_directory=True)
+    except OSError:
+        pytest.skip("symlinks are not available on this filesystem or need privileges")
+
+    server = StaticServer()
+    url = server.start(document_root=project, port=8145)
+    try:
+        with pytest.raises(HTTPError) as caught:
+            urlopen(url + "/leak/secret.txt", timeout=HTTP_TIMEOUT)
+        assert caught.value.code == 403
+        assert "top secret" not in caught.value.read().decode("utf-8")
+        assert "hello" in urlopen(url, timeout=HTTP_TIMEOUT).read().decode("utf-8")
+    finally:
+        server.stop()
+
+
 # --- a folder with nothing to serve -----------------------------------------
 
 
