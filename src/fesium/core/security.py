@@ -1,13 +1,16 @@
 import re
 from dataclasses import dataclass
+from functools import lru_cache
 from pathlib import Path
 
+# Verbs that change state on every engine Fesium speaks to. A dialect with a
+# larger vocabulary than SQLite's adds its own through `extra_destructive`.
 DESTRUCTIVE_KEYWORDS = ("DROP", "DELETE", "TRUNCATE", "ALTER", "UPDATE", "INSERT", "REPLACE")
 
-_DESTRUCTIVE_IN_BODY = re.compile(
-    r"\b(" + "|".join(DESTRUCTIVE_KEYWORDS) + r")\b",
-    re.IGNORECASE,
-)
+
+@lru_cache(maxsize=8)
+def _destructive_in_body(keywords: frozenset[str]) -> re.Pattern[str]:
+    return re.compile(r"\b(" + "|".join(sorted(keywords)) + r")\b", re.IGNORECASE)
 
 
 @dataclass(frozen=True)
@@ -36,13 +39,28 @@ def strip_sql_leading_noise(query: str) -> str:
     return remaining
 
 
-def classify_query_risk(query: str) -> QueryRisk:
+def classify_query_risk(
+    query: str,
+    *,
+    extra_destructive: frozenset[str] = frozenset(),
+) -> QueryRisk:
+    """Does this query need the user to confirm before it runs?
+
+    ``extra_destructive`` carries the verbs that change state on the engine
+    actually connected but are absent from the shared list because SQLite has
+    no such statement - MySQL's ``GRANT`` and ``CALL``, for instance. Without
+    it the confirmation gate is only ever as wide as SQLite's vocabulary, and
+    a dialect with more verbs than that walks straight through it.
+    """
     body = strip_sql_leading_noise(query)
     first_word = body.split()[0].upper() if body.split() else ""
 
-    requires_confirmation = first_word in DESTRUCTIVE_KEYWORDS
+    destructive = frozenset(DESTRUCTIVE_KEYWORDS) | frozenset(
+        verb.upper() for verb in extra_destructive
+    )
+    requires_confirmation = first_word in destructive
 
-    if first_word == "WITH" and _DESTRUCTIVE_IN_BODY.search(body):
+    if first_word == "WITH" and _destructive_in_body(destructive).search(body):
         # WITH ... UPDATE/DELETE/INSERT CTE - treat as destructive.
         requires_confirmation = True
 

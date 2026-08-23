@@ -204,3 +204,21 @@ def test_toggling_read_only_drops_the_mysql_session(tmp_path):
 
     assert controller.state.database_connected is False
     assert controller._database_password is None
+
+
+def test_the_controller_offers_the_connected_engines_destructive_verbs(tmp_path):
+    """Which verbs need a prompt follows what is connected, not a constant.
+
+    Without this the confirmation dialog is gated on SQLite's keyword list
+    whatever the app is actually talking to.
+    """
+    controller = FesiumController(config=None, cwd=tmp_path)
+
+    assert controller.extra_destructive_verbs == frozenset()
+
+    connect(controller)
+    assert "GRANT" in controller.extra_destructive_verbs
+    assert "CALL" in controller.extra_destructive_verbs
+
+    controller.disconnect_mysql()
+    assert controller.extra_destructive_verbs == frozenset()

@@ -335,7 +335,8 @@ def main() -> None:
     def run_sql_action(query: str) -> None:
         is_single_statement, _ = validate_single_sql_statement(query)
         if is_single_statement and not controller.state.database_read_only:
-            risk = classify_query_risk(query)
+            risk = classify_query_risk(
+                query, extra_destructive=controller.extra_destructive_verbs)
             if risk.requires_confirmation:
                 confirmed = messagebox.askyesno(
                     "Confirm Destructive Query",

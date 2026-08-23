@@ -54,6 +54,7 @@ class DatabaseEngine(Protocol):
 
     placeholder: str
     read_verbs: frozenset[str]
+    extra_destructive_verbs: frozenset[str]
     errors: tuple[type[BaseException], ...]
 
     def connect(self, target: str, *, read_only: bool) -> Any:
@@ -82,6 +83,8 @@ class SqliteEngine:
 
     placeholder = "?"
     read_verbs = SQLITE_READ_VERBS
+    # SQLite's destructive vocabulary is the shared one; it adds nothing.
+    extra_destructive_verbs = frozenset()
     errors = (sqlite3.Error,)
 
     def connect(self, target: str, *, read_only: bool) -> Any:
@@ -141,9 +144,17 @@ class MySQLEngine:
 
     placeholder = "%s"
     read_verbs = MYSQL_READ_VERBS
-    # Verbs that write or change state on MySQL but are absent from SQLite's
-    # vocabulary. REPLACE is destructive on both; the rest exist only here.
-    extra_write_verbs = frozenset({"CALL", "GRANT", "REVOKE", "CREATE", "RENAME", "TRUNCATE", "LOAD"})
+    # Verbs that change state on MySQL and mean nothing to SQLite, which is
+    # why the shared destructive list has never carried them. Read-only mode
+    # already refuses all of them, because it admits only `read_verbs`. Write
+    # mode gates on confirmation instead, and that gate was blind to every one
+    # of these until they were wired into `classify_query_risk`.
+    #
+    # CREATE is deliberately absent. Creating a table removes nothing, and a
+    # prompt warning that the query "may modify or remove data" would be a lie
+    # the user quickly learns to click through - which is how a confirmation
+    # dialog stops working at all.
+    extra_destructive_verbs = frozenset({"CALL", "GRANT", "REVOKE", "RENAME", "LOAD"})
 
     def __init__(
         self,

@@ -95,6 +95,19 @@ class FesiumController:
     def project_database_available(self) -> bool:
         return self._project_database_path is not None
 
+    @property
+    def extra_destructive_verbs(self) -> frozenset[str]:
+        """Destructive verbs belonging to the engine currently connected.
+
+        The confirmation prompt is what stands between a write-mode user and a
+        statement that changes the database. Its shared keyword list only ever
+        knew SQLite's vocabulary, so on MySQL a `GRANT` or a `CALL` ran with no
+        prompt at all. The engine says which verbs it adds; nobody else can.
+        """
+        if self._mysql_manager is not None:
+            return MySQLEngine.extra_destructive_verbs
+        return frozenset()
+
     def _database_browser_snapshot(self, preferred_table: str = "") -> tuple[tuple[str, ...], str, tuple[dict, ...]]:
         if self._mysql_manager is not None:
             database = self._mysql_manager
