@@ -12,20 +12,27 @@ social preview set its wordmark in Arial while the app ships its own face, and
 the two disagreed about the mark's proportions. One definition below now feeds the SVG,
 the banner, the social preview and the icons, so they cannot disagree again.
 
-Two decisions are worth stating, because both were measured rather than
-guessed:
+Decisions worth stating, because each was measured rather than guessed:
 
-**The mark carries its own ground.** The previous mark was transparent with
-every stroke at ``stroke-opacity="0.28"``. In a README that means it sits on
-whatever ground the reader's GitHub theme supplies - 2.12:1 against the dark
-canvas and 1.10:1 against the light one, where the WCAG floor for a graphical
-object is 3:1. The tile is opaque, and the banner and social preview bake a
-dark ground in, so both render identically in either GitHub theme.
+**The mark is line art, and its colour follows its ground.** An orbit, a
+nucleus and one electron riding the ring - three shapes, one colour, no
+fill block. Monochrome line work reads as engineering rather than decoration,
+and a single colour survives every size from favicon to banner. The colour is
+the accent on dark grounds (7.8:1 against ``#121419``) and a deepened shade of
+the same hue on light ones (4.6:1 against white), because the raw accent
+measures 2.7:1 there - under the 3:1 floor for a graphical object. Same
+geometry everywhere; only the ink changes with the paper.
 
-**The small sizes get their own artwork.** A ring inside the tile plus a
-crossing orbit reads at 120px and turns to mush at 32. The shipped mark keeps
-one orbit and a nucleus, and the 16px icon entry redraws them heavier rather
-than downscaling artwork built for 512.
+**The social preview carries a light ground.** The previous preview baked the
+app's dark background in and measured a mean luminance of 29/255 - on
+GitHub's card it read as a black rectangle, which is what it mostly was. This
+one inverts: near-white ground, deep-teal mark, dark wordmark. It reads
+instantly in both GitHub themes, where a dark card disappears into the dark
+one and blends into the light one.
+
+**The small sizes get their own artwork.** The full mark reads at 120px and
+turns to mush at 32. The shipped icon keeps the tile, and the 16px entry
+redraws every shape heavier rather than downscaling artwork built for 512.
 """
 
 import struct
@@ -46,20 +53,44 @@ ACCENT = (93, 169, 179)        # accent.primary  #5DA9B3
 GROUND = (18, 20, 25)          # bg.app          #121419
 INK = (238, 243, 247)          # text.primary    #eef3f7
 MUTED = (143, 154, 168)        # text.secondary  #8f9aa8
-BORDER = (43, 52, 64)          # border.default  #2b3440
+
+# The accent deepened just enough to clear 3:1 against white (it measures
+# 4.6:1). Same hue as ACCENT, so the two read as one brand on either ground.
+ACCENT_DEEP = (61, 126, 136)   # #3d7e88
+# MUTED deepened for text on the light ground, for the same reason.
+MUTED_DEEP = (90, 102, 115)    # #5a6673
 
 BOX = 512                      # the mark's design canvas
 SUPERSAMPLE = 8                # Pillow has no anti-aliased stroking of its own
 
 # The mark, in design units. Tuned at 32px, not at 512.
 TILE_INSET = 28
-ORBIT_RX, ORBIT_RY = 186, 84
+ORBIT_RX, ORBIT_RY = 196, 86
 ORBIT_TILT = 24                # counter-clockwise, matching the SVG's rotate(-24)
-ORBIT_STROKE = 52
-NUCLEUS_R = 52
+ORBIT_STROKE = 36
+NUCLEUS_R = 54
+ELECTRON_R = 24
 # The 16px entry, redrawn heavier so the shapes survive at that size.
-SMALL_ORBIT_STROKE = 76
+SMALL_ORBIT_STROKE = 58
 SMALL_NUCLEUS_R = 74
+SMALL_ELECTRON_R = 36
+
+
+def _electron_center() -> tuple[float, float]:
+    """Where the electron sits: on the ring, at its rotated left extreme.
+
+    The unrotated ellipse's leftmost point is ``(cx - RX, cy)``; the orbit
+    layer is then rotated counter-clockwise by ORBIT_TILT about the centre,
+    and the electron has to land on the stroke, not near it.
+    """
+    import math
+
+    c = BOX / 2
+    dx, dy = -ORBIT_RX, 0.0
+    theta = math.radians(ORBIT_TILT)
+    # Counter-clockwise in screen coordinates (y grows downward).
+    return c + dx * math.cos(theta) + dy * math.sin(theta), \
+        c - dx * math.sin(theta) + dy * math.cos(theta)
 
 
 def _blank(scale: int) -> Image.Image:
@@ -73,49 +104,80 @@ def _orbit_layer(scale: int, stroke: int) -> Image.Image:
     ImageDraw.Draw(layer).ellipse(
         [(c - ORBIT_RX) * scale, (c - ORBIT_RY) * scale,
          (c + ORBIT_RX) * scale, (c + ORBIT_RY) * scale],
-        outline=GROUND + (255,), width=int(stroke * scale))
+        outline=(0, 0, 0, 255), width=int(stroke * scale))
     return layer.rotate(ORBIT_TILT, resample=Image.BICUBIC,
                         center=(c * scale, c * scale))
 
 
-def draw_mark(size: int, *, small: bool = False) -> Image.Image:
-    """The mark at ``size`` px, drawn large and downscaled for the edges."""
+def draw_line_mark(size: int, color: tuple[int, int, int], *,
+                   small: bool = False) -> Image.Image:
+    """The mark as monochrome line art on transparency, at ``size`` px.
+
+    Orbit, nucleus and electron all take ``color`` - one ink, three shapes.
+    Drawn large and downscaled so the edges stay clean.
+    """
     scale = SUPERSAMPLE
     stroke = SMALL_ORBIT_STROKE if small else ORBIT_STROKE
     nucleus = SMALL_NUCLEUS_R if small else NUCLEUS_R
+    electron = SMALL_ELECTRON_R if small else ELECTRON_R
 
     img = _blank(scale)
+    # The orbit layer is drawn in opaque black and recoloured, because the
+    # rotation resamples alpha and would fade a coloured stroke's edges.
+    orbit = _orbit_layer(scale, stroke)
+    solid = Image.new("RGBA", orbit.size, color + (255,))
+    img.paste(solid, (0, 0), orbit)
+
     draw = ImageDraw.Draw(img)
-    draw.rectangle(
-        [TILE_INSET * scale, TILE_INSET * scale,
-         (BOX - TILE_INSET) * scale, (BOX - TILE_INSET) * scale],
-        fill=ACCENT + (255,))
-    img.alpha_composite(_orbit_layer(scale, stroke))
     c = BOX / 2
-    ImageDraw.Draw(img).ellipse(
+    draw.ellipse(
         [(c - nucleus) * scale, (c - nucleus) * scale,
-         (c + nucleus) * scale, (c + nucleus) * scale], fill=GROUND + (255,))
+         (c + nucleus) * scale, (c + nucleus) * scale], fill=color + (255,))
+    ex, ey = _electron_center()
+    draw.ellipse(
+        [(ex - electron) * scale, (ey - electron) * scale,
+         (ex + electron) * scale, (ey + electron) * scale], fill=color + (255,))
     return img.resize((size, size), Image.LANCZOS)
 
 
-def write_mark_svg(path: Path) -> None:
-    """The same geometry as SVG, for anywhere a vector is wanted.
+def draw_mark(size: int, *, small: bool = False) -> Image.Image:
+    """The tile mark for the app icon: accent square, ground-coloured line art.
 
-    The viewBox stays 0 0 512 512: tests/unit/test_brand_asset_layout.py
-    asserts it, and every size below is derived from that canvas.
+    The tile exists because an icon floats among other icons on surfaces this
+    project does not control - a taskbar, a desktop - and carries its own
+    ground the way the banner does.
+    """
+    scale = SUPERSAMPLE
+    img = _blank(scale)
+    ImageDraw.Draw(img).rectangle(
+        [TILE_INSET * scale, TILE_INSET * scale,
+         (BOX - TILE_INSET) * scale, (BOX - TILE_INSET) * scale],
+        fill=ACCENT + (255,))
+    line = draw_line_mark(BOX, GROUND, small=small)
+    img.alpha_composite(line.resize((BOX * scale, BOX * scale), Image.LANCZOS))
+    return img.resize((size, size), Image.LANCZOS)
+
+
+def write_mark_svg(path: Path, color: tuple[int, int, int]) -> None:
+    """The line mark as SVG, for anywhere a vector is wanted.
+
+    Transparent by design: the caller picks the variant whose ink suits its
+    ground (ACCENT on dark, ACCENT_DEEP on light). The viewBox stays
+    0 0 512 512: tests/unit/test_brand_asset_layout.py asserts it, and every
+    size below is derived from that canvas.
     """
     hexof = "#%02x%02x%02x"
+    ex, ey = _electron_center()
     path.write_text(
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" '
         'role="img" aria-label="Fesium">\n'
-        f'  <rect x="{TILE_INSET}" y="{TILE_INSET}" '
-        f'width="{BOX - 2 * TILE_INSET}" height="{BOX - 2 * TILE_INSET}" '
-        f'fill="{hexof % ACCENT}" />\n'
         f'  <ellipse cx="256" cy="256" rx="{ORBIT_RX}" ry="{ORBIT_RY}" '
-        f'fill="none" stroke="{hexof % GROUND}" stroke-width="{ORBIT_STROKE}" '
+        f'fill="none" stroke="{hexof % color}" stroke-width="{ORBIT_STROKE}" '
         f'transform="rotate(-{ORBIT_TILT} 256 256)" />\n'
         f'  <circle cx="256" cy="256" r="{NUCLEUS_R}" '
-        f'fill="{hexof % GROUND}" />\n'
+        f'fill="{hexof % color}" />\n'
+        f'  <circle cx="{ex:.0f}" cy="{ey:.0f}" r="{ELECTRON_R}" '
+        f'fill="{hexof % color}" />\n'
         "</svg>\n",
         encoding="utf-8")
 
@@ -159,13 +221,13 @@ def build_banner(path: Path, height: int = 300) -> None:
 
     It bakes the dark ground rather than shipping a transparent logo, so the
     header reads the same for a visitor on GitHub's light theme as on its dark
-    one. That is the whole reason this file exists as a PNG rather than the
-    transparent SVG the README used to inline.
+    one. The mark sits as line art in the accent - quieter than a filled tile
+    and consistent with the SVG the repo ships beside it.
 
     The canvas is sized to the lockup rather than fixed, because a fixed width
     left the composition stranded against a third of a canvas of dead space.
     """
-    margin, gap, mark_size, line_gap = 76, 40, 152, 14
+    margin, gap, mark_size, line_gap = 76, 44, 148, 14
     wordmark = load_font(BOLD, 78)
     tagline = load_font(REGULAR, 26)
     words, tag = "Fesium", "Local dev tools for students and developers"
@@ -182,7 +244,7 @@ def build_banner(path: Path, height: int = 300) -> None:
     # the image down to the width of a README column.
     draw.rectangle([0, height - 6, width, height], fill=ACCENT)
 
-    mark = draw_mark(mark_size)
+    mark = draw_line_mark(mark_size, ACCENT)
     img.paste(mark, (margin, (height - 6 - mark_size) // 2), mark)
 
     text_x = margin + mark_size + gap
@@ -196,12 +258,14 @@ def build_banner(path: Path, height: int = 300) -> None:
 def build_social_preview(path: Path, width: int = 1280, height: int = 640) -> None:
     """GitHub's social preview, at the size GitHub asks for.
 
-    The previous version tiled a 160px faceted pattern across the canvas, which
-    resolved into visible horizontal banding, and set the wordmark in Arial.
-    This one keeps the ground plain and the wordmark in the app's own face.
+    The ground is light on purpose. The previous preview baked the app's dark
+    background in and measured a mean luminance of 29/255, so GitHub's card
+    rendered it as a black rectangle - the complaint that prompted this
+    rework. Near-white ground, deep-teal mark, dark wordmark: it reads in both
+    GitHub themes, where a dark card vanishes into the dark one.
     """
-    mark_size, mark_gap, line_gap = 216, 58, 20
-    wordmark = load_font(BOLD, 92)
+    mark_size, mark_gap, line_gap = 224, 56, 20
+    wordmark = load_font(BOLD, 96)
     tagline = load_font(REGULAR, 30)
     words, tag = "Fesium", "Local dev tools for students and developers"
 
@@ -212,24 +276,26 @@ def build_social_preview(path: Path, width: int = 1280, height: int = 640) -> No
     # measured to the exact middle.
     top = (height - stack) // 2 - 16
 
-    img = Image.new("RGB", (width, height), GROUND)
+    img = Image.new("RGB", (width, height), INK)
     draw = ImageDraw.Draw(img)
+    # One accent rule along the bottom, tying the card to the banner.
+    draw.rectangle([0, height - 10, width, height], fill=ACCENT)
 
-    # A soft accent wash behind the mark, drawn as concentric rings rather than
-    # a bitmap gradient so it stays banding-free at this size.
+    # A faint deep-teal wash behind the mark, drawn as concentric rings rather
+    # than a bitmap gradient so it stays banding-free at this size.
     cx, cy = width // 2, top + mark_size // 2
-    for radius in range(320, 0, -2):
-        weight = (1 - radius / 320) * 0.13
-        blend = tuple(round(GROUND[i] + (ACCENT[i] - GROUND[i]) * weight)
+    for radius in range(300, 0, -2):
+        weight = (1 - radius / 300) * 0.07
+        blend = tuple(round(INK[i] + (ACCENT_DEEP[i] - INK[i]) * weight)
                       for i in range(3))
         draw.ellipse([cx - radius, cy - radius, cx + radius, cy + radius], fill=blend)
 
-    mark = draw_mark(mark_size)
+    mark = draw_line_mark(mark_size, ACCENT_DEEP)
     img.paste(mark, (cx - mark_size // 2, top), mark)
 
     text_y = top + mark_size + mark_gap
-    draw_ink(draw, cx, text_y, words, wordmark, INK, centre=True)
-    draw_ink(draw, cx, text_y + word_h + line_gap, tag, tagline, MUTED, centre=True)
+    draw_ink(draw, cx, text_y, words, wordmark, GROUND, centre=True)
+    draw_ink(draw, cx, text_y + word_h + line_gap, tag, tagline, MUTED_DEEP, centre=True)
 
     img.save(path, optimize=True)
 
@@ -265,7 +331,9 @@ def main() -> int:
     BRAND_DIR.mkdir(parents=True, exist_ok=True)
     ICON_DIR.mkdir(parents=True, exist_ok=True)
 
-    write_mark_svg(BRAND_DIR / "fesium-orbit.svg")
+    # The vector ships in the dark-ground ink; on a light surface use
+    # ACCENT_DEEP, which the script emits nowhere by default but accepts here.
+    write_mark_svg(BRAND_DIR / "fesium-orbit.svg", ACCENT)
     build_banner(BRAND_DIR / "fesium-banner.png")
     build_social_preview(BRAND_DIR / "fesium-social-preview.png")
 
