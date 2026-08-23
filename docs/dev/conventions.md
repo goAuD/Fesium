@@ -51,6 +51,6 @@
 
 - Update [`README.md`](../../README.md) and [`CHANGELOG.md`](../../CHANGELOG.md) when user-facing behavior changes.
 - Add an entry under [`docs/release/`](../release/) when tagging a new version.
-- Record major planning or design shifts under [`docs/plans/`](../plans/) and [`docs/specs/`](../specs/) with a dated filename.
+- Record major planning or design shifts under [`docs/specs/`](../specs/) with a dated filename.
 - When an architectural decision becomes durable and reusable, add an ADR under [`docs/decisions/`](../decisions/).
 - Keep docs honest. Do not describe unfinished work as shipped.

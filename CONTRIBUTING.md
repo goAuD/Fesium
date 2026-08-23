@@ -27,5 +27,5 @@ If your change affects behavior, update the relevant docs:
 
 - [README.md](README.md) for user-facing workflow changes
 - [CHANGELOG.md](CHANGELOG.md) for release-facing notes
-- [docs/specs/](docs/specs/) and [docs/plans/](docs/plans/) for larger scoped work
+- [docs/specs/](docs/specs/) for larger scoped work
 - [docs/decisions/](docs/decisions/) when a decision is durable enough to be a rule, not just a plan
