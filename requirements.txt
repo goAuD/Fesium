@@ -11,5 +11,5 @@
 customtkinter==6.0.0
 pillow==12.3.0
 pytest==9.2.0
-ruff==0.16.3
+ruff==0.17.5
 PyMySQL==1.2.4
